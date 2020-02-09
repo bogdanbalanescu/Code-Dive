@@ -2,6 +2,7 @@
 	"name": "code-dive",
 	"displayName": "Code Dive",
 	"description": "Code Dive is a VS Code Extension that serves as a Visual Programming Tool for Textual Based Programming Languages.",
+	"publisher": "bdaniel",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.42.0"
@@ -10,20 +11,20 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.helloWorld"
+		"onCommand:extension.code-dive"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
+				"command": "extension.code-dive",
+				"title": "Code Dive"
 			}
 		]
 	},
 	"scripts": {
 		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
+		"compile": "tsc -p ./ && copy react-code-dive\\build\\index.html out\\index.html",
 		"lint": "eslint src --ext ts",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile && yarn run lint",
