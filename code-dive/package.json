@@ -1,81 +1,55 @@
 {
- "name": "code-dive",
- "displayName": "Code Dive",
- "description": "Code Dive is a VS Code Extension that serves as a Visual Programming Tool for Textual Based Programming Languages.",
- "publisher": "bdaniel",
- "version": "0.0.1",
- "engines": {
- },
- "categories": [
-  "Other"
- ],
- "activationEvents": [
-  "onCommand:extension.code-dive"
- ],
- "main": "./build/src-ext/extension.js",
- "contributes": {
-  "commands": [
-   {
-    "command": "extension.code-dive",
-    "title": "Code Dive"
-   }
-  ]
- },
- "private": true,
- "scripts": {
-  "vscode:prepublish": "node scripts/build-non-split.js && tsc -p tsconfig.extension.json",
-  "postinstall": "node node_modules/vscode/bin/install",
-  "start": "react-scripts start",
-  "build": "node scripts/build-non-split.js && tsc -p tsconfig.extension.json",
-  "test": "react-scripts test --env=jsdom",
-  "eject": "react-scripts eject"
- },
- "dependencies": {
-  "@emotion/core": "^10.0.27",
-  "@emotion/styled": "^10.0.27",
-  "@projectstorm/react-diagrams": "^6.0.1-beta.7",
-  "@testing-library/jest-dom": "^4.2.4",
-  "@testing-library/react": "^9.3.2",
-  "@testing-library/user-event": "^7.1.2",
-  "@types/glob": "^7.1.1",
-  "@types/jest": "^24.0.0",
-  "@types/mocha": "^7.0.1",
-  "@types/node": "^12.0.0",
-  "@types/react": "^16.9.0",
-  "@types/react-dom": "^16.9.0",
-  "@types/vscode": "^1.42.0",
-  "@typescript-eslint/eslint-plugin": "^2.19.2",
-  "@typescript-eslint/parser": "^2.19.2",
-  "closest": "^0.0.1",
-  "dagre": "^0.8.5",
-  "eslint": "^6.8.0",
-  "glob": "^7.1.6",
-  "mathjs": "^6.6.0",
-  "mocha": "^7.0.1",
-  "pathfinding": "^0.4.18",
-  "paths-js": "^0.4.10",
-  "react": "^16.12.0",
-  "react-dom": "^16.12.0",
-  "react-scripts": "3.3.1",
-  "resize-observer-polyfill": "^1.5.1",
-  "rewire": "^4.0.1",
-  "typescript": "~3.7.2",
-  "vscode": "^1.1.36",
-  "vscode-test": "^1.3.0"
- },
- "eslintConfig": {
-  "extends": "react-app"
- },
- "browserslist": {
-  "production": [
-   ">0.2%",
-   "not dead",
-   "not op_mini all"
+  "name": "code-dive",
+  "displayName": "Code Dive",
+  "description": "Code Dive is a VS Code Extension that serves as a Visual Programming Tool for Textual Based Programming Languages.",
+  "publisher": "bdaniel",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "activationEvents": [
+    "onCommand:extension.code-dive"
   ],
-  "development": [
-   "last 1 chrome version",
-   "last 1 firefox version",
-   "last 1 safari version"
+  "main": "./build/src-ext/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.code-dive",
+        "title": "Start Code Dive",
+        "category": "Code Dive"
+      }
+    ]
+  },
+  "dependencies": {
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "terser": "3.16.0",
+    "vscode": "^1.1.17"
+  },
+  "resolutions": {
+    "terser": "3.14.1"
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./scripts/build-non-split.js && tsc -p tsconfig.extension.json",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "start": "react-scripts start",
+    "build": "node ./scripts/build-non-split.js && tsc -p tsconfig.extension.json",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.13",
+    "@types/node": "^10.1.2",
+    "@types/react": "^16.3.14",
+    "@types/react-dom": "^16.0.5",
+    "react-scripts": "^2.1.3",
+    "rewire": "^4.0.1",
+    "typescript": "^3.3.1"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
   ]
- }
 }
