@@ -1,8 +1,8 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
-
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
 		ReactPanel.createOrShow(context.extensionPath);
 	}));
@@ -105,7 +105,7 @@ class ReactPanel {
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
 				<meta name="theme-color" content="#000000">
-				<title>React App</title>
+				<title>Code Dive</title>
 				<link rel="stylesheet" type="text/css" href="${styleUri}">
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https:; script-src 'nonce-${nonce}';style-src vscode-resource: 'unsafe-inline' http: https: data:;">
 				<base href="${vscode.Uri.file(path.join(this._extensionPath, 'build')).with({ scheme: 'vscode-resource' })}/">

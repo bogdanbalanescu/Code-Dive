@@ -7,9 +7,24 @@ import createEngine, { DiagramModel, DefaultNodeModel, DefaultLinkModel } from '
 import { CanvasWidget } from '@projectstorm/react-canvas-core';
 import { DemoCanvasWidget } from './helpers/DemoCanvasWidget';
 
+declare var acquireVsCodeApi: any;
+
+const vscode = acquireVsCodeApi();
+
 class App extends React.Component {
-    public render() {
-      //1) setup the diagram engine
+  public render() {
+    // Send a message to the extension
+    setInterval(() => {
+      // Alert the extension when our cat introduces a bug
+      if (Math.random() < 0.1) {
+          vscode.postMessage({
+              command: 'alert',
+              text: '🐛  on line 999'
+          })
+      }
+    }, 100);
+
+    //1) setup the diagram engine
     var engine = createEngine();
 
     //2) setup the diagram model
