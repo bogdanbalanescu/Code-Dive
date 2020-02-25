@@ -8,18 +8,20 @@ import { CanvasWidget } from '@projectstorm/react-canvas-core';
 import { DemoCanvasWidget } from './helpers/DemoCanvasWidget';
 import { InteractorFactory } from './interactors/InteractorFactory';
 import { Interactor } from './interactors/Interactor';
+import { registerWindowEventListener } from './eventListeners/EventListener';
 
 class App extends React.Component<{}, {vsCodeInteractor: Interactor}> {
   constructor(props: any) {
     super(props);
     this.state = {vsCodeInteractor: InteractorFactory.createInteractor()};
+    registerWindowEventListener();
   }
 
   public render() {
     // Send a message to the extension
     setInterval(() => {
       this.state.vsCodeInteractor.alert('🐛  on line 999');
-    }, 3000);
+    }, 10000);
 
     //1) setup the diagram engine
     var engine = createEngine();

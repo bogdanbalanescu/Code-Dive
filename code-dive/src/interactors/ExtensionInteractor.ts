@@ -10,7 +10,7 @@ export class ExtensionInteractor implements Interactor {
     alert(message: string): void {
         this.vsCodeApi.postMessage({
             command: 'alert',
-            text: '🐛  on line 999'
+            text: message
         });
     }
 }

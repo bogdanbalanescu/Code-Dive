@@ -6,6 +6,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
 		ReactPanel.createOrShow(context.extensionPath);
 	}));
+	context.subscriptions.push(vscode.commands.registerCommand('extension.code-says-hello', () => {
+		ReactPanel.sayHello();
+	}));
 }
 
 /**
@@ -66,10 +69,14 @@ class ReactPanel {
 		}, null, this._disposables);
 	}
 
-	public doRefactor() {
+	public static sayHello() {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
-		this._panel.webview.postMessage({ command: 'refactor' });
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'sayHello' });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
 	}
 
 	public dispose() {
