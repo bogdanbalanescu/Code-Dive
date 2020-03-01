@@ -13,4 +13,10 @@ export class ExtensionInteractor implements Interactor {
             text: message
         });
     }
+
+    startCodeDiveAnalysis(): void {
+        this.vsCodeApi.postMessage({
+            command: 'startCodeDiveAnalysis'
+        });
+    }
 }

@@ -1,5 +1,6 @@
-import * as path from 'path';
+import { CodeDiveClass } from './CodeDiveClass';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -8,6 +9,9 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-says-hello', () => {
 		ReactPanel.sayHello();
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive-analysis', () => {
+		ReactPanel.startCodeDiveAnalysis();
 	}));
 }
 
@@ -23,6 +27,7 @@ class ReactPanel {
 	private static readonly viewType = 'react';
 
 	private readonly _panel: vscode.WebviewPanel;
+	private readonly _codeDiveChannel: vscode.OutputChannel;
 	private readonly _extensionPath: string;
 	private _disposables: vscode.Disposable[] = [];
 
@@ -59,14 +64,58 @@ class ReactPanel {
 		// This happens when the user closes the panel or when the panel is closed programatically
 		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
+		// Create an output channel for debugging purposes
+		this._codeDiveChannel = vscode.window.createOutputChannel("Code-Dive-Channel");
+
 		// Handle messages from the webview
-		this._panel.webview.onDidReceiveMessage(message => {
+		this._panel.webview.onDidReceiveMessage(async message => {
 			switch (message.command) {
 				case 'alert':
 					vscode.window.showErrorMessage(message.text);
 					return;
+				case 'startCodeDiveAnalysis':
+					var sourceFilesPaths = await this.readSourceFilesPathsFromCurrentWorkspace();
+					var classes = this.parseSourceFilesAsClasses(sourceFilesPaths);
+					// TODO: return the classes?
 			}
 		}, null, this._disposables);
+	}
+
+	private async readSourceFilesPathsFromCurrentWorkspace(): Promise<string[]> {
+		return await vscode.workspace.findFiles('**/*.cs', '**/obj/**').then((uris: vscode.Uri[]) => {
+			var sourceFilePaths : string[] = [];
+			uris.forEach((uri: vscode.Uri) => {
+				sourceFilePaths.push(uri.path); // TODO: consider uri.fspath as well OR even the uri itself
+
+				// log path
+				this._codeDiveChannel.appendLine(uri.path);
+			});
+			return sourceFilePaths;
+		});
+	}
+	
+	private parseSourceFilesAsClasses(sourceFilesPaths: string[]): CodeDiveClass[] {
+		// TODO: parse each source file as a CodeDiveClass when possible.
+		var codeDiveClasses: CodeDiveClass[] = [];
+		sourceFilesPaths.forEach(async (filePath: string) => {
+			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
+				return file.getText();
+			})
+			var codeDiveClass = this.tryParseCodeAsClass(fileText);
+			// TODO: add to codeDiveClasses if not null
+		});
+
+		// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
+		throw new Error("Method not implemented.");
+	}
+
+	private tryParseCodeAsClass(sourceCode: string): CodeDiveClass {
+		// TODO: parse sourceCode as a CodeDiveClass => can be done in the CodeDiveClass or in a separate parser in the future
+		// TODO: if cannot parse, then return null
+		// TODO: consider multiple classes in the same file -> return array instead of just one instance
+		var x = sourceCode;
+
+		throw new Error("Method not implemented.");
 	}
 
 	public static sayHello() {
@@ -74,6 +123,16 @@ class ReactPanel {
 		// You can send any JSON serializable data.
 		if (ReactPanel.currentPanel) {
 			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'sayHello' });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
+	}
+
+	public static startCodeDiveAnalysis() {
+		// Send a message to the webview webview.
+		// You can send any JSON serializable data.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'startCodeDiveAnalysis' });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}

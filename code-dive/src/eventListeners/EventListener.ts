@@ -10,6 +10,9 @@ export function registerWindowEventListener() {
             case 'sayHello':
                 interactor.alert('Just here to say hello! 👋')
                 break;
+            case 'startCodeDiveAnalysis':
+                interactor.startCodeDiveAnalysis();
+                break;
         }
     }) as EventListener);
 }
