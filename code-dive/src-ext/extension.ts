@@ -2,6 +2,7 @@ import { CodeDiveClass } from './CodeDiveClass';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { parseClass } from "./ClassParser";
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
@@ -114,6 +115,8 @@ class ReactPanel {
 		// TODO: if cannot parse, then return null
 		// TODO: consider multiple classes in the same file -> return array instead of just one instance
 		var x = sourceCode;
+		var jisonParsedCode1 = parseClass('a3244'); // return true
+		var jisonParsedCode2 = parseClass('a3244z'); // throws a lexical error
 
 		throw new Error("Method not implemented.");
 	}
