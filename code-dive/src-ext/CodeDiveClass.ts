@@ -68,8 +68,9 @@ export class CodeDiveClass {
     public fields: Field[];
     public properties: Property[];
     public methods: Method[];
-    public constructor(usingStatements: NamespaceDependency[], name: string, parents: Type[], fields: Field[], properties: Property[], methods: Method[]) {
+    public constructor(usingStatements: NamespaceDependency[], namespace: Namespace, name: string, parents: Type[], fields: Field[], properties: Property[], methods: Method[]) {
         this.usingStatements = usingStatements ? usingStatements : [];
+        this.namespace = namespace;
         this.name = name;
         this.parents = parents ? parents : [];
         this.fields = fields ? fields : [];
