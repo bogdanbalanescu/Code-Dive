@@ -50,10 +50,12 @@
     "terser": "3.14.1"
   },
   "scripts": {
-    "vscode:prepublish": "node ./scripts/build-non-split.js && tsc -p tsconfig.extension.json",
+    "vscode:prepublish": "yarn build-webview && build-extension",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "start": "react-scripts start",
-    "build": "node ./scripts/build-non-split.js && tsc -p tsconfig.extension.json",
+    "build": "yarn build-webview && yarn build-extension",
+    "build-webview": "node ./scripts/build-non-split.js",
+    "build-extension": "tsc -p tsconfig.extension.json && xcopy src-ext\\jison build\\src-ext\\jison /i /y",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },

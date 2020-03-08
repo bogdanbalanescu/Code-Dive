@@ -12,7 +12,8 @@
         "strict": true
 	},
 	"include": [
-		"src-ext"
+        "src-ext",
+        "src-ext/**/*.jison"
 	],
     "exclude": [
         "node_modules",
