@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var jison = require('jison');
+var util = require('util');
 
 var cSharpGrammarFile = path.resolve(__dirname, "../jison/csharp-grammar.jison");
 var bnf = fs.readFileSync(cSharpGrammarFile, "utf8");
@@ -13,4 +14,6 @@ function parseClass(sourceCode) {
     return parser.parse(sourceCode);
 }
 
-console.log(parseClass(sourceCode));
+console.log(util.inspect(parseClass(sourceCode), {
+    showHidden: false, depth: Infinity, colors: true, compact: true, breakLength: 80
+}));
