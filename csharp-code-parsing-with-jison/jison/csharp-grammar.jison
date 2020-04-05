@@ -5,6 +5,7 @@
 %options flex
 
 %{
+/* 1. Namespace dependency */
 var namespaceDependecies = []; // current conventions says it is RECOMMENDED to declare namespace dependencies at file level and to apply them to all classes in the source file.
 if (!('addNamespace' in yy)) {
 	yy.addNamespace = function addNamespace(name) {
@@ -13,6 +14,7 @@ if (!('addNamespace' in yy)) {
 		});
 	};
 }
+/* 2. Namespace declaration */
 var currentNamespaceDeclaration = ''; // current convention says it is RECOMMENDED to have only one namespace declaration per source file.
 if (!('setCurrentNamespaceDeclaration' in yy)) {
 	yy.setCurrentNamespaceDeclaration = function setCurrentNamespaceDeclaration(name) {
@@ -24,14 +26,26 @@ if (!('removeCurrentNamespaceDeclaration' in yy)) {
 		currentNamespaceDeclaration = '';
 	};
 }
+/* Misc: modifiers */
+var modifiers = [];
+if (!('addModifier' in yy)) {
+	yy.addModifier = function addModifier(name) {
+		modifiers.push(name);
+	};
+}
+/* 3. Class declaration */
 var classDeclarations = [];
-var currentClassDeclaration = '';
+var currentClassName = '';
+var currentClassModifiers = [];
 var fields = [];
 var properties = [];
 var property_accessors = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
-		currentClassDeclaration = name;
+		currentClassName = name;
+		currentClassModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
 	};
 }
 if (!('endCurrentClassDeclaration' in yy)) {
@@ -39,25 +53,33 @@ if (!('endCurrentClassDeclaration' in yy)) {
 		classDeclarations.push({
 			namespaceDependecies : namespaceDependecies,
 			namespace : currentNamespaceDeclaration,
-			name : currentClassDeclaration,
+			name : currentClassName,
+			modifiers : currentClassModifiers,
 			/*TODO: parents/inheritances*/
 			fields : fields,
 			properties: properties
 			/*TODO: continue with others*/
-		})
+		});
 		// Cleanup after class declaration
-		currentClassDeclaration = '';
+		currentClassName = '';
+		currentClassModifiers = [];
 		fields = [];
+		properties = [];
 	};
 }
+/* 3.1 Field declaration */
 if (!('addField' in yy)) {
 	yy.addField = function addField(type, name) {
 		fields.push({
 			type: type,
-			name: name
+			name: name,
+			modifiers : modifiers
 		});
+		// Cleanup modifiers
+		modifiers = [];
 	};
 }
+/* 3.2 Property declaration */
 if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		property_accessors.push({
@@ -71,9 +93,11 @@ if (!('addProperty' in yy)) {
 		properties.push({
 			type: type,
 			name: name,
+			modifiers : modifiers,
 			accessors : property_accessors
 		});
 		// Cleanup after property
+		modifiers = [];
 		property_accessors = [];
 	};
 }
@@ -107,7 +131,14 @@ if (!('getParsedSourceFile' in yy)) {
 "volatile"				return 'VOLATILE';
 "get"					return 'GET';
 "set"					return 'SET';
+"ref"					return 'REF';
+"out"					return 'OUT';
+"this"					return 'THIS';
+"true"					return 'TRUE';
+"false"					return 'FALSE';
+"null"					return 'NULL';
 [_a-zA-Z]+[_a-zA-Z0-9]*	return 'IDENTIFIER';
+[0-9]+					return yytext;
 <<EOF>>               	return 'EOF';
 .						return yytext; /*returns the matched text*/
 /lex
@@ -158,7 +189,9 @@ namespace_member
 	;
 /* 3. Class declaration */
 class_declaration
-	: CLASS IDENTIFIER _subroutine_add_current_class '{' class_body '}'
+	: modifiers CLASS IDENTIFIER _subroutine_add_current_class '{' class_body '}'
+		{yy.endCurrentClassDeclaration();}
+	| CLASS IDENTIFIER _subroutine_add_current_class '{' class_body '}'
 		{yy.endCurrentClassDeclaration();}
 	;
 _subroutine_add_current_class
@@ -176,6 +209,7 @@ class_members
 class_member
 	: field_declaration
 	| property_declaration
+	| constructor_declaration
 	/* TODO: add method, property and constructor members (+ others when time is right) */
 	;
 /* 3.1 Field declaration */
@@ -225,6 +259,11 @@ accessor_body
 	;
 
 
+
+
+
+
+
 qualified_identifier
 	: qualified_identifier '.' IDENTIFIER 
 		{$$ = $1 + $2 + $3;}
@@ -232,10 +271,15 @@ qualified_identifier
 	;
 modifiers
 	: modifiers modifier
+		{yy.addModifier($2)}
 	| modifier
+		{yy.addModifier($1)}
 	;
 modifier
+	/* modifiers for classes, fields, methods, constructors and properties */
 	: NEW | PUBLIC | PROTECTED | INTERNAL | PRIVATE | STATIC | VIRTUAL | SEALED | OVERRIDE | ABSTRACT | EXTERN | READONLY | VOLATILE
+	/* modifiers for parameters */
+	| REF | OUT | THIS
 	;
 /* Misc */
 semicolon

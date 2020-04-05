@@ -2,9 +2,9 @@ using System;
 using System.A.B.C;
 
 namespace CodeDive {
-    class Example {
+    public class Example {
         public int x;
-        public int y;
-        public int X { get; set; }
+        protected sealed int y;
+        protected sealed int X { get; set; }
     }
 }
