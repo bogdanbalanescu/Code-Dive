@@ -39,7 +39,11 @@ var currentClassName = '';
 var currentClassModifiers = [];
 var fields = [];
 var properties = [];
-var property_accessors = [];
+var propertyAccessors = [];
+var constructors = [];
+var currentConstructorName = "";
+var currentConstructorModifiers = [];
+var currentConstructorFixedParameters = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentClassName = name;
@@ -57,7 +61,8 @@ if (!('endCurrentClassDeclaration' in yy)) {
 			modifiers : currentClassModifiers,
 			/*TODO: parents/inheritances*/
 			fields : fields,
-			properties: properties
+			properties: properties,
+			constructors: constructors
 			/*TODO: continue with others*/
 		});
 		// Cleanup after class declaration
@@ -82,7 +87,7 @@ if (!('addField' in yy)) {
 /* 3.2 Property declaration */
 if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
-		property_accessors.push({
+		propertyAccessors.push({
 			type: type,
 			body: undefined // functionality not yet supported
 		});
@@ -94,12 +99,45 @@ if (!('addProperty' in yy)) {
 			type: type,
 			name: name,
 			modifiers : modifiers,
-			accessors : property_accessors
+			accessors : propertyAccessors
 		});
 		// Cleanup after property
 		modifiers = [];
-		property_accessors = [];
+		propertyAccessors = [];
 	};
+}
+/* 3.3 Constructor declaration */
+if (!('beginCurrentConstructorDeclaration' in yy)) {
+	yy.beginCurrentConstructorDeclaration = function beginCurrentConstructorDeclaration(name) {
+		currentConstructorName = name;
+		currentConstructorModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
+	}
+}
+if (!('addFixedParameter' in yy)) {
+	yy.addFixedParameter = function addFixedParameter(type, name, modifier = "") {
+		currentConstructorFixedParameters.push({
+			type: type,
+			name: name,
+			modifier: modifier
+		});
+		// Cleanup modifiers
+		modifiers = [];
+	}
+}
+if (!('endCurrentConstructorDeclaration' in yy)) {
+	yy.endCurrentConstructorDeclaration = function endCurrentConstructorDeclaration() {
+		constructors.push({
+			name: currentConstructorName,
+			modifiers: currentConstructorModifiers,
+			parameters: currentConstructorFixedParameters
+		});
+		// Cleanup after constructor declaration
+		currentConstructorName = "";
+		currentConstructorModifiers = [];
+		currentConstructorFixedParameters = [];
+	}
 }
 
 if (!('getParsedSourceFile' in yy)) {
@@ -257,8 +295,47 @@ accessor_body
 	: semicolon
 	/*TODO: see about properties with a block body*/
 	;
-
-
+/* 3.3 Constructor declaration */
+constructor_declaration
+	: modifiers constructor_declarator constructor_body
+		{yy.endCurrentConstructorDeclaration();}
+	| constructor_declarator constructor_body
+		{yy.endCurrentConstructorDeclaration();}
+	;
+/* 3.3.1 Constructor declarator*/
+constructor_declarator
+	: IDENTIFIER _subroutine_add_current_constructor '(' formal_parameter_list ')'
+	| IDENTIFIER _subroutine_add_current_constructor '(' ')'
+	/*TODO: see about constructor initializer: base(...), this(...) */
+	;
+_subroutine_add_current_constructor
+	: /* empty */
+		{yy.beginCurrentConstructorDeclaration($1);}
+	;
+formal_parameter_list
+	: fixed_parameters
+	/*TODO: see about params array*/
+	;
+fixed_parameters
+	: fixed_parameters ',' fixed_parameter
+	| fixed_parameter
+	;
+fixed_parameter
+	: modifier IDENTIFIER IDENTIFIER
+		{yy.addFixedParameter($2, $3, $1)}
+	| IDENTIFIER IDENTIFIER
+		{yy.addFixedParameter($1, $2)}
+	/*TODO: see about default arugment = expression*/
+	;
+/* 3.3.2 Constructor body*/
+constructor_body
+	: block
+	| semicolon
+	;
+block
+	/*: '{' statement_list '}'*/
+	: '{' '}'
+	;
 
 
 

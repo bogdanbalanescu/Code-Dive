@@ -6,5 +6,8 @@ namespace CodeDive {
         public int x;
         protected sealed int y;
         protected sealed int X { get; set; }
+        public Example (int x, out int y) 
+        {
+        }
     }
 }
