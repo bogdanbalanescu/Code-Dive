@@ -8,6 +8,8 @@ namespace CodeDive {
         protected sealed int X { get; set; }
         public Example (int x, out int y) 
         {
+            int some_variable;
+            string you_cant_catch_me;
         }
     }
 }

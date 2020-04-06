@@ -44,6 +44,7 @@ var constructors = [];
 var currentConstructorName = "";
 var currentConstructorModifiers = [];
 var currentConstructorFixedParameters = [];
+var statements = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentClassName = name;
@@ -131,13 +132,27 @@ if (!('endCurrentConstructorDeclaration' in yy)) {
 		constructors.push({
 			name: currentConstructorName,
 			modifiers: currentConstructorModifiers,
-			parameters: currentConstructorFixedParameters
+			parameters: currentConstructorFixedParameters,
+			statements: statements
 		});
 		// Cleanup after constructor declaration
 		currentConstructorName = "";
 		currentConstructorModifiers = [];
 		currentConstructorFixedParameters = [];
+		statements = [];
 	}
+}
+/* Statements */
+if (!('addVariableDeclarationStatement' in yy)) {
+	yy.addVariableDeclarationStatement = function addVariableDeclarationStatement(type, name) {
+		statements.push({
+			statementType: "variable_declaration",
+			statementContent: {
+				type: type,
+				name: name
+			}
+		});
+	};
 }
 
 if (!('getParsedSourceFile' in yy)) {
@@ -333,10 +348,22 @@ constructor_body
 	| semicolon
 	;
 block
-	/*: '{' statement_list '}'*/
-	: '{' '}'
+	: '{' statement_list '}'
+	| '{' '}'
 	;
-
+statement_list
+	: statement_list statement
+	| statement
+	;
+statement
+	: variable_declaration_statement
+	/*| embedded_statement*/
+	;
+/* 3.3.2.1 Variable declaration statement */
+variable_declaration_statement
+	: IDENTIFIER IDENTIFIER semicolon
+		{yy.addVariableDeclarationStatement($1, $2)}
+	;
 
 
 
