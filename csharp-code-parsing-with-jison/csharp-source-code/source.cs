@@ -6,10 +6,11 @@ namespace CodeDive {
         public int x;
         protected sealed int y;
         protected sealed int X { get; set; }
+        public Example() {}
         public Example (int x, out int y) 
         {
-            int some_variable;
-            string you_cant_catch_me;
+            int randomNumber;
+            string message;
         }
     }
 }

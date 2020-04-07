@@ -144,17 +144,31 @@ if (!('endCurrentConstructorDeclaration' in yy)) {
 }
 /* Statements */
 if (!('addVariableDeclarationStatement' in yy)) {
-	yy.addVariableDeclarationStatement = function addVariableDeclarationStatement(type, name) {
-		statements.push({
-			statementType: "variable_declaration",
-			statementContent: {
-				type: type,
-				name: name
-			}
-		});
+	yy.addVariableDeclarationStatement = function addVariableDeclarationStatement(text) {
+		statements.push(createStatement(text));
+	};
+}
+if (!('addEmptyStatement' in yy)) {
+	yy.addEmptyStatement = function addEmptyStatement(text) {
+		statements.push(createStatement(text));
+	};
+}
+if (!('addExpressionStatement' in yy)) {
+	yy.addExpressionStatement = function addExpressionStatement(text) {
+		// TODO: revisit this
+		statements.push(createStatement(text));
 	};
 }
 
+function createStatement(text, usedFields = [], usedProperties = [], usedConstructors = [], usedMethods = []) {
+	return {
+		statementText: text,
+		usedFields: usedFields,
+		usedProperties: usedProperties,
+		usedConstructors: usedConstructors,
+		usedMethods: usedMethods
+	};
+}
 if (!('getParsedSourceFile' in yy)) {
 	yy.getParsedSourceFile = function getParsedSourceFile() {
 		return {
@@ -337,10 +351,10 @@ fixed_parameters
 	;
 fixed_parameter
 	: modifier IDENTIFIER IDENTIFIER
-		{yy.addFixedParameter($2, $3, $1)}
+		{yy.addFixedParameter($2, $3, $1);}
 	| IDENTIFIER IDENTIFIER
-		{yy.addFixedParameter($1, $2)}
-	/*TODO: see about default arugment = expression*/
+		{yy.addFixedParameter($1, $2);}
+	/*TODO: see about default argument = expression*/
 	;
 /* 3.3.2 Constructor body*/
 constructor_body
@@ -357,13 +371,83 @@ statement_list
 	;
 statement
 	: variable_declaration_statement
-	/*| embedded_statement*/
+	| embedded_statement
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
 	: IDENTIFIER IDENTIFIER semicolon
-		{yy.addVariableDeclarationStatement($1, $2)}
+		{$$ = $1 + ' ' + $2 + $3;
+		 yy.addVariableDeclarationStatement($$);}
+	/*TODO: see about initilizations of variables, such as int x = 2;*/
 	;
+/* 3.3.2.2 Embedded statements */
+embedded_statement
+	/*TODO: see about extending this with block as well*/
+	: empty_statement
+	
+	/*TODO: revisit this - uncomment*/
+	/*expression_statement*/
+
+	/*selection_statement*/	
+	/*iteration_statement*/	
+	/*try_statement*/	
+	;
+/* 3.3.2.2.1 Empty statement */
+empty_statement
+	: semicolon
+		{yy.addEmptyStatement($$);}
+	;
+/* 3.3.2.2.2 Expression statement */
+expression_statement
+	: statement_expression semicolon
+		{$$ = $1 + $2;
+		 yy.addExpressionStatement($$);}
+	;
+statement_expression
+	: invocation_expression
+	| object_creation_expression
+	| assignment
+	;
+invocation_expression
+	: primary_expression '(' argument_list ')'
+	: primary_expression '(' ')'
+	;
+primary_expression
+	: primary_no_array_creation_expression
+	| array_creation_expression
+	;
+primary_no_array_creation_expression
+	: literal
+	| simple_name
+	| parenthesized_expression
+	| member_access
+	| invocation_expression
+	| element_access
+	| this_access
+	| base_access
+	| object_creation_expression
+	: 
+array_creation_expression
+	: 'new' IDENTIFIER '[' expression_list ']'
+	;
+
+argument_list
+	: arguments
+	;
+arguments
+	: arguments ',' argument
+	: argument
+	;
+argument
+	: IDENTIFIER ':' argument_value
+	: argument_value
+	;
+argument_value
+	: expression
+	| REF expression
+	| OUT expression
+	;
+
 
 
 
