@@ -45,6 +45,7 @@ var currentConstructorName = "";
 var currentConstructorModifiers = [];
 var currentConstructorFixedParameters = [];
 var statements = [];
+var declaredVariables = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentClassName = name;
@@ -90,8 +91,10 @@ if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		propertyAccessors.push({
 			type: type,
-			body: undefined // functionality not yet supported
+			body: statements.length > 0 ? statements : undefined // functionality not yet supported
 		});
+		// Cleanup
+		statements = [];
 	};
 }
 if (!('addProperty' in yy)) {
@@ -133,34 +136,56 @@ if (!('endCurrentConstructorDeclaration' in yy)) {
 			name: currentConstructorName,
 			modifiers: currentConstructorModifiers,
 			parameters: currentConstructorFixedParameters,
+			declaredVariables: declaredVariables,
 			statements: statements
 		});
 		// Cleanup after constructor declaration
 		currentConstructorName = "";
 		currentConstructorModifiers = [];
 		currentConstructorFixedParameters = [];
+		declaredVariables = [];
 		statements = [];
 	}
 }
 /* Statements */
-var currentStatementUsedFields = [];
-var currentStatementUsedProperties = [];
+var currentStatementUsedFieldsAndProperties = [];
 var currentStatementUsedConstructors = [];
 var currentStatementUsedMethods = [];
+if (!('addVariableDeclaration' in yy)) {
+	yy.addVariableDeclaration = function addVariableDeclaration(type, name) {
+		declaredVariables.push({
+			type: type,
+			name: name
+		});
+	};
+}
 if (!('addStatement' in yy)) {
 	yy.addStatement = function addStatement(text) {
 		statements.push({
 			statementText: text,
-			usedFields: currentStatementUsedFields,
-			usedProperties: currentStatementUsedProperties,
+			usedFieldsAndProperties: currentStatementUsedFieldsAndProperties,
 			usedConstructors: currentStatementUsedConstructors,
 			usedMethods: currentStatementUsedMethods
 		});
 		// Cleanup
-		currentStatementUsedFields = [];
-		currentStatementUsedProperties = [];
+		currentStatementUsedFieldsAndProperties = [];
 		currentStatementUsedConstructors = [];
 		currentStatementUsedMethods = [];
+	};
+}
+if (!('addUsedMethod' in yy)) {
+	yy.addUsedMethod = function addUsedMethod(methodName) {
+		currentStatementUsedMethods.push(methodName);
+	};
+}
+if (!('addUsedFieldOrProperty' in yy)) {
+	yy.addUsedFieldOrProperty = function addUsedFieldOrProperty(fieldOrPropertyName) {
+		currentStatementUsedFieldsAndProperties.push(fieldOrPropertyName);
+	};
+}
+if (!('addUsedConstructor' in yy)) {
+	yy.addUsedConstructor = function addUsedConstructor(constructorName) {
+		currentStatementUsedConstructors.push(constructorName);
 	};
 }
 
@@ -175,9 +200,11 @@ if (!('getParsedSourceFile' in yy)) {
 
 %%
 \s+                   	/* skip whitespace */
-('\\.') return 'CHARACTER_LITERAL';
-('[^\\]') return 'CHARACTER_LITERAL';
-(".*(\\.)*.*") return 'STRING_LITERAL';
+(\'(\\)?.\') return 'CHARACTER_LITERAL';
+(\".*(\\.)*.*\") return 'STRING_LITERAL';
+([0-9]+(UL|Ul|uL|ul|LU|Lu|lU|lu|U|u|L|l)?) return 'DECIMAL_INTEGER';
+((0x|0X)[0-9A-Fa-f]+(UL|Ul|uL|ul|LU|Lu|lU|lu|U|u|L|l)?) return 'HEXADECIMAL_INTEGER';
+(([0-9]+)?(\.)?[0-9]+((e|E)(\+|\-)?[0-9]+)?(F|f|D|d|M|m)?) return 'REAL_NUMBER';
 "using"				  	return 'USING';
 "namespace"				return 'NAMESPACE';
 "class"					return 'CLASS';
@@ -205,21 +232,7 @@ if (!('getParsedSourceFile' in yy)) {
 "null"					return 'NULL';
 "is"					return 'IS';
 "as"					return 'AS';
-'bool'					return 'BOOL';
-'byte'					return 'BYTE';
-'char'					return 'CHAR';
-'decimal'				return 'DECIMAL';
-'double'				return 'DOUBLE';
-'float' 				return 'FLOAT';
-'int'					return 'INT';
-'long'					return 'LONG';
-'object'				return 'OBJECT';
-'sbyte' 				return 'SBYTE';
-'short' 				return 'SHORT';
-'string'				return 'STRING';
-'uint'					return 'UINT';
-'ulong' 				return 'ULONG';
-'ushort'				return 'USHORT';
+(bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort) return 'IDENTIFIER';
 [_a-zA-Z]+[_a-zA-Z0-9]*	return 'IDENTIFIER';
 <<EOF>>               	return 'EOF';
 .						return yytext; /*returns the matched text*/
@@ -292,30 +305,35 @@ class_member
 	: field_declaration
 	| property_declaration
 	| constructor_declaration
-	/* TODO: add method, property and constructor members (+ others when time is right) */
+	/* TODO: add method member */
 	;
 /* 3.1 Field declaration */
 field_declaration
-	: modifiers type variable_declaration semicolon
+	: modifiers IDENTIFIER variable_declaration semicolon
 		{yy.addField($2, $3);}
-	| type variable_declaration semicolon
+	| modifiers array_type variable_declaration semicolon
+		{yy.addField($2, $3);}
+	| IDENTIFIER variable_declaration semicolon
+		{yy.addField($1, $2);}
+	| array_type variable_declaration semicolon
 		{yy.addField($1, $2);}
 	;
 variable_declaration
 	: IDENTIFIER
-	/*TODO: consider field declaration with variable initializer ?*/
 	;
 /* 3.2 Property declaration */
 property_declaration
-	: modifiers type IDENTIFIER property_body
+	: modifiers IDENTIFIER IDENTIFIER property_body
 		{yy.addProperty($2, $3);}
-	| type IDENTIFIER property_body
+	| modifiers array_type IDENTIFIER property_body
+		{yy.addProperty($2, $3);}
+	| IDENTIFIER IDENTIFIER property_body
+		{yy.addProperty($1, $2);}
+	| array_type IDENTIFIER property_body
 		{yy.addProperty($1, $2);}
 	;
 property_body
 	: '{' accessor_declarations '}'
-	/*TODO: consider lambda expressions prop X => expression;*/
-	/*TODO: consider property initializer ?*/
 	;
 accessor_declarations
 	: get_accessor_declaration set_accessor_declaration
@@ -337,7 +355,7 @@ set_accessor_declaration
 	;
 accessor_body
 	: semicolon
-	/*TODO: see about properties with a block body*/
+	| block
 	;
 /* 3.3 Constructor declaration */
 constructor_declaration
@@ -372,19 +390,20 @@ statement_list
 statement
 	: variable_declaration_statement
 	| embedded_statement
+		{yy.addStatement($$);}
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
-	: type IDENTIFIER semicolon
-		{$$ = $1 + ' ' + $2 + $3;
-		 yy.addStatement($$);}
-	/*TODO: see about initilizations of variables, such as int x = 2;*/
+	: IDENTIFIER IDENTIFIER semicolon
+		{yy.addVariableDeclaration($1, $2);}
+	| array_type IDENTIFIER semicolon
+		{yy.addVariableDeclaration($1, $2);}
 	;
 /* 3.3.2.2 Embedded statements */
 embedded_statement
-	/*TODO: see about extending this with block as well*/
 	: empty_statement
-	| expression_statement
+	| invocation_statement
+	| assignment_statement
 
 	/*TODO: follow up with the next ones*/
 	/*selection_statement*/	
@@ -394,88 +413,80 @@ embedded_statement
 /* 3.3.2.2.1 Empty statement */
 empty_statement
 	: semicolon
-		{yy.addStatement($$);}
 	;
-/* 3.3.2.2.2 Expression statement */
-expression_statement
-	: statement_expression semicolon
-		{$$ = $1 + $2;
-		 yy.addStatement($$);}
+/* 3.3.2.2.2 Invocation statement */
+invocation_statement
+	: invocation_expression semicolon
+		{$$ = $1 + $2;}
 	;
-statement_expression
-	: invocation_expression
-
-	/*TODO: follow up with the next ones*/
-    /*| null_conditional_invocation_expression*/
-    /*| object_creation_expression*/
-    /*| assignment*/
-    /*| post_increment_expression*/
-    /*| post_decrement_expression*/
-    /*| pre_increment_expression*/
-    /*| pre_decrement_expression*/
-    /*| await_expression*/
-	;
-/* 3.3.2.2.2.1 Invocation expression */
 invocation_expression
-	: primary_expression '(' argument_list ')'
-		{$$ = $1 + $2 + $3 + $4;}
-	| primary_expression '(' ')'
-		{$$ = $1 + $2 + $3;}
+	: expression_literal '(' argument_list ')'
+		{$$ = $1 + $2 + $3 + $4;
+		 yy.addUsedMethod($1);}
+	| expression_literal '(' ')'
+		{$$ = $1 + $2 + $3;
+		 yy.addUsedMethod($1);}
 	;
-primary_expression
-    : primary_no_array_creation_expression
-    | array_creation_expression
-    ;
-primary_no_array_creation_expression
-    : literal
-    /*| interpolated_string_expression*/
-    | simple_name
-    | parenthesized_expression
+expression_literal
+    : IDENTIFIER
     | member_access
-    | invocation_expression
-    | element_access
     | this_access
     | base_access
-    /*| post_increment_expression*/
-    /*| post_decrement_expression*/
-    | object_creation_expression
-    /*| delegate_creation_expression*/
-    /*| anonymous_object_creation_expression*/
-    /*| typeof_expression*/
-    /*| checked_expression*/
-    /*| unchecked_expression*/
-    /*| default_value_expression*/
-    /*| nameof_expression*/
-    /*| anonymous_method_expression*/
-    /*| primary_no_array_creation_expression_unsafe*/
     ;
-array_creation_expression
-    /*: NEW non_array_type '[' expression_list ']' rank_specifier* array_initializer?*/
-    : NEW non_array_type '[' expression_list ']'
-    /*| NEW array_type array_initializer*/
-    /*| NEW rank_specifier array_initializer*/
-    ;
-non_array_type
-	: type
+/* 3.3.2.2.3 Assignment statement (expression, invocation expression, object creation expression) */
+assignment_statement
+	: assignment_expression semicolon
+		{$$ = $1 + $2;}
 	;
+assignment_expression
+    : unary_expression assignment_operator expression
+		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+	| unary_expression assignment_operator invocation_expression
+		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+    | unary_expression assignment_operator object_creation_expression
+		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+	| unary_expression assignment_operator array_creation_expression
+		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+	;
+object_creation_expression
+    : NEW IDENTIFIER '(' argument_list ')'
+		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;
+		 yy.addUsedConstructor($2);}
+    | NEW IDENTIFIER '(' ')'
+		{$$ = $1 + ' ' + $2 + $3 + $4;
+		 yy.addUsedConstructor($2);}
+	;
+array_creation_expression
+    : NEW IDENTIFIER '[' expression_list ']'
+		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;}
+    ;
 
 
-// TODO: continue with fixing the expression statement (conflicts when running parsing the source code)
-//
 
 
 
 
 
-/* Misc. I: qualified identifier, type, modifiers, semicolon. */
+
+
+
+
+
+
+
+
+
+
+
+/* Misc. I: qualified identifier, modifiers, semicolon. */
 qualified_identifier
 	: qualified_identifier '.' IDENTIFIER 
 		{$$ = $1 + $2 + $3;}
 	| IDENTIFIER
 	;
-type
-	: IDENTIFIER
-	| predefined_type
+array_type
+	: IDENTIFIER '[' ']'
+		{$$ = $1 + $2 + $3;}
 	;
 modifiers
 	: modifiers modifier
@@ -502,9 +513,13 @@ fixed_parameters
 	| fixed_parameter
 	;
 fixed_parameter
-	: modifier type IDENTIFIER
+	: modifier IDENTIFIER IDENTIFIER
 		{yy.addFixedParameter($2, $3, $1);}
-	| type IDENTIFIER
+	| modifier array_type IDENTIFIER
+		{yy.addFixedParameter($2, $3, $1);}
+	| IDENTIFIER IDENTIFIER
+		{yy.addFixedParameter($1, $2);}
+	| array_type IDENTIFIER
 		{yy.addFixedParameter($1, $2);}
 	/*TODO: see about default argument = expression*/
 	;
@@ -529,7 +544,7 @@ argument_value
 	| OUT expression
 		{$$ = $1 + ' ' + $2}
 	;
-/* Misc. IV: expressions */
+/* Misc. IV: expression list, expression */
 expression_list
 	: expression_list ',' expression
 		{$$ = $1 + $2 + ' ' + $3;}
@@ -537,7 +552,7 @@ expression_list
     ;
 expression
     : non_assignment_expression
-    | assignment
+    | assignment_expression
     ;
 non_assignment_expression
     : conditional_expression
@@ -596,9 +611,9 @@ relational_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     | relational_expression '>=' shift_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | relational_expression IS type
+    | relational_expression IS IDENTIFIER
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | relational_expression AS type
+    | relational_expression AS IDENTIFIER
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     ;
 shift_expression
@@ -625,7 +640,9 @@ multiplicative_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     ;
 unary_expression
-    : primary_expression
+    : expression_literal
+		{yy.addUsedFieldOrProperty($1);}
+	| literal
     /*| null_conditional_expression*/
     | '+' unary_expression
 		{$$ = $1 + $2;}
@@ -641,10 +658,6 @@ unary_expression
     /*| await_expression*/
     /*| unary_expression_unsafe*/
     ;
-assignment
-    : unary_expression assignment_operator expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    ;
 assignment_operator
     : '='
     | '+='
@@ -658,7 +671,7 @@ assignment_operator
     | '<<='
     | '>>='
     ;
-/* Misc. V: primary expressions - literals */
+/* Misc. V: literals */
 literal
     : boolean_literal
     | integer_literal
@@ -676,66 +689,14 @@ integer_literal
     | hexadecimal_integer_literal
     ;
 decimal_integer_literal
-	: decimal_digits integer_type_suffix
-		{$$ = $1 + $2;}
-	| decimal_digits
-    ;
-decimal_digits
-	: decimal_digits decimal_digit
-		{$$ = $1 + $2;}
-	| decimal_digit
-	;
-decimal_digit
-    : '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-    ;
-integer_type_suffix
-    : 'U' | 'u' | 'L' | 'l' | 'UL' | 'Ul' | 'uL' | 'ul' | 'LU' | 'Lu' | 'lU' | 'lu'
+	: DECIMAL_INTEGER
     ;
 hexadecimal_integer_literal
-	: '0x' hex_digits integer_type_suffix
-		{$$ = $1 + $2 + $3;}
-	| '0x' hex_digits
-		{$$ = $1 + $2;}
-	| '0X' hex_digits integer_type_suffix
-		{$$ = $1 + $2 + $3;}
-	| '0X' hex_digits
-		{$$ = $1 + $2;}
-	;
-hex_digits
-	: hex_digits hex_digit
-		{$$ = $1 + $2;}
-	| hex_digit
-	;
-hex_digit
-    : '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-    | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+	: HEXADECIMAL_INTEGER
 	;
 real_literal
-    : decimal_digits '.' decimal_digits
-    | decimal_digits '.' decimal_digits exponent_part
-    | decimal_digits '.' decimal_digits real_type_suffix
-    | decimal_digits '.' decimal_digits exponent_part real_type_suffix
-    | '.' decimal_digits
-    | '.' decimal_digits exponent_part
-    | '.' decimal_digits real_type_suffix
-    | '.' decimal_digits exponent_part real_type_suffix
-    | decimal_digits exponent_part
-    | decimal_digits exponent_part real_type_suffix
-    | decimal_digits real_type_suffix
-    ;
-exponent_part
-    : 'e' decimal_digits
-    | 'e' sign decimal_digits
-    | 'E' decimal_digits
-    | 'E' sign decimal_digits
-    ;
-sign
-    : '+'
-    | '-'
-    ;
-real_type_suffix
-    : 'F' | 'f' | 'D' | 'd' | 'M' | 'm'
-    ;
+    : REAL_NUMBER
+	;
 character_literal
     : CHARACTER_LITERAL
     ;
@@ -745,11 +706,6 @@ string_literal
 null_literal
 	: NULL
 	;
-/* Misc. V: primary expressions - simple name */
-simple_name
-	: IDENTIFIER
-    /*: IDENTIFIER type_argument_list*/
-    ;
 /* Misc. V: primary expressions - parenthesized expression */
 parenthesized_expression
     : '(' expression ')'
@@ -757,36 +713,25 @@ parenthesized_expression
     ;
 /* Misc. V: primary expressions - member access, element access, this access, base access */
 member_access
-    : primary_expression '.' IDENTIFIER
+    : IDENTIFIER '.' IDENTIFIER
+		{$$ = $1 + $2 + $3;}
+	| literal '.' IDENTIFIER
 		{$$ = $1 + $2 + $3;}
     /*| primary_expression '.' IDENTIFIER type_argument_list?*/
-    | predefined_type '.' IDENTIFIER
-		{$$ = $1 + $2 + $3;}
+    /*| predefined_type '.' IDENTIFIER*/ /*covered by primary_expression fow now*/
     /*| predefined_type '.' identifier type_argument_list?*/
     /*| qualified_alias_member '.' IDENTIFIER*/
     ;
-predefined_type
-    : BOOL   | BYTE  | CHAR  | DECIMAL | DOUBLE | FLOAT | INT | LONG
-    | OBJECT | SBYTE | SHORT | STRING  | UINT   | ULONG | USHORT
-    ;
 element_access
-    : primary_no_array_creation_expression '[' expression_list ']'
+    : IDENTIFIER '[' expression_list ']'
+	| member_access '[' expression_list ']'
     ;
 this_access
-    : THIS
+	: THIS '.' IDENTIFIER
+		{$$ = $1 + $2 + $3;}
     ;
 base_access
     : BASE '.' IDENTIFIER
 		{$$ = $1 + $2 + $3;}
-    | BASE '[' expression_list ']'
-		{$$ = $1 + $2 + $3 + $4;}
-    ;
-/* Misc. V: primary expressions - object creation expression */
-object_creation_expression
-    : NEW type '(' argument_list ')'
-    | NEW type '(' ')'
-    /*| NEW type '(' argument_list ')' object_or_collection_initializer*/
-    /*| NEW type '(' ')' object_or_collection_initializer*/
-    /*| NEW type object_or_collection_initializer*/
     ;
 %%
