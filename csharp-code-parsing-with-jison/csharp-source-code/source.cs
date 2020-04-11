@@ -3,9 +3,21 @@ using System.A.B.C;
 
 namespace CodeDive {
 
-    public struct MyStruct {
-        public int X { get; set; }
+    public enum ProgressState {
+        BEGINNING,
+        INTHEMIDDLE,
+        FINISHED
     }
+
+    /*public interface IName
+    {
+        int X { get; set; }
+        int Method (int x, float y);
+    }*/
+
+    /*public struct MyStruct {
+        public int X { get; set; }
+    }*/
 
     /*public class Example {
         public int x;

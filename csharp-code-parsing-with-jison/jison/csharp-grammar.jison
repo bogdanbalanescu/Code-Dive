@@ -36,6 +36,8 @@ if (!('addModifier' in yy)) {
 /* 3. Class declaration */
 var classes = [];
 var structs = [];
+var interfaces = [];
+var enums = [];
 var currentTypeName = '';
 var currentTypeModifiers = [];
 var fields = [];
@@ -49,6 +51,7 @@ var currentInvocableMemberModifiers = [];
 var currentInvocableMemberFixedParameters = [];
 var declaredVariables = [];
 var statements = [];
+var currentEnumValues = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentTypeName = name;
@@ -100,7 +103,7 @@ if (!('endCurrentStructDeclaration' in yy)) {
 			constructors: constructors,
 			methods: methods
 		});
-		// Cleanup after class declaration
+		// Cleanup after struct declaration
 		currentTypeName = '';
 		currentTypeModifiers = [];
 		fields = [];
@@ -108,6 +111,56 @@ if (!('endCurrentStructDeclaration' in yy)) {
 		constructors = [];
 		methods = [];
 	};
+}
+if (!('beginCurrentInterfaceDeclaration' in yy)) {
+	yy.beginCurrentInterfaceDeclaration = function beginCurrentInterfaceDeclaration(name) {
+		currentTypeName = name;
+		currentTypeModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
+	};
+}
+if (!('endCurrentInterfaceDeclaration' in yy)) {
+	yy.endCurrentInterfaceDeclaration = function endCurrentInterfaceDeclaration() {
+		interfaces.push({
+			namespaceDependecies : namespaceDependecies,
+			namespace : currentNamespaceDeclaration,
+			name : currentTypeName,
+			modifiers : currentTypeModifiers,
+			/*TODO: parents/inheritances*/
+			properties: properties,
+			methods: methods
+		});
+		// Cleanup after interface declaration
+		currentTypeName = '';
+		currentTypeModifiers = [];
+		properties = [];
+		methods = [];
+	}
+}
+if (!('beginCurrentEnumDeclaration' in yy)) {
+	yy.beginCurrentEnumDeclaration = function beginCurrentEnumDeclaration(name) {
+		currentTypeName = name;
+		currentTypeModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
+	};
+}
+if (!('endCurrentEnumDeclaration' in yy)) {
+	yy.endCurrentEnumDeclaration = function endCurrentEnumDeclaration() {
+		enums.push({
+			namespaceDependecies : namespaceDependecies,
+			namespace : currentNamespaceDeclaration,
+			name : currentTypeName,
+			modifiers : currentTypeModifiers,
+			/*TODO: parents/inheritances - only integer related values accepted: byte, short, int, long, etc. */
+			values: currentEnumValues
+		});
+		// Cleanup after enum declaration
+		currentTypeName = '';
+		currentTypeModifiers = [];
+		currentEnumValues = [];
+	}
 }
 /* 3.1 Field declaration */
 if (!('addField' in yy)) {
@@ -252,13 +305,20 @@ if (!('addUsedConstructor' in yy)) {
 		currentStatementUsedConstructors.push(constructorName);
 	};
 }
+if (!('addEnumValue' in yy)) {
+	yy.addEnumValue = function addEnumValue(name) {
+		currentEnumValues.push(name);
+	}
+}
 
 if (!('getParsedSourceFile' in yy)) {
 	yy.getParsedSourceFile = function getParsedSourceFile() {
 		return {
 			classes : classes,
-			structs : structs
-		}
+			structs : structs,
+			interfaces : interfaces,
+			enums : enums
+		};
 	};
 }
 %}
@@ -312,6 +372,8 @@ if (!('getParsedSourceFile' in yy)) {
 "throw"					return 'THROW';
 "return"				return 'RETURN';
 "struct"				return 'STRUCT';
+"interface"				return 'INTERFACE';
+"enum"					return 'ENUM';
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
@@ -365,7 +427,9 @@ namespace_members
 namespace_member
 	: class_declaration /*TODO: add support for abstract classes with abstract members*/
 	| struct_declaration
-	/* TODO: add interface, enum, delegate */
+	| interface_declaration
+	| enum_declaration
+	/* TODO: consider adding delegates */
 	;
 /* 3. Class declaration */
 class_declaration
@@ -394,11 +458,7 @@ class_member
 	;
 /* 4. Struct declaration */
 struct_declaration
-	: modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}' semicolon
-		{yy.endCurrentStructDeclaration();}
-	| modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
-		{yy.endCurrentStructDeclaration();}
-	| STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}' semicolon
+	: modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
 		{yy.endCurrentStructDeclaration();}
 	| STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
 		{yy.endCurrentStructDeclaration();}
@@ -420,6 +480,54 @@ struct_member
 	| property_declaration
 	| constructor_declaration
 	| method_declaration
+	;
+/* 5. Interface declaration */
+interface_declaration
+	: modifiers INTERFACE IDENTIFIER _subroutine_add_current_interface '{' interface_body '}'
+		{yy.endCurrentInterfaceDeclaration();}
+	| INTERFACE IDENTIFIER _subroutine_add_current_interface '{' interface_body '}'
+		{yy.endCurrentInterfaceDeclaration();}
+	;
+_subroutine_add_current_interface
+	: /* empty */
+		{yy.beginCurrentInterfaceDeclaration($1);}
+	;
+interface_body
+	: /* empty */
+	| interface_members
+	;
+interface_members
+	: interface_members interface_member
+	| interface_member
+	;
+interface_member
+	: property_declaration
+	| method_header semicolon
+		{yy.endCurrentMethodDeclaration();}
+	;
+/* 6. Enum declaration */
+enum_declaration
+	: modifiers ENUM IDENTIFIER _subroutine_add_current_enum '{' enum_body '}'
+		{yy.endCurrentEnumDeclaration($1);}
+	| ENUM IDENTIFIER _subroutine_add_current_enum '{' enum_body '}'
+		{yy.endCurrentEnumDeclaration($1);}
+	;
+_subroutine_add_current_enum
+	: /* empty */
+		{yy.beginCurrentEnumDeclaration($1);}
+	;
+enum_body
+	: /* empty */
+    | enum_member_declarations
+    ;
+enum_member_declarations
+	: enum_member_declarations ',' enum_member_declaration
+	| enum_member_declaration
+	;
+enum_member_declaration
+	: IDENTIFIER
+		{yy.addEnumValue($1);}
+	/*TODO: consider enum value initialization*/
 	;
 /*
  *
