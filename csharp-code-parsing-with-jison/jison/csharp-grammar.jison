@@ -34,37 +34,36 @@ if (!('addModifier' in yy)) {
 	};
 }
 /* 3. Class declaration */
-var classDeclarations = [];
-var currentClassName = '';
-var currentClassModifiers = [];
+var classes = [];
+var structs = [];
+var currentTypeName = '';
+var currentTypeModifiers = [];
 var fields = [];
 var properties = [];
 var propertyAccessors = [];
 var constructors = [];
-var currentConstructorName = "";
-var currentConstructorModifiers = [];
-var currentConstructorFixedParameters = [];
-var statements = [];
-var declaredVariables = [];
-var currentMethodType = "";
-var currentMethodName = "";
-var currentMethodModifiers = [];
 var methods = [];
+var currentInvocableMemberType = "";
+var currentInvocableMemberName = "";
+var currentInvocableMemberModifiers = [];
+var currentInvocableMemberFixedParameters = [];
+var declaredVariables = [];
+var statements = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
-		currentClassName = name;
-		currentClassModifiers = modifiers;
+		currentTypeName = name;
+		currentTypeModifiers = modifiers;
 		// Cleanup modifiers
 		modifiers = [];
 	};
 }
 if (!('endCurrentClassDeclaration' in yy)) {
 	yy.endCurrentClassDeclaration = function endCurrentClassDeclaration() {
-		classDeclarations.push({
+		classes.push({
 			namespaceDependecies : namespaceDependecies,
 			namespace : currentNamespaceDeclaration,
-			name : currentClassName,
-			modifiers : currentClassModifiers,
+			name : currentTypeName,
+			modifiers : currentTypeModifiers,
 			/*TODO: parents/inheritances*/
 			fields : fields,
 			properties: properties,
@@ -72,8 +71,38 @@ if (!('endCurrentClassDeclaration' in yy)) {
 			methods: methods
 		});
 		// Cleanup after class declaration
-		currentClassName = '';
-		currentClassModifiers = [];
+		currentTypeName = '';
+		currentTypeModifiers = [];
+		fields = [];
+		properties = [];
+		constructors = [];
+		methods = [];
+	};
+}
+if (!('beginCurrentStructDeclaration' in yy)) {
+	yy.beginCurrentStructDeclaration = function beginCurrentStructDeclaration(name) {
+		currentTypeName = name;
+		currentTypeModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
+	};
+}
+if (!('endCurrentStructDeclaration' in yy)) {
+	yy.endCurrentStructDeclaration = function endCurrentStructDeclaration() {
+		structs.push({
+			namespaceDependecies : namespaceDependecies,
+			namespace : currentNamespaceDeclaration,
+			name : currentTypeName,
+			modifiers : currentTypeModifiers,
+			/*TODO: parents/inheritances*/
+			fields : fields,
+			properties: properties,
+			constructors: constructors,
+			methods: methods
+		});
+		// Cleanup after class declaration
+		currentTypeName = '';
+		currentTypeModifiers = [];
 		fields = [];
 		properties = [];
 		constructors = [];
@@ -119,15 +148,15 @@ if (!('addProperty' in yy)) {
 /* 3.3 Constructor declaration */
 if (!('beginCurrentConstructorDeclaration' in yy)) {
 	yy.beginCurrentConstructorDeclaration = function beginCurrentConstructorDeclaration(name) {
-		currentConstructorName = name;
-		currentConstructorModifiers = modifiers;
+		currentInvocableMemberName = name;
+		currentInvocableMemberModifiers = modifiers;
 		// Cleanup modifiers
 		modifiers = [];
 	}
 }
 if (!('addFixedParameter' in yy)) {
 	yy.addFixedParameter = function addFixedParameter(type, name, modifier = "") {
-		currentConstructorFixedParameters.push({
+		currentInvocableMemberFixedParameters.push({
 			type: type,
 			name: name,
 			modifier: modifier
@@ -139,16 +168,16 @@ if (!('addFixedParameter' in yy)) {
 if (!('endCurrentConstructorDeclaration' in yy)) {
 	yy.endCurrentConstructorDeclaration = function endCurrentConstructorDeclaration() {
 		constructors.push({
-			name: currentConstructorName,
-			modifiers: currentConstructorModifiers,
-			parameters: currentConstructorFixedParameters,
+			name: currentInvocableMemberName,
+			modifiers: currentInvocableMemberModifiers,
+			parameters: currentInvocableMemberFixedParameters,
 			declaredVariables: declaredVariables,
 			statements: statements
 		});
 		// Cleanup after constructor declaration
-		currentConstructorName = "";
-		currentConstructorModifiers = [];
-		currentConstructorFixedParameters = [];
+		currentInvocableMemberName = "";
+		currentInvocableMemberModifiers = [];
+		currentInvocableMemberFixedParameters = [];
 		declaredVariables = [];
 		statements = [];
 	}
@@ -156,9 +185,9 @@ if (!('endCurrentConstructorDeclaration' in yy)) {
 /* 3.4 Method declaration */
 if (!('beginCurrentMethodDeclaration' in yy)) {
 	yy.beginCurrentMethodDeclaration = function beginCurrentMethodDeclaration(type, name) {
-		currentMethodType = type;
-		currentMethodName = name;
-		currentMethodModifiers = modifiers;
+		currentInvocableMemberType = type;
+		currentInvocableMemberName = name;
+		currentInvocableMemberModifiers = modifiers;
 		// Cleanup modifiers
 		modifiers = [];
 	}
@@ -166,18 +195,18 @@ if (!('beginCurrentMethodDeclaration' in yy)) {
 if (!('endCurrentMethodDeclaration' in yy)) {
 	yy.endCurrentMethodDeclaration = function endCurrentMethodDeclaration() {
 		methods.push({
-			type: currentMethodType,
-			name: currentMethodName,
-			modifiers: currentMethodModifiers,
-			parameters: currentConstructorFixedParameters,
+			type: currentInvocableMemberType,
+			name: currentInvocableMemberName,
+			modifiers: currentInvocableMemberModifiers,
+			parameters: currentInvocableMemberFixedParameters,
 			declaredVariables: declaredVariables,
 			statements: statements
 		});
 		// Cleanup after method declaration
-		currentMethodType = "";
-		currentMethodName = "";
-		currentMethodModifiers = [];
-		currentConstructorFixedParameters = [];
+		currentInvocableMemberType = "";
+		currentInvocableMemberName = "";
+		currentInvocableMemberModifiers = [];
+		currentInvocableMemberFixedParameters = [];
 		declaredVariables = [];
 		statements = [];
 	}
@@ -227,7 +256,8 @@ if (!('addUsedConstructor' in yy)) {
 if (!('getParsedSourceFile' in yy)) {
 	yy.getParsedSourceFile = function getParsedSourceFile() {
 		return {
-			classDeclarations : classDeclarations
+			classes : classes,
+			structs : structs
 		}
 	};
 }
@@ -235,6 +265,8 @@ if (!('getParsedSourceFile' in yy)) {
 
 %%
 \s+                   	/* skip whitespace */
+(\/\*(.|(\r\n|\r|\n))*\*\/) /* skip multiline comments */
+(\/\/(.)*(\r\n|\r|\n)?) /* skip one line comments */
 (\'(\\)?.\') return 'CHARACTER_LITERAL';
 (\".*(\\.)*.*\") return 'STRING_LITERAL';
 ([0-9]+(UL|Ul|uL|ul|LU|Lu|lU|lu|U|u|L|l)?) return 'DECIMAL_INTEGER';
@@ -279,6 +311,7 @@ if (!('getParsedSourceFile' in yy)) {
 "finally"				return 'FINALLY';
 "throw"					return 'THROW';
 "return"				return 'RETURN';
+"struct"				return 'STRUCT';
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
@@ -330,8 +363,9 @@ namespace_members
 	| namespace_member
 	;
 namespace_member
-	: class_declaration
-	/* TODO: add interface, struct, enum, delegate */
+	: class_declaration /*TODO: add support for abstract classes with abstract members*/
+	| struct_declaration
+	/* TODO: add interface, enum, delegate */
 	;
 /* 3. Class declaration */
 class_declaration
@@ -353,6 +387,35 @@ class_members
 	| class_member
 	;
 class_member
+	: field_declaration
+	| property_declaration
+	| constructor_declaration
+	| method_declaration
+	;
+/* 4. Struct declaration */
+struct_declaration
+	: modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}' semicolon
+		{yy.endCurrentStructDeclaration();}
+	| modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
+		{yy.endCurrentStructDeclaration();}
+	| STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}' semicolon
+		{yy.endCurrentStructDeclaration();}
+	| STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
+		{yy.endCurrentStructDeclaration();}
+	;
+_subroutine_add_current_struct
+	: /* empty */
+		{yy.beginCurrentStructDeclaration($1);}
+	;
+struct_body
+	: /* empty */
+	| struct_members
+	;
+struct_members
+	: struct_members struct_member
+	| struct_member
+	;
+struct_member
 	: field_declaration
 	| property_declaration
 	| constructor_declaration

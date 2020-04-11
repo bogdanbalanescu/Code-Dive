@@ -2,7 +2,12 @@ using System;
 using System.A.B.C;
 
 namespace CodeDive {
-    public class Example {
+
+    public struct MyStruct {
+        public int X { get; set; }
+    }
+
+    /*public class Example {
         public int x;
         protected sealed int[] y;
         protected sealed Machine Machine { get; set; }
@@ -50,5 +55,5 @@ namespace CodeDive {
             z = x + y;
             return z;
         }
-    }
+    }*/
 }
