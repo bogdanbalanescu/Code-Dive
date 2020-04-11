@@ -44,5 +44,11 @@ namespace CodeDive {
 				x = PossibleTask();
 			}
         }
+
+        public override int Add(int x, int y) 
+        {
+            z = x + y;
+            return z;
+        }
     }
 }

@@ -46,6 +46,10 @@ var currentConstructorModifiers = [];
 var currentConstructorFixedParameters = [];
 var statements = [];
 var declaredVariables = [];
+var currentMethodType = "";
+var currentMethodName = "";
+var currentMethodModifiers = [];
+var methods = [];
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentClassName = name;
@@ -64,14 +68,16 @@ if (!('endCurrentClassDeclaration' in yy)) {
 			/*TODO: parents/inheritances*/
 			fields : fields,
 			properties: properties,
-			constructors: constructors
-			/*TODO: continue with others*/
+			constructors: constructors,
+			methods: methods
 		});
 		// Cleanup after class declaration
 		currentClassName = '';
 		currentClassModifiers = [];
 		fields = [];
 		properties = [];
+		constructors = [];
+		methods = [];
 	};
 }
 /* 3.1 Field declaration */
@@ -142,6 +148,35 @@ if (!('endCurrentConstructorDeclaration' in yy)) {
 		// Cleanup after constructor declaration
 		currentConstructorName = "";
 		currentConstructorModifiers = [];
+		currentConstructorFixedParameters = [];
+		declaredVariables = [];
+		statements = [];
+	}
+}
+/* 3.4 Method declaration */
+if (!('beginCurrentMethodDeclaration' in yy)) {
+	yy.beginCurrentMethodDeclaration = function beginCurrentMethodDeclaration(type, name) {
+		currentMethodType = type;
+		currentMethodName = name;
+		currentMethodModifiers = modifiers;
+		// Cleanup modifiers
+		modifiers = [];
+	}
+}
+if (!('endCurrentMethodDeclaration' in yy)) {
+	yy.endCurrentMethodDeclaration = function endCurrentMethodDeclaration() {
+		methods.push({
+			type: currentMethodType,
+			name: currentMethodName,
+			modifiers: currentMethodModifiers,
+			parameters: currentConstructorFixedParameters,
+			declaredVariables: declaredVariables,
+			statements: statements
+		});
+		// Cleanup after method declaration
+		currentMethodType = "";
+		currentMethodName = "";
+		currentMethodModifiers = [];
 		currentConstructorFixedParameters = [];
 		declaredVariables = [];
 		statements = [];
@@ -243,10 +278,12 @@ if (!('getParsedSourceFile' in yy)) {
 "catch"					return 'CATCH';
 "finally"				return 'FINALLY';
 "throw"					return 'THROW';
+"return"				return 'RETURN';
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
 (bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort) return 'IDENTIFIER';
+"void" 					return 'IDENTIFIER';
 [_a-zA-Z]+[_a-zA-Z0-9]*	return 'IDENTIFIER';
 <<EOF>>               	return 'EOF';
 .						return yytext; /*returns the matched text*/
@@ -319,8 +356,20 @@ class_member
 	: field_declaration
 	| property_declaration
 	| constructor_declaration
-	/* TODO: add method member */
+	| method_declaration
 	;
+/*
+ *
+ *
+ *
+ *
+ *
+ * The following is consisted of type members: fields, properties, constructors and methods.
+ * 3.1 Field declaration
+ * 3.2 Property declaration 
+ * 3.3 Constructor declaration 
+ * 3.4 Method declaration 
+*/
 /* 3.1 Field declaration */
 field_declaration
 	: modifiers IDENTIFIER variable_declaration semicolon
@@ -393,7 +442,29 @@ constructor_body
 	: block
 	| semicolon
 	;
-/*TODO: separate the block somehow from the constructor and re-number everything*/
+/* 3.4 Method declaration */
+method_declaration
+	: modifiers method_header method_body
+		{yy.endCurrentMethodDeclaration();}
+	| method_header method_body
+		{yy.endCurrentMethodDeclaration();}
+	;
+/* 3.4.1 Method header */
+method_header
+	: IDENTIFIER IDENTIFIER _subroutine_add_current_method '(' formal_parameter_list ')'
+	| IDENTIFIER IDENTIFIER _subroutine_add_current_method '(' ')'
+	;
+_subroutine_add_current_method
+	: /* empty */
+		{yy.beginCurrentMethodDeclaration($0, $1);}
+	;
+/* 3.4.2 Method body */
+method_body
+	: block
+	/*Consider expression body: => expression ;*/
+	| semicolon
+	;
+/*3.3.2.0 Block */
 block
 	: '{' statement_list '}'
 	| '{' '}'
@@ -429,7 +500,8 @@ embedded_statement
 	: empty_statement
 	| invocation_statement
 	| assignment_statement
-	| throw_statement
+	| throw_statement /*TODO: reasses if it should remain an embedded_statement or not*/
+	| return_statement /*TODO: reasses if it should remain an embedded_statement or not*/
 	;
 /* 3.3.2.2.1 Empty statement */
 empty_statement
@@ -482,6 +554,12 @@ array_creation_expression
 /* 3.3.2.2.4 Throw statement */
 throw_statement
 	: THROW IDENTIFIER semicolon
+		{$$ = $1 + ' '+ $2 + $3;
+		 yy.addUsedFieldOrProperty($2);}
+	;
+/* 3.3.2.2.5 Return statement */
+return_statement
+	: RETURN IDENTIFIER semicolon
 		{$$ = $1 + ' '+ $2 + $3;
 		 yy.addUsedFieldOrProperty($2);}
 	;
@@ -557,18 +635,20 @@ finally_clause
     : FINALLY '{' embedded_statement '}'
 		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4;}
     ;
-
-
-
-
-
-
-
-
-
-
-
-
+/*
+ *
+ *
+ *
+ *
+ *
+ * The following is consisted of misc. items that help with other constructions:
+ *
+ * Misc. I: qualified identifier, modifiers, semicolon.
+ * Misc. II: formal parameter list (for defining methods and constructors)
+ * Misc. III: arguments list (for calling methods and constructors)
+ * Misc. IV: expression list, expression
+ * Misc. V: literals
+*/
 /* Misc. I: qualified identifier, modifiers, semicolon. */
 qualified_identifier
 	: qualified_identifier '.' IDENTIFIER 
