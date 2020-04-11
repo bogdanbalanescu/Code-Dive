@@ -31,6 +31,18 @@ namespace CodeDive {
                 Write(x);
             foreach (int w in randomNumbers)
                 Write(w);
+			try
+			{
+				x = ImpossibleTask();
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+				x = PossibleTask();
+			}
         }
     }
 }

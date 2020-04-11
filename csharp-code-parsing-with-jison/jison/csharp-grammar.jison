@@ -239,6 +239,10 @@ if (!('getParsedSourceFile' in yy)) {
 "for"					return 'FOR';
 "foreach"				return 'FOREACH';
 "in"					return 'IN';
+"try"					return 'TRY';
+"catch"					return 'CATCH';
+"finally"				return 'FINALLY';
+"throw"					return 'THROW';
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
@@ -389,6 +393,7 @@ constructor_body
 	: block
 	| semicolon
 	;
+/*TODO: separate the block somehow from the constructor and re-number everything*/
 block
 	: '{' statement_list '}'
 	| '{' '}'
@@ -405,21 +410,26 @@ statement
 		{yy.addStatement($$);}
 	| iteration_statement
 		{yy.addStatement($$);}
-	/*| try_statement
-		{yy.addStatement($$);}*/
+	| try_statement
+		{yy.addStatement($$);}
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
 	: IDENTIFIER IDENTIFIER semicolon
-		{yy.addVariableDeclaration($1, $2);}
+		{$$ = $1 + ' ' + $2 + $3;
+		 yy.addVariableDeclaration($1, $2);
+		 yy.addStatement($$);}
 	| array_type IDENTIFIER semicolon
-		{yy.addVariableDeclaration($1, $2);}
+		{$$ = $1 + ' ' + $2 + $3;
+		 yy.addVariableDeclaration($1, $2);
+		 yy.addStatement($$);}
 	;
 /* 3.3.2.2 Embedded statements */
 embedded_statement
 	: empty_statement
 	| invocation_statement
 	| assignment_statement
+	| throw_statement
 	;
 /* 3.3.2.2.1 Empty statement */
 empty_statement
@@ -469,6 +479,12 @@ array_creation_expression
     : NEW IDENTIFIER '[' expression_list ']'
 		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;}
     ;
+/* 3.3.2.2.4 Throw statement */
+throw_statement
+	: THROW IDENTIFIER semicolon
+		{$$ = $1 + ' '+ $2 + $3;
+		 yy.addUsedFieldOrProperty($2);}
+	;
 /* 3.3.2.3 Selection statement */
 selection_statement
     : if_statement
@@ -513,8 +529,35 @@ for_iterator
 	;
 foreach_statement
     : FOREACH '(' IDENTIFIER IDENTIFIER IN expression ')' embedded_statement
-		{$$ = $1 + ' ' + $2 + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + $7 + ' ' + $8;}
+		{$$ = $1 + ' ' + $2 + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + $7 + ' ' + $8;
+		 yy.addVariableDeclaration($3, $4);}
     ;
+/* 3.3.2.5 Try statement (try, catch, finally) */
+try_statement
+    : try_clause catch_clauses finally_clause
+		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+    | try_clause catch_clauses
+		{$$ = $1 + ' ' + $2;}
+    ;
+try_clause
+	: TRY '{' embedded_statement '}'
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4;}
+	;
+catch_clauses
+	: catch_clauses catch_clause
+		{$$ = $1 + ' ' + $2;}
+	| catch_clause
+	;
+catch_clause
+    : CATCH '(' IDENTIFIER IDENTIFIER ')' '{' embedded_statement '}'
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + ' ' + $7 + ' ' + $8;
+		 yy.addVariableDeclaration($3, $4);}
+    ;
+finally_clause
+    : FINALLY '{' embedded_statement '}'
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4;}
+    ;
+
 
 
 
