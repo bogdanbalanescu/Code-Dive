@@ -9,13 +9,21 @@ namespace CodeDive {
         public Example() {}
         public Example (int x, out int y) 
         {
+            this.X = x;
             int[] randomNumber;
             string message;
             Machine.Start(randomNumber, message);
             this.ProcessMessage(message);
             randomNumber = Machine.Start(2 + 3, message);
-            message = new String("241", message);
-            y = new int[index + 2];
+            message = new String("241", message[2]);
+            y.z = new int[index + 2];
+            y[1] = 4;
+            z = y[2];
+            if (x <= 3)
+                ComputeSum(z.q[3]);
+            else
+                ComputeCount(y);
+            x <<= 1;
         }
     }
 }

@@ -232,6 +232,11 @@ if (!('getParsedSourceFile' in yy)) {
 "null"					return 'NULL';
 "is"					return 'IS';
 "as"					return 'AS';
+"if"					return 'IF';
+"else"					return 'ELSE';
+((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
+(\<\<|\>\>)				return 'SHIFT_OPERATOR';
+(\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
 (bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort) return 'IDENTIFIER';
 [_a-zA-Z]+[_a-zA-Z0-9]*	return 'IDENTIFIER';
 <<EOF>>               	return 'EOF';
@@ -391,6 +396,8 @@ statement
 	: variable_declaration_statement
 	| embedded_statement
 		{yy.addStatement($$);}
+	| selection_statement
+		{yy.addStatement($$);}
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
@@ -406,7 +413,6 @@ embedded_statement
 	| assignment_statement
 
 	/*TODO: follow up with the next ones*/
-	/*selection_statement*/	
 	/*iteration_statement*/	
 	/*try_statement*/	
 	;
@@ -460,8 +466,20 @@ array_creation_expression
     : NEW IDENTIFIER '[' expression_list ']'
 		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;}
     ;
-
-
+/* 3.3.2.3 Selection statement */
+selection_statement
+    : if_statement
+    /*| switch_statement*/ /*Cannot support this right now*/
+    ;
+if_statement
+    : IF '(' boolean_expression ')' embedded_statement
+		{$$ = $1 + $2 + $3 + $4 + ' ' + $5;}
+    | IF '(' boolean_expression ')' embedded_statement ELSE embedded_statement
+		{$$ = $1 + $2 + $3 + $4 + ' ' + $5 + ' ' + $6 + ' ' + $7;}
+    ;
+boolean_expression
+	: expression
+	;
 
 
 
@@ -603,13 +621,7 @@ equality_expression
     ;
 relational_expression
     : shift_expression
-    | relational_expression '<' shift_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | relational_expression '>' shift_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | relational_expression '<=' shift_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | relational_expression '>=' shift_expression
+    | relational_expression COMPARISON_OPERATOR shift_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     | relational_expression IS IDENTIFIER
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
@@ -618,9 +630,7 @@ relational_expression
     ;
 shift_expression
     : additive_expression
-    | shift_expression '<<' additive_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | shift_expression '>>' additive_expression
+    | shift_expression SHIFT_OPERATOR additive_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     ;
 additive_expression
@@ -643,6 +653,7 @@ unary_expression
     : expression_literal
 		{yy.addUsedFieldOrProperty($1);}
 	| literal
+	| element_access
     /*| null_conditional_expression*/
     | '+' unary_expression
 		{$$ = $1 + $2;}
@@ -659,17 +670,7 @@ unary_expression
     /*| unary_expression_unsafe*/
     ;
 assignment_operator
-    : '='
-    | '+='
-    | '-='
-    | '*='
-    | '/='
-    | '%='
-    | '&='
-    | '|='
-    | '^='
-    | '<<='
-    | '>>='
+    : ASSIGNMENT_OPERATOR
     ;
 /* Misc. V: literals */
 literal
@@ -724,7 +725,11 @@ member_access
     ;
 element_access
     : IDENTIFIER '[' expression_list ']'
+		{$$ = $1 + $2 + $3 + $4;
+		 yy.addUsedFieldOrProperty($1);}
 	| member_access '[' expression_list ']'
+		{$$ = $1 + $2 + $3 + $4;
+		 yy.addUsedFieldOrProperty($1);}
     ;
 this_access
 	: THIS '.' IDENTIFIER
