@@ -10,20 +10,27 @@ namespace CodeDive {
         public Example (int x, out int y) 
         {
             this.X = x;
-            int[] randomNumber;
+            int[] randomNumbers;
             string message;
             Machine.Start(randomNumber, message);
             this.ProcessMessage(message);
             randomNumber = Machine.Start(2 + 3, message);
             message = new String("241", message[2]);
             y.z = new int[index + 2];
-            y[1] = 4;
+            y[1] = methodCall() + otherResult;
             z = y[2];
             if (x <= 3)
                 ComputeSum(z.q[3]);
             else
                 ComputeCount(y);
             x <<= 1;
+            while (7 + ye())
+                x(49);
+            do flipOver(); while (notTired());
+            for (x = 1; x < 2; x = x + 1)
+                Write(x);
+            foreach (int w in randomNumbers)
+                Write(w);
         }
     }
 }

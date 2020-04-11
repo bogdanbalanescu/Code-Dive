@@ -234,6 +234,11 @@ if (!('getParsedSourceFile' in yy)) {
 "as"					return 'AS';
 "if"					return 'IF';
 "else"					return 'ELSE';
+"while"					return 'WHILE';
+"do"					return 'DO';
+"for"					return 'FOR';
+"foreach"				return 'FOREACH';
+"in"					return 'IN';
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
@@ -398,6 +403,10 @@ statement
 		{yy.addStatement($$);}
 	| selection_statement
 		{yy.addStatement($$);}
+	| iteration_statement
+		{yy.addStatement($$);}
+	/*| try_statement
+		{yy.addStatement($$);}*/
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
@@ -411,10 +420,6 @@ embedded_statement
 	: empty_statement
 	| invocation_statement
 	| assignment_statement
-
-	/*TODO: follow up with the next ones*/
-	/*iteration_statement*/	
-	/*try_statement*/	
 	;
 /* 3.3.2.2.1 Empty statement */
 empty_statement
@@ -447,8 +452,6 @@ assignment_statement
 assignment_expression
     : unary_expression assignment_operator expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-	| unary_expression assignment_operator invocation_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     | unary_expression assignment_operator object_creation_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
 	| unary_expression assignment_operator array_creation_expression
@@ -480,11 +483,38 @@ if_statement
 boolean_expression
 	: expression
 	;
-
-
-
-
-
+/* 3.3.2.4 Iteration statement */
+iteration_statement
+    : while_statement
+    | do_statement
+    | for_statement
+    | foreach_statement
+    ;
+while_statement
+    : WHILE '(' boolean_expression ')' embedded_statement
+		{$$ = $1 + $2 + $3 + $4 + ' ' + $5;}
+    ;
+do_statement
+    : DO embedded_statement WHILE '(' boolean_expression ')' semicolon
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4 + $5 + $6 + $7;}
+    ;
+for_statement
+	: FOR '(' for_initializer semicolon for_condition semicolon for_iterator ')' embedded_statement
+		{$$ = $1 + ' ' + $2 + $3 + $4 + ' ' + $5 + $6 + ' ' + $7 + $8 + ' ' + $9;}
+	;
+for_initializer
+	: assignment_expression
+	;
+for_condition
+	: boolean_expression
+	;
+for_iterator
+	: assignment_expression
+	;
+foreach_statement
+    : FOREACH '(' IDENTIFIER IDENTIFIER IN expression ')' embedded_statement
+		{$$ = $1 + ' ' + $2 + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + $7 + ' ' + $8;}
+    ;
 
 
 
@@ -654,6 +684,7 @@ unary_expression
 		{yy.addUsedFieldOrProperty($1);}
 	| literal
 	| element_access
+	| invocation_expression
     /*| null_conditional_expression*/
     | '+' unary_expression
 		{$$ = $1 + $2;}
