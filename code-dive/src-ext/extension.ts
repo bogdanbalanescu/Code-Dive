@@ -1,8 +1,8 @@
-import { CodeDiveClass } from './codeModel/CodeDiveClass';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { parseClass } from "./codeParser/ClassParser";
+import { parseSourceCode } from "./codeParser/ClassParser";
+import { IType } from './codeModel/Types/IType';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
@@ -76,8 +76,11 @@ class ReactPanel {
 					return;
 				case 'startCodeDiveAnalysis':
 					var sourceFilesPaths = await this.readSourceFilesPathsFromCurrentWorkspace();
-					var classes = this.parseSourceFilesAsClasses(sourceFilesPaths);
-					// TODO: return the classes?
+					var classes = await this.parseSourceFilesAsTypes(sourceFilesPaths);
+					// TODO: continue from here -> async problem, parsed classes are not awaited and array is empty
+					// TODO: pass the classes as message to the extension
+					// TODO: show a visual representation of the classes
+					var x = classes;
 			}
 		}, null, this._disposables);
 	}
@@ -95,35 +98,29 @@ class ReactPanel {
 		});
 	}
 	
-	private parseSourceFilesAsClasses(sourceFilesPaths: string[]): CodeDiveClass[] {
-		// TODO: parse each source file as a CodeDiveClass when possible.
-		var codeDiveClasses: CodeDiveClass[] = [];
+	private parseSourceFilesAsTypes(sourceFilesPaths: string[]): IType[] {
+		// TODO: parse each source file as IType array when possible.
+		var types: IType[] = [];
 		sourceFilesPaths.forEach(async (filePath: string) => {
 			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
 				return file.getText();
 			})
-			var codeDiveClass = this.tryParseCodeAsClass(fileText);
-			// TODO: add to codeDiveClasses if not null
-		});
+			try {
+				var parsedTypes = this.parseSourceCodeAsTypes(fileText);
+				types.concat(parsedTypes);
+			}
+			catch (e) {
+				this._codeDiveChannel.appendLine(e.message);
 
-		// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
-		throw new Error("Method not implemented.");
+				// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
+				throw new Error("Unaccepted message occurred when parsing source file.");
+			}
+		});
+		return types;
 	}
 
-	private tryParseCodeAsClass(sourceCode: string): CodeDiveClass {
-		// TODO: parse sourceCode as a CodeDiveClass => can be done in the CodeDiveClass or in a separate parser in the future
-		// TODO: if cannot parse, then return null
-		// TODO: consider multiple classes in the same file -> return array instead of just one instance
-		var x = sourceCode;
-		try {
-			var jisonParsedCode1 = parseClass('4 * 5'); // return true
-			var jisonParsedCode2 = parseClass('4 * 5 :: 2'); // throws a lexical error
-		}
-		catch (e) {
-			this._codeDiveChannel.appendLine(e.message);
-		}
-
-		throw new Error("Method not implemented.");
+	private parseSourceCodeAsTypes(sourceCode: string): IType[] {
+		return parseSourceCode(sourceCode);
 	}
 
 	public static sayHello() {

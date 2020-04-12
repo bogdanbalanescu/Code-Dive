@@ -189,7 +189,7 @@ if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		propertyAccessors.push({
 			type: type,
-			body: statements.length > 0 ? statements : undefined // functionality not yet supported
+			body: statements.length > 0 ? statements : null // functionality not yet supported
 		});
 		// Cleanup
 		statements = [];
