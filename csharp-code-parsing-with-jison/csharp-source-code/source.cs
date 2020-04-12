@@ -3,23 +3,23 @@ using System.A.B.C;
 
 namespace CodeDive {
 
-    public enum ProgressState {
-        BEGINNING,
-        INTHEMIDDLE,
-        FINISHED
-    }
+    // public enum ProgressState : int {
+    //     BEGINNING,
+    //     INTHEMIDDLE,
+    //     FINISHED
+    // }
 
-    /*public interface IName
-    {
-        int X { get; set; }
-        int Method (int x, float y);
-    }*/
+    // public interface IName : IW, IX
+    // {
+    //     int X { get; set; }
+    //     int Method (int x, float y);
+    // }
 
-    /*public struct MyStruct {
-        public int X { get; set; }
-    }*/
+    // public struct MyStruct {
+    //     public int X { get; set; }
+    // }
 
-    /*public class Example {
+    public class Example {
         public int x;
         protected sealed int[] y;
         protected sealed Machine Machine { get; set; }
@@ -64,8 +64,7 @@ namespace CodeDive {
 
         public override int Add(int x, int y) 
         {
-            z = x + y;
-            return z;
+            return x + y;
         }
-    }*/
+    }
 }

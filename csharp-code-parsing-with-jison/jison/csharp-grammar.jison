@@ -40,6 +40,7 @@ var interfaces = [];
 var enums = [];
 var currentTypeName = '';
 var currentTypeModifiers = [];
+var parentInheritances = [];
 var fields = [];
 var properties = [];
 var propertyAccessors = [];
@@ -52,6 +53,11 @@ var currentInvocableMemberFixedParameters = [];
 var declaredVariables = [];
 var statements = [];
 var currentEnumValues = [];
+if (!('addParentInheritance' in yy)) {
+	yy.addParentInheritance = function addParentInheritance(name) {
+		parentInheritances.push(name);
+	};
+}
 if (!('beginCurrentClassDeclaration' in yy)) {
 	yy.beginCurrentClassDeclaration = function beginCurrentClassDeclaration(name) {
 		currentTypeName = name;
@@ -67,7 +73,7 @@ if (!('endCurrentClassDeclaration' in yy)) {
 			namespace : currentNamespaceDeclaration,
 			name : currentTypeName,
 			modifiers : currentTypeModifiers,
-			/*TODO: parents/inheritances*/
+			parentInheritances : parentInheritances,
 			fields : fields,
 			properties: properties,
 			constructors: constructors,
@@ -76,6 +82,7 @@ if (!('endCurrentClassDeclaration' in yy)) {
 		// Cleanup after class declaration
 		currentTypeName = '';
 		currentTypeModifiers = [];
+		parentInheritances = [];
 		fields = [];
 		properties = [];
 		constructors = [];
@@ -97,7 +104,7 @@ if (!('endCurrentStructDeclaration' in yy)) {
 			namespace : currentNamespaceDeclaration,
 			name : currentTypeName,
 			modifiers : currentTypeModifiers,
-			/*TODO: parents/inheritances*/
+			parentInheritances : parentInheritances,
 			fields : fields,
 			properties: properties,
 			constructors: constructors,
@@ -106,6 +113,7 @@ if (!('endCurrentStructDeclaration' in yy)) {
 		// Cleanup after struct declaration
 		currentTypeName = '';
 		currentTypeModifiers = [];
+		parentInheritances = [];
 		fields = [];
 		properties = [];
 		constructors = [];
@@ -127,13 +135,14 @@ if (!('endCurrentInterfaceDeclaration' in yy)) {
 			namespace : currentNamespaceDeclaration,
 			name : currentTypeName,
 			modifiers : currentTypeModifiers,
-			/*TODO: parents/inheritances*/
+			parentInheritances : parentInheritances,
 			properties: properties,
 			methods: methods
 		});
 		// Cleanup after interface declaration
 		currentTypeName = '';
 		currentTypeModifiers = [];
+		parentInheritances = [];
 		properties = [];
 		methods = [];
 	}
@@ -153,12 +162,13 @@ if (!('endCurrentEnumDeclaration' in yy)) {
 			namespace : currentNamespaceDeclaration,
 			name : currentTypeName,
 			modifiers : currentTypeModifiers,
-			/*TODO: parents/inheritances - only integer related values accepted: byte, short, int, long, etc. */
+			parentInheritances : parentInheritances,
 			values: currentEnumValues
 		});
 		// Cleanup after enum declaration
 		currentTypeName = '';
 		currentTypeModifiers = [];
+		parentInheritances = [];
 		currentEnumValues = [];
 	}
 }
@@ -310,7 +320,7 @@ if (!('addEnumValue' in yy)) {
 		currentEnumValues.push(name);
 	}
 }
-
+/* Parse complete output */
 if (!('getParsedSourceFile' in yy)) {
 	yy.getParsedSourceFile = function getParsedSourceFile() {
 		return {
@@ -425,17 +435,30 @@ namespace_members
 	| namespace_member
 	;
 namespace_member
-	: class_declaration /*TODO: add support for abstract classes with abstract members*/
+	: class_declaration
 	| struct_declaration
 	| interface_declaration
 	| enum_declaration
 	/* TODO: consider adding delegates */
 	;
+/* Parents and inheritances */
+parents_and_inheritances
+	: /* empty */
+	| ':' parents_list
+	;
+parents_list
+	: parents_list ',' parent
+	| parent
+	;
+parent
+	: IDENTIFIER
+		{yy.addParentInheritance($1);}
+	;
 /* 3. Class declaration */
 class_declaration
-	: modifiers CLASS IDENTIFIER _subroutine_add_current_class '{' class_body '}'
+	: modifiers CLASS IDENTIFIER _subroutine_add_current_class parents_and_inheritances '{' class_body '}'
 		{yy.endCurrentClassDeclaration();}
-	| CLASS IDENTIFIER _subroutine_add_current_class '{' class_body '}'
+	| CLASS IDENTIFIER _subroutine_add_current_class parents_and_inheritances '{' class_body '}'
 		{yy.endCurrentClassDeclaration();}
 	;
 _subroutine_add_current_class
@@ -458,9 +481,9 @@ class_member
 	;
 /* 4. Struct declaration */
 struct_declaration
-	: modifiers STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
+	: modifiers STRUCT IDENTIFIER _subroutine_add_current_struct parents_and_inheritances '{' struct_body '}'
 		{yy.endCurrentStructDeclaration();}
-	| STRUCT IDENTIFIER _subroutine_add_current_struct '{' struct_body '}'
+	| STRUCT IDENTIFIER _subroutine_add_current_struct parents_and_inheritances '{' struct_body '}'
 		{yy.endCurrentStructDeclaration();}
 	;
 _subroutine_add_current_struct
@@ -483,9 +506,9 @@ struct_member
 	;
 /* 5. Interface declaration */
 interface_declaration
-	: modifiers INTERFACE IDENTIFIER _subroutine_add_current_interface '{' interface_body '}'
+	: modifiers INTERFACE IDENTIFIER _subroutine_add_current_interface parents_and_inheritances '{' interface_body '}'
 		{yy.endCurrentInterfaceDeclaration();}
-	| INTERFACE IDENTIFIER _subroutine_add_current_interface '{' interface_body '}'
+	| INTERFACE IDENTIFIER _subroutine_add_current_interface parents_and_inheritances '{' interface_body '}'
 		{yy.endCurrentInterfaceDeclaration();}
 	;
 _subroutine_add_current_interface
@@ -507,9 +530,9 @@ interface_member
 	;
 /* 6. Enum declaration */
 enum_declaration
-	: modifiers ENUM IDENTIFIER _subroutine_add_current_enum '{' enum_body '}'
+	: modifiers ENUM IDENTIFIER _subroutine_add_current_enum parents_and_inheritances '{' enum_body '}'
 		{yy.endCurrentEnumDeclaration($1);}
-	| ENUM IDENTIFIER _subroutine_add_current_enum '{' enum_body '}'
+	| ENUM IDENTIFIER _subroutine_add_current_enum parents_and_inheritances '{' enum_body '}'
 		{yy.endCurrentEnumDeclaration($1);}
 	;
 _subroutine_add_current_enum
@@ -654,6 +677,8 @@ statement
 		{yy.addStatement($$);}
 	| try_statement
 		{yy.addStatement($$);}
+	| return_statement
+		{yy.addStatement($$);}
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
@@ -671,8 +696,7 @@ embedded_statement
 	: empty_statement
 	| invocation_statement
 	| assignment_statement
-	| throw_statement /*TODO: reasses if it should remain an embedded_statement or not*/
-	| return_statement /*TODO: reasses if it should remain an embedded_statement or not*/
+	| throw_statement
 	;
 /* 3.3.2.2.1 Empty statement */
 empty_statement
@@ -724,15 +748,22 @@ array_creation_expression
     ;
 /* 3.3.2.2.4 Throw statement */
 throw_statement
-	: THROW IDENTIFIER semicolon
-		{$$ = $1 + ' '+ $2 + $3;
+	: THROW semicolon
+		{$$ = $1 + $2;}
+	| THROW IDENTIFIER semicolon
+		{$$ = $1 + ' ' + $2 + $3;
 		 yy.addUsedFieldOrProperty($2);}
+	| THROW object_creation_expression semicolon
+		{$$ = $1 + ' ' + $2 + $3;}
 	;
 /* 3.3.2.2.5 Return statement */
 return_statement
-	: RETURN IDENTIFIER semicolon
-		{$$ = $1 + ' '+ $2 + $3;
-		 yy.addUsedFieldOrProperty($2);}
+	: RETURN expression semicolon
+		{$$ = $1 + ' ' + $2 + $3;}
+	| RETURN object_creation_expression semicolon
+		{$$ = $1 + ' ' + $2 + $3;}
+	| RETURN array_creation_expression semicolon
+		{$$ = $1 + ' ' + $2 + $3;}
 	;
 /* 3.3.2.3 Selection statement */
 selection_statement
