@@ -19,9 +19,9 @@ class App extends React.Component<{}, {vsCodeInteractor: Interactor}> {
 
   public render() {
     // Send a message to the extension
-    setInterval(() => {
-      this.state.vsCodeInteractor.alert('🐛 on line 999');
-    }, 10000);
+    // setInterval(() => {
+    //   this.state.vsCodeInteractor.alert('🐛 on line 999');
+    // }, 10000);
 
     //1) setup the diagram engine
     var engine = createEngine();

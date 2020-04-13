@@ -76,11 +76,13 @@ class ReactPanel {
 					return;
 				case 'startCodeDiveAnalysis':
 					var sourceFilesPaths = await this.readSourceFilesPathsFromCurrentWorkspace();
-					var classes = await this.parseSourceFilesAsTypes(sourceFilesPaths);
+					var parsedTypes = await this.parseSourceFilesAsTypes(sourceFilesPaths);
+					
+					ReactPanel.postCodeDiveAnalysisResults(parsedTypes);
 					// TODO: continue from here -> async problem, parsed classes are not awaited and array is empty
 					// TODO: pass the classes as message to the extension
 					// TODO: show a visual representation of the classes
-					var x = classes;
+					var x = parsedTypes;
 			}
 		}, null, this._disposables);
 	}
@@ -98,24 +100,25 @@ class ReactPanel {
 		});
 	}
 	
-	private parseSourceFilesAsTypes(sourceFilesPaths: string[]): IType[] {
+	private async parseSourceFilesAsTypes(sourceFilesPaths: string[]): Promise<IType[]> {
 		// TODO: parse each source file as IType array when possible.
 		var types: IType[] = [];
-		sourceFilesPaths.forEach(async (filePath: string) => {
+		var typesJobs = sourceFilesPaths.map(async (filePath: string) => {
 			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
 				return file.getText();
 			})
 			try {
-				var parsedTypes = this.parseSourceCodeAsTypes(fileText);
-				types.concat(parsedTypes);
+				return this.parseSourceCodeAsTypes(fileText);
 			}
 			catch (e) {
-				this._codeDiveChannel.appendLine(e.message);
+				this._codeDiveChannel.appendLine(`Error while parsing file ${filePath}: ${e.message}`);
 
 				// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
-				throw new Error("Unaccepted message occurred when parsing source file.");
+				// throw new Error("Unaccepted message occurred when parsing source file.");
+				return [];
 			}
 		});
+		types = (await Promise.all(typesJobs)).reduce((previous, current) => previous.concat(current));
 		return types;
 	}
 
@@ -138,6 +141,16 @@ class ReactPanel {
 		// You can send any JSON serializable data.
 		if (ReactPanel.currentPanel) {
 			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'startCodeDiveAnalysis' });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
+	}
+
+	public static postCodeDiveAnalysisResults(parsedTypes: IType[]) {
+		// Send a message to the webview webview.
+		// You can send any JSON serializable data.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'codeDiveAnalysisResults', codeDiveAnalysisResults: parsedTypes });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
