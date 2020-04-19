@@ -2,7 +2,7 @@ import { BrowserInteractor } from './BrowserInteractor';
 import { ExtensionInteractor } from './ExtensionInteractor';
 
 declare var acquireVsCodeApi: any;
-const vscode = acquireVsCodeApi();
+const vscode = navigator.userAgent.indexOf('Electron') !== -1 ? acquireVsCodeApi() : null;
 
 export class InteractorFactory {
     static createInteractor() {
