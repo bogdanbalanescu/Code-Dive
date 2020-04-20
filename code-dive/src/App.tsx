@@ -1,12 +1,11 @@
 import * as React from 'react';
 import './App.css';
 
-// import logo from './logo.svg';
-
 import { RootState } from './redux';
 import { connect } from 'react-redux';
 import { IType } from './codeModel/Types/IType';
 import { postTypes } from './redux/modules/types';
+import ExampleGraph from './components/codeRepresentation/ExampleGraph';
 
 const mapStateToProps = (state: RootState) => ({
   types: state.types,
@@ -48,27 +47,12 @@ class App extends React.Component<Props> {
   }
 
   public render() {
-    // Send a message to the extension
-    // setInterval(() => {
-    //   this.state.vsCodeInteractor.alert('🐛 on line 999');
-    // }, 10000);
-
-    // return (
-    //   <div className="App">
-    //     <header className="App-header">
-    //       <img src={logo} className="App-logo" alt="logo" />
-    //       <h1 className="App-title">Welcome to React</h1>
-    //     </header>
-    //     <p className="App-intro">
-    //       To get started, edit <code>src/App.tsx</code> and save to reload.
-    //     </p>
-    //   </div>
-    // );
     return (
       <div>
-        <h1>Welcome to Code Dive!</h1>
+        <header><h1>Welcome to Code Dive!</h1></header>
         <p>Hang on while we test a few things.</p>
         <p>{JSON.stringify(this.props.types)}</p>
+        <ExampleGraph></ExampleGraph>
       </div>
     );
   }
