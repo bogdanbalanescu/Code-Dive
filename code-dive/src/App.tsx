@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { IType } from './codeModel/Types/IType';
 import { postTypes } from './redux/modules/types';
 import ExampleGraph from './components/codeRepresentation/ExampleGraph';
+import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 
 const mapStateToProps = (state: RootState) => ({
   types: state.types,
@@ -52,7 +53,7 @@ class App extends React.Component<Props> {
         <header><h1>Welcome to Code Dive!</h1></header>
         <p>Hang on while we test a few things.</p>
         <p>{JSON.stringify(this.props.types)}</p>
-        <ExampleGraph></ExampleGraph>
+        <CodeDiagram></CodeDiagram>
       </div>
     );
   }
