@@ -2,6 +2,10 @@ import * as go from 'gojs';
 import * as React from 'react';
 
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
+import { IType } from '../../codeModel/Types/IType'
+import { Class } from '../../codeModel/Types/Class';
+
+import { parsedTypes } from './typesExample';
 
 interface CodeDiagramState {
     nodeDataArray: Array<go.ObjectData>;
@@ -10,40 +14,100 @@ interface CodeDiagramState {
     skipsDiagramUpdate: boolean;
 }
 
-export class CodeDiagram extends React.Component<{}, CodeDiagramState> {
+interface CodeDiagramProps {
+    types: IType[]
+}
+
+export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramState> {
     private mapNodeKeyIndex: Map<go.Key, number>;
     private mapLinkKeyIndex: Map<go.Key, number>;
 
-    constructor(props: object) {
+    constructor(props: CodeDiagramProps) {
         super(props);
+
+        var parsedClasses = parsedTypes as Class[];
+        var nodeData = parsedClasses//this.props.types
+            .map(type => type as Class)
+            .map(type => {
+                return {
+                    // skip sourceFilePath - for now we only support the readonly model
+                    // skip namespaceDependencies - for now we only show classes, structs, interfaces and enums - may show namespaces in the future
+                    key: type.namespace + type.name,
+                    modifiers: type.modifiers,
+                    name: type.name,
+                    // skip parent inheritances -> will use these for links
+                    fields: type.fields.map(field => {
+                        return {
+                            modifiers: field.modifiers,
+                            name: field.name,
+                            type: field.type
+                        };
+                    }),
+                    properties: type.properties.map(property => {
+                        return {
+                            modifiers: property.modifiers,
+                            name: property.name,
+                            type: property.type,
+                            accessors: property.accessors.map(accessor => {
+                                return {
+                                    type: accessor.type,
+                                    body: accessor.body.map(statement => {
+                                        return {
+                                            statementText: statement.statementText
+                                            // skip used fields, properties, constructors and methods -> will use these for links
+                                        };
+                                    })
+                                };
+                            })
+                        };
+                    }),
+                    constructors: type.constructors.map(constructor => {
+                        return {
+                            modifiers: constructor.modifiers,
+                            name: constructor.name,
+                            parameters: constructor.parameters.map(parameter => {
+                                return {
+                                    modifier: parameter.modifier,
+                                    name: parameter.name,
+                                    type: parameter.type
+                                };
+                            }),
+                            // skip declared variables -> will use these for links
+                            statements: constructor.statements.map(statement => {
+                                return {
+                                    statementText: statement.statementText
+                                    // skip used fields, properties, constructors and methods -> will use these for links
+                                };
+                            })
+                        };
+                    }),
+                    methods: type.methods.map(method => {
+                        return {
+                            modifiers: method.modifiers,
+                            name: method.name,
+                            type: method.type,
+                            parameters: method.parameters.map(parameter => {
+                                return {
+                                    modifier: parameter.modifier,
+                                    name: parameter.name,
+                                    type: parameter.type
+                                };
+                            }),
+                            // skip declared variables -> will use these for links
+                            statements: method.statements.map(statement => {
+                                return {
+                                    statementText: statement.statementText
+                                    // skip used fields, properties, constructors and methods -> will use these for links
+                                };
+                            })
+                        };
+                    })
+                };
+            });
+
         this.state = {
-            nodeDataArray: [
-                { 
-                    key: "1", 
-                    name: "Class1", 
-                    fields: 
-                    [
-                        {
-                        accessModifiers: ["public"],
-                        name: "RandomNumber",
-                        type: "int"
-                        }
-                    ]
-                },
-                { 
-                    key: "2", 
-                    name: "Class2", fields: 
-                    [
-                        {
-                            accessModifiers: ["protected"],
-                            name: "X",
-                            type: "int"
-                        }
-                    ]
-                }
-            ],
+            nodeDataArray: nodeData,
             linkDataArray: [
-                { key: "-1", from: "1", to: "2" }
             ],
             modelData: {},
             skipsDiagramUpdate: true

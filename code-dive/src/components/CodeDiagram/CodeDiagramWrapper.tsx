@@ -68,17 +68,16 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             };
         }
 
-        const filterViewableAccessModifiers = (accessModifiers: string[]) => {
-            var x = accessModifiers.filter((modifier: string) => {
+        const filterViewablemodifiers = (modifiers: string[]) => {
+            return modifiers.filter((modifier: string) => {
                 return ["public", "private", "protected", "internal"].includes(modifier);
             })
-            return x;
         }
 
         // access modifier template
         var accessModifierTemplate = 
             $(go.Panel, "Horizontal",
-                { margin: new go.Margin(0, 5, 0, 0) },
+                { margin: new go.Margin(0, 4, 0, 0) },
                 $(go.TextBlock,
                     {
                         name: "SYMBOL", visible: true, textAlign: "center", stroke: "blue", cursor: "pointer",
@@ -97,46 +96,152 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
         // field template
         var fieldTemplate = 
-            $(go.Panel, "Horizontal",
-                // field visibility access modifiers
-                $(go.Panel, "Horizontal",
-                    new go.Binding("itemArray", "accessModifiers", filterViewableAccessModifiers),
-                    {
-                        row: 1, stretch: go.GraphObject.Fill,
-                        defaultAlignment: go.Spot.Left, background: "lightyellow", opacity: 0.75,
-                        itemTemplate: accessModifierTemplate
-                    }),
-                $(go.TextBlock,
-                    { isMultiline: false, editable: false },
-                    new go.Binding("text", "name"),
-                    new go.Binding("isUnderline", "accessModifiers", accessModifiers => accessModifiers.includes("static"))),
-                // field type
-                $(go.TextBlock,
-                    new go.Binding("text", "type", type => `: ${type}` ))
+            $(go.Panel, "Auto",
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Panel, "Table",
+                    // field visibility access modifiers
+                    $(go.Panel, "Horizontal",
+                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        {
+                            row: 0, column: 0, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left, opacity: 0.75,
+                            itemTemplate: accessModifierTemplate
+                        }),
+                    // field name
+                    $(go.TextBlock,
+                        { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green" },
+                        new go.Binding("text", "name"),
+                        new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
+                    // field type
+                    $(go.TextBlock,
+                        { row: 0, column: 2, stroke: "blue" },
+                        new go.Binding("text", "type", type => `: ${type}` )))
             );
 
-        // property template
-        var propertyTemplate = 
-        $(go.Panel, "Horizontal",
-            // property visibility access modifiers
+        const markLastItemAsLast = (parameters: string[]) => {
+            return parameters.map((parameter: any) => {
+                return {
+                    name: parameter.name,
+                    type: parameter.type,
+                    isLast: parameters.indexOf(parameter) == parameters.length - 1
+                };
+            });
+        }
+
+        var statementTemplate =
             $(go.Panel, "Horizontal",
-                new go.Binding("itemArray", "accessModifiers", filterViewableAccessModifiers),
-                {
-                    row: 1, margin: 3, stretch: go.GraphObject.Fill,
-                    defaultAlignment: go.Spot.Left, background: "lightyellow",
-                    itemTemplate: accessModifierTemplate
-                }),
-            $(go.TextBlock,
-                { isMultiline: false, editable: false },
-                new go.Binding("text", "name"),
-                new go.Binding("isUnderline", "accessModifiers", accessModifiers => accessModifiers.includes("static"))),
-            // property type
-            $(go.TextBlock,
-                new go.Binding("text", "type", type => `: ${type}` ))
-            // TODO: add get and set
-            // TODO: add block to be possible for get and set
-        );
+                $(go.TextBlock,
+                    { row: 0, column: 0, isMultiline: false, editable: false, stroke: "black" },
+                    new go.Binding("text", "statementText"))
+            );
+
+        var accessorTemplate =
+            $(go.Panel, "Auto",
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Panel, "Table",
+                    { defaultRowSeparatorStroke: "black" },
+                    // method name
+                    $(go.TextBlock,
+                        { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
+                        new go.Binding("text", "type")),
+                    $(go.Panel, "Vertical",
+                        new go.Binding("itemArray", "body"), 
+                        {
+                            row: 1, columnSpan: 4, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: statementTemplate
+                        })
+                )
+            );
         
+        var propertyTemplate =
+            $(go.Panel, "Auto",
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Panel, "Table",
+                    // property visibility access modifiers
+                    $(go.Panel, "Horizontal",
+                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        {
+                            row: 0, column: 0, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left, opacity: 0.75,
+                            itemTemplate: accessModifierTemplate
+                        }),
+                    // property name
+                    $(go.TextBlock,
+                        { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green" },
+                        new go.Binding("text", "name"),
+                        new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
+                    // property type
+                    $(go.TextBlock,
+                        { row: 0, column: 2, stroke: "blue" },
+                        new go.Binding("text", "type", type => `: ${type}` )),
+                    // property accessors
+                    $(go.Panel, "Vertical",
+                        new go.Binding("itemArray", "accessors"), 
+                        {
+                            row: 1, columnSpan: 5, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: accessorTemplate
+                        }))
+            );
+
+        var methodParameterTemplate = 
+            $(go.Panel, "Horizontal",
+                $(go.TextBlock,
+                    { row: 0, column: 0, isMultiline: false, editable: false, stroke: "green" },
+                    new go.Binding("text", "name")),
+                $(go.TextBlock,
+                    { row: 0, column: 0, isMultiline: false, editable: false, stroke: "blue" },
+                    new go.Binding("text", "type", type => `: ${type}`)),
+                $(go.TextBlock, ", ",
+                    { row: 0, column: 0, isMultiline: false, editable: false, stroke: "black" },
+                    new go.Binding("text", ", "),
+                    new go.Binding("visible", "isLast", isLast => { return isLast !== true }))
+            );
+
+        // method template
+        var methodTemplate =
+            $(go.Panel, "Auto",
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Panel, "Table",
+                    { defaultRowSeparatorStroke: "black" },
+                    // method visibility access modifiers
+                    $(go.Panel, "Horizontal",
+                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        {
+                            row: 0, column: 0, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left, opacity: 0.75,
+                            itemTemplate: accessModifierTemplate
+                        }),
+                    // method name
+                    $(go.TextBlock,
+                        { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green", alignment: go.Spot.Left },
+                        new go.Binding("text", "name", name => `${name}(`),
+                        new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
+                    // method parameters
+                    $(go.Panel, "Horizontal",
+                        new go.Binding("itemArray", "parameters", markLastItemAsLast),
+                        {
+                            row: 0, column: 2, stretch: go.GraphObject.Fill, name: "METHODPARAMETERS",
+                            defaultAlignment: go.Spot.Left, opacity: 0.75,
+                            itemTemplate: methodParameterTemplate
+                        }),
+                    $(go.TextBlock, ")", { row:0, column:4, isMultiline: false, editable: false, stroke: "green", alignment: go.Spot.Left }),
+                    // method type
+                    $(go.TextBlock,
+                        { row: 0, column: 5, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
+                        new go.Binding("text", "type", type => `: ${type}`)),
+                    // method statements
+                    $(go.Panel, "Vertical",
+                        new go.Binding("itemArray", "statements"), 
+                        {
+                            row: 1, columnSpan: 5, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: statementTemplate
+                        })
+                )
+            );
+
         // class node template
         diagram.nodeTemplate = 
             $(go.Node, "Auto",
@@ -145,7 +250,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     fromSpot: go.Spot.AllSides,
                     toSpot: go.Spot.AllSides
                 },
-                $(go.Shape, { fill: "lightyellow" }),
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
                 $(go.Panel, "Table", 
                     { defaultRowSeparatorStroke: "black" },
                     // class name
@@ -164,14 +269,54 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         new go.Binding("itemArray", "fields"),
                         {
                             row: 1, margin: 3, stretch: go.GraphObject.Fill,
-                            defaultAlignment: go.Spot.Left, background: "lightyellow",
+                            defaultAlignment: go.Spot.Left,
                             itemTemplate: fieldTemplate
                         }),
                     $("PanelExpanderButton", "FIELDS",
                         { row: 1, column: 1, alignment: go.Spot.TopRight, visible: false},
                         new go.Binding("visible", "fields", fields => fields.length > 0)),
                     // properties
+                    $(go.TextBlock, "Properties",
+                        { row: 2, font: "italic 10pt sans-serif" },
+                        new go.Binding("visible", "visible", (visible => !visible)).ofObject("PROPERTIES")),
+                    $(go.Panel, "Vertical", { name: "PROPERTIES" },
+                        new go.Binding("itemArray", "properties"),
+                        {
+                            row: 2, margin: 3, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: propertyTemplate
+                        }),
+                    $("PanelExpanderButton", "PROPERTIES",
+                        { row: 2, column: 1, alignment: go.Spot.TopRight, visible: false},
+                        new go.Binding("visible", "properties", properties => properties.length > 0)),
+                    // constructors
+                    $(go.TextBlock, "Constructors",
+                        { row: 3, font: "italic 10pt sans-serif" },
+                        new go.Binding("visible", "visible", (visible => !visible)).ofObject("CONSTRUCTORS")),
+                    $(go.Panel, "Vertical", { name: "CONSTRUCTORS" },
+                        new go.Binding("itemArray", "constructors"),
+                        {
+                            row: 3, margin: 3, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: methodTemplate
+                        }),
+                    $("PanelExpanderButton", "CONSTRUCTORS",
+                        { row: 3, column: 1, alignment: go.Spot.TopRight, visible: false},
+                        new go.Binding("visible", "constructors", constructors => constructors.length > 0)),
                     // methods
+                    $(go.TextBlock, "Methods",
+                        { row: 4, font: "italic 10pt sans-serif" },
+                        new go.Binding("visible", "visible", (visible => !visible)).ofObject("METHODS")),
+                    $(go.Panel, "Vertical", { name: "METHODS" },
+                        new go.Binding("itemArray", "methods"),
+                        {
+                            row: 4, margin: 3, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: methodTemplate
+                        }),
+                    $("PanelExpanderButton", "METHODS",
+                        { row: 4, column: 1, alignment: go.Spot.TopRight, visible: false},
+                        new go.Binding("visible", "methods", methods => methods.length > 0)),
                 )
             );
 

@@ -53,7 +53,7 @@ class App extends React.Component<Props> {
         <header><h1>Welcome to Code Dive!</h1></header>
         <p>Hang on while we test a few things.</p>
         <p>{JSON.stringify(this.props.types)}</p>
-        <CodeDiagram></CodeDiagram>
+        <CodeDiagram types={this.props.types}></CodeDiagram>
       </div>
     );
   }
