@@ -29,18 +29,21 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         var nodeData = parsedClasses//this.props.types
             .map(type => type as Class)
             .map(type => {
+                var fullyQualifiedName = `${type.namespace}.${type.name}`;
                 return {
                     // skip sourceFilePath - for now we only support the readonly model
                     // skip namespaceDependencies - for now we only show classes, structs, interfaces and enums - may show namespaces in the future
-                    key: type.namespace + type.name,
+                    key: fullyQualifiedName,
                     modifiers: type.modifiers,
                     name: type.name,
+                    outPortId: `${fullyQualifiedName}.out`,
                     // skip parent inheritances -> will use these for links
                     fields: type.fields.map(field => {
                         return {
                             modifiers: field.modifiers,
                             name: field.name,
-                            type: field.type
+                            type: field.type,
+                            inPortId: `${fullyQualifiedName}.${field.name}.in`
                         };
                     }),
                     properties: type.properties.map(property => {
@@ -53,12 +56,14 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                                     type: accessor.type,
                                     body: accessor.body.map(statement => {
                                         return {
-                                            statementText: statement.statementText
-                                            // skip used fields, properties, constructors and methods -> will use these for links
+                                            statementText: statement.statementText,
+                                            outPortId: `${fullyQualifiedName}.${property.name}.${statement.statementText}.out`
+                                            // skip used fields, properties, constructors and methods -> will use these for links,
                                         };
                                     })
                                 };
-                            })
+                            }),
+                            inPortId: `${fullyQualifiedName}.${property.name}.in`
                         };
                     }),
                     constructors: type.constructors.map(constructor => {
@@ -75,10 +80,13 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                             // skip declared variables -> will use these for links
                             statements: constructor.statements.map(statement => {
                                 return {
-                                    statementText: statement.statementText
+                                    statementText: statement.statementText,
+                                    outPortId: `${fullyQualifiedName}.${constructor.name}.${statement.statementText}.out`
                                     // skip used fields, properties, constructors and methods -> will use these for links
                                 };
-                            })
+                            }),
+                            inPortId: `${fullyQualifiedName}.${constructor.name}.in`,
+                            outPortId: `${fullyQualifiedName}.${constructor.name}.out`
                         };
                     }),
                     methods: type.methods.map(method => {
@@ -96,10 +104,13 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                             // skip declared variables -> will use these for links
                             statements: method.statements.map(statement => {
                                 return {
-                                    statementText: statement.statementText
+                                    statementText: statement.statementText,
+                                    outPortId: `${fullyQualifiedName}.${method.name}.${statement.statementText}.out`
                                     // skip used fields, properties, constructors and methods -> will use these for links
                                 };
-                            })
+                            }),
+                            inPortId: `${fullyQualifiedName}.${method.name}.in`,
+                            outPortId: `${fullyQualifiedName}.${method.name}.out`
                         };
                     })
                 };

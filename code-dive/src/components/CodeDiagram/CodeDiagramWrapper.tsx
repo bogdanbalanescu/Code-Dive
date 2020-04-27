@@ -33,7 +33,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         const diagram = 
             $(go.Diagram, 
                 {
-                    model: $(go.GraphLinksModel),
+                    model: $(go.GraphLinksModel, 
+                    {
+                        linkFromPortIdProperty: "fromPort", // required information:
+                        linkToPortIdProperty: "toPort",      // identifies data property names
+                    }),
                     layout: $(go.LayeredDigraphLayout, 
                     {
                         direction: 0,
