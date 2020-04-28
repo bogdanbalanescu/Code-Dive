@@ -9,9 +9,7 @@
 var namespaceDependecies = []; // current conventions says it is RECOMMENDED to declare namespace dependencies at file level and to apply them to all classes in the source file.
 if (!('addNamespace' in yy)) {
 	yy.addNamespace = function addNamespace(name) {
-		namespaceDependecies.push({
-			name: name
-		});
+		namespaceDependecies.push(name);
 	};
 }
 /* 2. Namespace declaration */
@@ -189,7 +187,7 @@ if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		propertyAccessors.push({
 			type: type,
-			body: statements.length > 0 ? statements : null // functionality not yet supported
+			body: statements.length > 0 ? statements : [] // functionality not yet supported
 		});
 		// Cleanup
 		statements = [];

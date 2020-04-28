@@ -19,7 +19,38 @@ namespace CodeDive {
     //     public int X { get; set; }
     // }
 
-    public class Example {
+    public class MagicTrick
+    {
+        private string secret;
+        public string Name { get; set; }
+
+        MagicTrick(string name) {
+            Name = name;
+        }
+
+        public int ApplyMagic(int x) {
+            Math math;
+            math = new Math();
+            return x * math.MagicNumber;
+        }
+    }
+
+    public class Math
+    {
+        public int MagicNumber { get; set; }
+
+        public int Add(int x, int y) {
+            int sum;
+            sum = x + y;
+            return sum;
+        }
+
+        public int Multiply(int x, int y) {
+            return x * y;
+        }
+    }
+
+    /*public class Example {
         public int x;
         protected sealed int[] y;
         protected sealed Machine Machine { get; set; }
@@ -66,5 +97,5 @@ namespace CodeDive {
         {
             return x + y;
         }
-    }
+    }*/
 }

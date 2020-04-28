@@ -6,14 +6,25 @@ using System.Threading.Tasks;
 
 namespace FruitDelivery
 {
+    public class MagicTrick
+    {
+        private string secret;
+        public string Name { get; set; }
+
+        MagicTrick(string name) {
+            Name = name;
+        }
+
+        public int ApplyMagic(int x) {
+            Math math;
+            math = new Math();
+            return x * math.MagicNumber;
+        }
+    }
+
     public class Math
     {
-        public int lastSum;
-        public int LastSum { get { return lastSum; } set { lastSum = value; } }
-
-        Math(int lastSum) {
-            this.lastSum = lastSum;
-        }
+        public int MagicNumber { get; set; }
 
         public int Add(int x, int y) {
             int sum;

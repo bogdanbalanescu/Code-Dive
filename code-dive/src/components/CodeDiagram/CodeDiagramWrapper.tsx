@@ -239,7 +239,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     $(go.Panel, "Vertical",
                         new go.Binding("itemArray", "statements"), 
                         {
-                            row: 1, columnSpan: 5, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
+                            row: 1, columnSpan: 6, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
                             defaultAlignment: go.Spot.Left,
                             itemTemplate: statementTemplate
                         })
@@ -251,9 +251,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             $(go.Node, "Auto",
                 {
                     locationSpot: go.Spot.Center,
-                    fromSpot: go.Spot.AllSides,
-                    toSpot: go.Spot.AllSides
+                    fromLinkable: false,
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
                 },
+                new go.Binding("portId", "portId"),
                 $(go.Shape, "RoundedRectangle", { fill: "white" }),
                 $(go.Panel, "Table", 
                     { defaultRowSeparatorStroke: "black" },

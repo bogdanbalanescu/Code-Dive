@@ -25,18 +25,48 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
     constructor(props: CodeDiagramProps) {
         super(props);
 
+        const groupTypesByProperty = function(types: any, key: any) {
+            return types.reduce(function(rv: any, x: any) {
+                (rv[x[key]] = rv[x[key]] || []).push(x);
+                return rv;
+              }, {});
+            };
+        var typesGroupedByNamespace = groupTypesByProperty(parsedTypes, 'namespace');
+        const findParentInNamespaces = function(namespaces: string[], parentName: string): IType | null {
+            for (let namespace of namespaces) {
+                var parentNamespace = typesGroupedByNamespace[namespace];
+                if (parentNamespace !== undefined) {
+                    var parents = parentNamespace.filter((parent: IType) => parent.name == parentName);
+                    if (parents.length > 0) {
+                        return parents[0] as IType;
+                    }
+                }
+            };
+            return null;
+        }
+
         var parsedClasses = parsedTypes as Class[];
+        var linkData: any = [];
         var nodeData = parsedClasses//this.props.types
             .map(type => type as Class)
             .map(type => {
                 var fullyQualifiedName = `${type.namespace}.${type.name}`;
+                type.parentInheritances.forEach((parentInheritance: string) => {
+                    var parent = findParentInNamespaces(type.namespaceDependecies.concat([type.namespace]), parentInheritance);
+                    if (parent !== null) {
+                        linkData.push({
+                            from: fullyQualifiedName, to: `${parent.namespace}.${parent.name}`, fromPort: fullyQualifiedName, toPort: `${parent.namespace}.${parent.name}`
+                        });
+                    }
+                })
+
                 return {
                     // skip sourceFilePath - for now we only support the readonly model
                     // skip namespaceDependencies - for now we only show classes, structs, interfaces and enums - may show namespaces in the future
                     key: fullyQualifiedName,
                     modifiers: type.modifiers,
                     name: type.name,
-                    outPortId: `${fullyQualifiedName}.out`,
+                    portId: `${fullyQualifiedName}`,
                     // skip parent inheritances -> will use these for links
                     fields: type.fields.map(field => {
                         return {
@@ -118,8 +148,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
 
         this.state = {
             nodeDataArray: nodeData,
-            linkDataArray: [
-            ],
+            linkDataArray: linkData,
             modelData: {},
             skipsDiagramUpdate: true
         };
