@@ -100,7 +100,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // field template
         var fieldTemplate = 
             $(go.Panel, "Auto",
-                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Shape, "RoundedRectangle", { fill: "white" },
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId")),
                 $(go.Panel, "Table",
                     // field visibility access modifiers
                     $(go.Panel, "Horizontal",
@@ -126,6 +131,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // statement template
         var statementTemplate =
             $(go.Panel, "Horizontal",
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId"),
                 $(go.TextBlock,
                     { isMultiline: false, editable: false, stroke: "black" },
                     new go.Binding("text", "statementText")) 
@@ -158,7 +168,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // property template
         var propertyTemplate =
             $(go.Panel, "Auto",
-                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Shape, "RoundedRectangle", { fill: "white" },
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId")),
                 $(go.Panel, "Table",
                     // property visibility access modifiers
                     $(go.Panel, "Horizontal",
@@ -202,6 +217,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // method parameter template
         var methodParameterTemplate = 
             $(go.Panel, "Horizontal",
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId"),
                 // parameter name
                 $(go.TextBlock,
                     { isMultiline: false, editable: false, stroke: "green" },
@@ -222,7 +242,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // method template
         var methodTemplate =
             $(go.Panel, "Auto",
-                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Shape, "RoundedRectangle", { fill: "white" },
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId")),
                 $(go.Panel, "Table",
                     { defaultRowSeparatorStroke: "black" },
                     // method visibility access modifiers
@@ -274,7 +299,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             $(go.Node, "Auto",
                 {
                     locationSpot: go.Spot.Center,
-                    fromLinkable: false,
                     fromSpot: go.Spot.TopSide,
                     toSpot: go.Spot.BottomSide
                 },

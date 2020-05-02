@@ -18,19 +18,19 @@ export class Struct implements IType {
     constructors: Constructor[];
     methods: Method[];
 
-    public constructor(namespaceDependecies: string[], namespace: string, name: string, modifiers: string[], parentInheritances: string[],
-        fields: Field[], properties: Property[], constructors: Constructor[], methods: Method[]) {
+    public constructor(otherStruct: Struct) {
+        this.sourceFilePath = otherStruct.sourceFilePath || "";
         
-        this.namespaceDependecies = namespaceDependecies;
-        this.namespace = namespace;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parentInheritances = parentInheritances;
+        this.namespaceDependecies = otherStruct.namespaceDependecies;
+        this.namespace = otherStruct.namespace;
+        this.name = otherStruct.name;
+        this.modifiers = otherStruct.modifiers;
+        this.parentInheritances = otherStruct.parentInheritances;
 
-        this.fields = fields;
-        this.properties = properties;
-        this.constructors = constructors;
-        this.methods = methods;
+        this.fields = otherStruct.fields;
+        this.properties = otherStruct.properties;
+        this.constructors = otherStruct.constructors;
+        this.methods = otherStruct.methods;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

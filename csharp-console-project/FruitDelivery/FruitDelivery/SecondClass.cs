@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FruitDelivery
 {
-    public class MagicTrick
+    public class MagicTrick: Math
     {
         private string secret;
         public string Name { get; set; }

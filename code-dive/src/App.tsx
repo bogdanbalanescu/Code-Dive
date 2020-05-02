@@ -3,10 +3,12 @@ import './App.css';
 
 import { RootState } from './redux';
 import { connect } from 'react-redux';
-import { IType } from './codeModel/Types/IType';
 import { postTypes } from './redux/modules/types';
-import ExampleGraph from './components/codeRepresentation/ExampleGraph';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
+import { ParsedTypes } from './codeModel/ParsedTypes';
+import { ExtensionInteractor } from './interactors/ExtensionInteractor';
+
+import { types } from './components/CodeDiagram/typesExample';
 
 const mapStateToProps = (state: RootState) => ({
   types: state.types,
@@ -38,7 +40,7 @@ class App extends React.Component<Props> {
           this.props.interactor.startCodeDiveAnalysis();
           break;
       case 'codeDiveAnalysisResults':
-          var codeDiveAnalysisResults: IType[] = message.codeDiveAnalysisResults;
+          var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
           
           // TODO: show the visual representation of the code.
           // For now, we only show the result of the code dive analysis as text.
@@ -53,7 +55,7 @@ class App extends React.Component<Props> {
         <header><h1>Welcome to Code Dive!</h1></header>
         <p>Hang on while we test a few things.</p>
         <p>{JSON.stringify(this.props.types)}</p>
-        <CodeDiagram types={this.props.types}></CodeDiagram>
+        <CodeDiagram types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types}></CodeDiagram>
       </div>
     );
   }

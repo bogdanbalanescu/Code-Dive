@@ -1,4 +1,9 @@
+import { ParsedTypes } from "../../codeModel/ParsedTypes";
 import { IType } from "../../codeModel/Types/IType";
+import { Class } from "../../codeModel/Types/Class";
+import { Struct } from "../../codeModel/Types/Struct";
+import { Enum } from "../../codeModel/Types/Enum";
+import { Interface } from "../../codeModel/Types/Interface";
 
 // State
 const initialTypesState: IType[] = [];
@@ -12,7 +17,11 @@ interface SetTypesAction {
 type TypesActions = SetTypesAction;
 
 // Action Creators
-export function postTypes(types: IType[]): TypesActions {
+export function postTypes(parsedTypes: ParsedTypes): TypesActions {
+    var types: IType[] = parsedTypes.classes.map(type => new Class(type) as IType)
+        .concat(parsedTypes.structs.map(type => new Struct(type)))
+        .concat(parsedTypes.interfaces.map(type => new Interface(type)))
+        .concat(parsedTypes.enums.map(type => new Enum(type)));
     return {
         type: SET_TYPES,
         types: types

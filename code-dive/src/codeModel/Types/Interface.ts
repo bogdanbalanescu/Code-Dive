@@ -14,17 +14,17 @@ export class Interface implements IType {
     properties: Property[];
     methods: Method[];
 
-    public constructor(namespaceDependecies: string[], namespace: string, name: string, modifiers: string[], parentInheritances: string[],
-        properties: Property[], methods: Method[]) {
+    public constructor(otherInterface: Interface) {
+        this.sourceFilePath = otherInterface.sourceFilePath || "";
         
-        this.namespaceDependecies = namespaceDependecies;
-        this.namespace = namespace;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parentInheritances = parentInheritances;
+        this.namespaceDependecies = otherInterface.namespaceDependecies;
+        this.namespace = otherInterface.namespace;
+        this.name = otherInterface.name;
+        this.modifiers = otherInterface.modifiers;
+        this.parentInheritances = otherInterface.parentInheritances;
 
-        this.properties = properties;
-        this.methods = methods;
+        this.properties = otherInterface.properties;
+        this.methods = otherInterface.methods;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

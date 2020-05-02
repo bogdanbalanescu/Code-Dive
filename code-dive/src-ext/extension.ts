@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { parseSourceCode } from "./codeParser/ClassParser";
 import { IType } from './codeModel/Types/IType';
+import { ParsedTypes } from './codeModel/ParsedTypes';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
@@ -100,10 +101,10 @@ class ReactPanel {
 		});
 	}
 	
-	private async parseSourceFilesAsTypes(sourceFilesPaths: string[]): Promise<IType[]> {
+	private async parseSourceFilesAsTypes(sourceFilesPaths: string[]): Promise<ParsedTypes> {
 		// TODO: parse each source file as IType array when possible.
-		var types: IType[] = [];
-		var typesJobs = sourceFilesPaths.map(async (filePath: string) => {
+		var allParsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
+		var parsedTypesJobs = sourceFilesPaths.map(async (filePath: string) => {
 			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
 				return file.getText();
 			})
@@ -115,14 +116,19 @@ class ReactPanel {
 
 				// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
 				// throw new Error("Unaccepted message occurred when parsing source file.");
-				return [];
+				return new ParsedTypes([], [], [], []);
 			}
 		});
-		types = (await Promise.all(typesJobs)).reduce((previous, current) => previous.concat(current));
-		return types;
+		(await Promise.all(parsedTypesJobs)).forEach((parsedTypes: ParsedTypes) => {
+			allParsedTypes.addClasses(parsedTypes.classes);
+			allParsedTypes.addStructs(parsedTypes.structs);
+			allParsedTypes.addInterfaces(parsedTypes.interfaces);
+			allParsedTypes.addEnums(parsedTypes.enums);
+		});
+		return allParsedTypes;
 	}
 
-	private parseSourceCodeAsTypes(sourceCode: string): IType[] {
+	private parseSourceCodeAsTypes(sourceCode: string): ParsedTypes {
 		return parseSourceCode(sourceCode);
 	}
 
@@ -146,7 +152,7 @@ class ReactPanel {
 		}
 	}
 
-	public static postCodeDiveAnalysisResults(parsedTypes: IType[]) {
+	public static postCodeDiveAnalysisResults(parsedTypes: ParsedTypes) {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
 		if (ReactPanel.currentPanel) {
