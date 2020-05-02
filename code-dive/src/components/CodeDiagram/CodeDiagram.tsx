@@ -51,7 +51,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
         var nodeAndLinkData = CodeDiagram.computeNodeAndLinkData(nextProps);
-
+        
         return {
             ...previousState,
             nodeDataArray: nodeAndLinkData.nodeDataArray,
@@ -96,6 +96,22 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             }
             return undefined;
         };
+        const findConstructorOrMethodInType = function(type: IType | null, callableName: string): Constructor | undefined {
+            if (type === null)
+                return undefined;
+            if (type instanceof Class || type instanceof Struct) {
+                var constructor = type.constructors.find(constructor => constructor.name == callableName);
+                if (constructor !== undefined)
+                    return constructor;
+            }
+            if (type instanceof Class || type instanceof Struct || type instanceof Interface) {
+                var method = type.methods.find(method => method.name == callableName);
+                if (method !== undefined) {
+                    return method;
+                }
+            }
+            return undefined;
+        }
 
         const typeKey = 
             (type: IType) => `${type.namespace}.${type.name}`;
@@ -130,6 +146,20 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 }
             }
         };
+        const addLinkFromStatementToConstructorOrMethod = function (type: IType, callableName: string, statementPort: string) {
+            var relevantType = findTypeInRelevantNamespaces(type, callableName);
+            if (relevantType !== undefined) {
+                var callable = findConstructorOrMethodInType(relevantType, callableName);
+                if (callable !== undefined) {
+                    addLink(
+                        typeKey(type),
+                        statementPort,
+                        typeKey(relevantType as IType),
+                        constructorOrMethodPort(relevantType as Class | Struct, callable as Constructor | Method)
+                    )
+                }
+            }
+        }
         const createInheritanceLinks = function (type: Class) {
             type.parentInheritances.forEach((parentInheritance: string) => {
                 var parent = findTypeInRelevantNamespaces(type, parentInheritance);
@@ -160,8 +190,19 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                     addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementPort);
                 }
             });
-            // TODO: continue with used constructors and methods
+            statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
+                addLinkFromStatementToConstructorOrMethod(type, constructor, statementPort);
+            });
+            statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
+                addLinkFromStatementToConstructorOrMethod(type, method, statementPort);
+            });
         };
+        const createParameterLinks = function (type: IType, parameterType: string, parameterPort: string) {
+            var referencedType = findTypeInRelevantNamespaces(type, parameterType);
+            if (referencedType !== undefined) {
+                addLink(typeKey(type), parameterPort, typeKey(referencedType), typePort(referencedType));
+            }
+        }
         // TODO: put the filter back
         var parsedClasses = props.types.filter(type => type instanceof Class);
         var nodeData = parsedClasses //this.props.types
@@ -212,11 +253,13 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                             name: constructor.name,
                             portId: constructorOrMethodPort(type, constructor),
                             parameters: constructor.parameters.map(parameter => {
+                                var parameterPort = constructorOrMethodParameterPort(type, constructor, parameter);
+                                createParameterLinks(type, parameter.type, parameterPort);
                                 return {
                                     modifier: parameter.modifier,
                                     name: parameter.name,
                                     type: parameter.type,
-                                    portId: constructorOrMethodParameterPort(type, constructor, parameter)
+                                    portId: parameterPort
                                 };
                             }),
                             // skip declared variables -> will use these for links
@@ -238,11 +281,13 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                             type: method.type,
                             portId: constructorOrMethodPort(type, method),
                             parameters: method.parameters.map(parameter => {
+                                var parameterPort = constructorOrMethodParameterPort(type, method, parameter);
+                                createParameterLinks(type, parameter.type, parameterPort);
                                 return {
                                     modifier: parameter.modifier,
                                     name: parameter.name,
                                     type: parameter.type,
-                                    portId: constructorOrMethodParameterPort(type, method, parameter)
+                                    portId: parameterPort
                                 };
                             }),
                             // skip declared variables -> will use these for links

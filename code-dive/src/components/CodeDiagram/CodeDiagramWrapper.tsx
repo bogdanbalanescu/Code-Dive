@@ -246,8 +246,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         const markLastItemAsLast = (parameters: string[]) => {
             return parameters.map((parameter: any) => {
                 return {
-                    name: parameter.name,
-                    type: parameter.type,
+                    ...parameter,
                     isLast: parameters.indexOf(parameter) == parameters.length - 1
                 };
             });
@@ -255,10 +254,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
         // method parameter template
         var methodParameterTemplate = 
-            $(go.Panel, "Horizontal",
+                $(go.Panel, "Horizontal",
                 {
                     fromSpot: go.Spot.TopSide,
-                    toSpot: go.Spot.BottomSide
+                    toSpot: go.Spot.BottomSide,
                 },
                 new go.Binding("portId", "portId"),
                 // parameter name
@@ -308,8 +307,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     $(go.Panel, "Horizontal",
                         new go.Binding("itemArray", "parameters", markLastItemAsLast),
                         {
-                            row: 0, column: 3, stretch: go.GraphObject.Fill, name: "METHODPARAMETERS",
-                            defaultAlignment: go.Spot.Left, opacity: 0.75,
+                            row: 0, column: 3, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
                             itemTemplate: methodParameterTemplate
                         }),
                     // )
