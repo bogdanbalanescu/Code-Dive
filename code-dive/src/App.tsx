@@ -34,18 +34,18 @@ class App extends React.Component<Props> {
     const message = event.data; // The JSON data our extension sent
     switch (message.command) {
       case 'sayHello':
-          this.props.interactor.alert('Just here to say hello! 👋')
-          break;
+        this.props.interactor.alert('Just here to say hello! 👋')
+        break;
       case 'startCodeDiveAnalysis':
-          this.props.interactor.startCodeDiveAnalysis();
-          break;
+        this.props.interactor.startCodeDiveAnalysis();
+        break;
       case 'codeDiveAnalysisResults':
-          var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
-          
-          // TODO: show the visual representation of the code.
-          // For now, we only show the result of the code dive analysis as text.
-          this.props.postTypes(codeDiveAnalysisResults);
-          break;
+        var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
+        
+        // TODO: show the visual representation of the code.
+        // For now, we only show the result of the code dive analysis as text.
+        this.props.postTypes(codeDiveAnalysisResults);
+        break;
     }
   }
 

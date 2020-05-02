@@ -3,9 +3,10 @@ import { ReactDiagram } from 'gojs-react';
 import * as React from 'react';
 
 import './CodeDiagramWrapper.css';
+import { isDeepStrictEqual } from 'util';
 
 interface CodeDiagramProps { 
-    nodeDateArray: Array<go.ObjectData>;
+    nodeDataArray: Array<go.ObjectData>;
     linkDataArray: Array<go.ObjectData>;
     modelData: go.ObjectData;
     skipsDiagramUpdate: boolean;
@@ -17,6 +18,42 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     constructor(props: CodeDiagramProps) {
         super(props);
         this.diagramReference = React.createRef();
+    }
+
+    componentDidUpdate(prevProps: CodeDiagramProps, prevState: any, prevContext: any) {
+        if (this.props.nodeDataArray !== prevProps.nodeDataArray && this.diagramReference.current != null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram != null) {
+                diagram.startTransaction();
+                prevProps.linkDataArray.forEach(previousLink => {
+                    if (diagram == null) return;
+                    if (this.props.linkDataArray.findIndex(currentLink => isDeepStrictEqual(previousLink, currentLink)) !== -1) { // if link no longer exists or was modified, delete it
+                        var link = diagram.findLinkForKey(previousLink.key);
+                        if (link !== null) diagram.remove(link as go.Link);
+                    }
+                });
+                prevProps.nodeDataArray.forEach(previousNode => {
+                    if (diagram == null) return;
+                    if (this.props.nodeDataArray.findIndex(currentNode => isDeepStrictEqual(previousNode, currentNode)) !== -1) { // if node no longer exists or was modified, delete it
+                        var node = diagram.findNodeForKey(previousNode.key);
+                        if (node !== null) diagram.remove(node as go.Node);
+                    }
+                })
+                this.props.nodeDataArray.forEach(currentNode => {
+                    if (diagram == null) return;
+                    if (prevProps.nodeDataArray.findIndex(previousNode => isDeepStrictEqual(previousNode, currentNode)) === -1) {
+                        diagram.model.addNodeData(currentNode);
+                    }
+                })
+                this.props.linkDataArray.forEach(currentLink => {
+                    if (diagram == null) return;
+                    if (prevProps.linkDataArray.findIndex(previousLink => isDeepStrictEqual(previousLink, currentLink)) === -1) {
+                        (diagram.model as go.GraphLinksModel).addLinkData(currentLink);
+                    }
+                });
+                diagram.commitTransaction();
+            }
+        }
     }
 
     componentDidMount() {
@@ -34,6 +71,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 {
                     model: $(go.GraphLinksModel, 
                     {
+                        nodeKeyProperty: "key",
+                        linkKeyProperty: "key",
                         linkFromPortIdProperty: "fromPort", // required information:
                         linkToPortIdProperty: "toPort",     // identifies data property names
                     }),
@@ -382,7 +421,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 ref={this.diagramReference}
                 divClassName='code-diagram-component'
                 initDiagram={this.initDiagram}
-                nodeDataArray={this.props.nodeDateArray}
+                nodeDataArray={this.props.nodeDataArray}
                 linkDataArray={this.props.linkDataArray}
                 modelData={this.props.modelData}
                 onModelChange={() => {console.log('for now, we do nothing when model changes')}}
