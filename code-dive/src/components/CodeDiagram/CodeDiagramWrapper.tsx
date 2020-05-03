@@ -51,6 +51,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         (diagram.model as go.GraphLinksModel).addLinkData(currentLink);
                     }
                 });
+                // TODO: the above logic can be improved to only update what is necessary for better performance.
                 diagram.commitTransaction();
             }
         }
@@ -63,7 +64,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // Should remove listeners from the diagram.
     }
 
-    private initDiagram(): go.Diagram {
+    private initDiagram = (): go.Diagram => {
         const $ = go.GraphObject.make;
         // diagram
         const diagram = 
@@ -73,8 +74,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     {
                         nodeKeyProperty: "key",
                         linkKeyProperty: "key",
-                        linkFromPortIdProperty: "fromPort", // required information:
-                        linkToPortIdProperty: "toPort",     // identifies data property names
+                        linkFromPortIdProperty: "fromPort",
+                        linkToPortIdProperty: "toPort",
+                        nodeCategoryProperty: "category",
+                        linkCategoryProperty: "category"
                     }),
                     layout: $(go.LayeredDigraphLayout, 
                     {
@@ -89,32 +92,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         setsPortSpots: true
                     })
                 });
-        
-        const accessModifierToSymbol = (accessModifier: string) => {
-            switch (accessModifier) {
-                case "public": return "+";
-                case "private": return "-";
-                case "protected": return "#";
-                case "internal": return "~";
-                default: return "";
-            }; 
-        }
-
-        const symbolToAccessModifier = (symbol: string) => {
-            switch(symbol) {
-                case "+": return "public";
-                case "-": return "private";
-                case "#": return "protected";
-                case "~": return "internal";
-                default: return "";
-            };
-        }
-
-        const filterViewablemodifiers = (modifiers: string[]) => {
-            return modifiers.filter((modifier: string) => {
-                return ["public", "private", "protected", "internal"].includes(modifier);
-            })
-        }
 
         // access modifier template
         var accessModifierTemplate = 
@@ -125,7 +102,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         name: "SYMBOL", visible: true, textAlign: "center", stroke: "blue", cursor: "pointer",
                         click: (e: any, node: any) => node.visible = false
                     },
-                    new go.Binding("text", "", accessModifierToSymbol),
+                    new go.Binding("text", "", this.accessModifierToSymbol),
                     new go.Binding("visible", "visible", (visible => !visible)).ofObject("ACCESSMODIFIER")),
                 $(go.TextBlock,
                     {
@@ -148,7 +125,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 $(go.Panel, "Table",
                     // field visibility access modifiers
                     $(go.Panel, "Horizontal",
-                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
                         {
                             row: 0, column: 0, stretch: go.GraphObject.Fill,
                             defaultAlignment: go.Spot.Left, opacity: 1,
@@ -216,7 +193,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 $(go.Panel, "Table",
                     // property visibility access modifiers
                     $(go.Panel, "Horizontal",
-                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
                         {
                             row: 0, column: 0, stretch: go.GraphObject.Fill,
                             defaultAlignment: go.Spot.Left, opacity: 1,
@@ -242,15 +219,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                             itemTemplate: accessorTemplate
                         }))
             );
-
-        const markLastItemAsLast = (parameters: string[]) => {
-            return parameters.map((parameter: any) => {
-                return {
-                    ...parameter,
-                    isLast: parameters.indexOf(parameter) == parameters.length - 1
-                };
-            });
-        }
 
         // method parameter template
         var methodParameterTemplate = 
@@ -290,7 +258,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     { defaultRowSeparatorStroke: "black" },
                     // method visibility access modifiers
                     $(go.Panel, "Horizontal",
-                        new go.Binding("itemArray", "modifiers", filterViewablemodifiers),
+                        new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
                         {
                             row: 0, column: 0, stretch: go.GraphObject.Fill,
                             defaultAlignment: go.Spot.Left, opacity: 0.75,
@@ -305,7 +273,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     $(go.TextBlock, "(", { row: 0, column: 2, width: 5 }),
                     // method parameters
                     $(go.Panel, "Horizontal",
-                        new go.Binding("itemArray", "parameters", markLastItemAsLast),
+                        new go.Binding("itemArray", "parameters", this.markLastItemAsLast),
                         {
                             row: 0, column: 3, stretch: go.GraphObject.Fill,
                             defaultAlignment: go.Spot.Left,
@@ -333,7 +301,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             );
 
         // class node template
-        diagram.nodeTemplate = 
+        var classNodeTemplate =
             $(go.Node, "Auto",
                 {
                     locationSpot: go.Spot.Center,
@@ -410,8 +378,94 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         new go.Binding("visible", "methods", methods => methods.length > 0)),
                 )
             );
+        
+        // enum value template
+        var valueTemplate =
+            $(go.Panel, "Horizontal",
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId"),
+                $(go.TextBlock,
+                    { isMultiline: false, editable: false, stroke: "black" },
+                    new go.Binding("text", "value")) 
+            );
 
+        // enum node template
+        var enumNodeTemplate =
+            $(go.Node, "Auto",
+                {
+                    locationSpot: go.Spot.Center,
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide
+                },
+                new go.Binding("portId", "portId"),
+                $(go.Shape, "RoundedRectangle", { fill: "white" }),
+                $(go.Panel, "Table",
+                    { defaultRowSeparatorStroke: "black" },
+                    // enum name
+                    $(go.TextBlock,
+                        {
+                            row: 0, columnSpan: 2, margin: 3, alignment: go.Spot.Center,
+                            font: "bold 12pt sans-serif",
+                            isMultiline: false, editable: false
+                        },
+                        new go.Binding("text", "name")),
+                    // values
+                    $(go.TextBlock, "Values",
+                        { row: 4, font: "italic 10pt sans-serif" },
+                        new go.Binding("visible", "visible", (visible => !visible)).ofObject("VALUES")),
+                    $(go.Panel, "Vertical", { name: "VALUES" },
+                        new go.Binding("itemArray", "values"),
+                        {
+                            row: 4, margin: 3, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: valueTemplate
+                        }),
+                    $("PanelExpanderButton", "VALUES",
+                        { row: 4, column: 1, alignment: go.Spot.TopRight, visible: false},
+                        new go.Binding("visible", "values", values => values.length > 0)),
+                )
+            );
+
+        diagram.nodeTemplateMap.add("class", classNodeTemplate);
+        diagram.nodeTemplateMap.add("struct", classNodeTemplate);
+        diagram.nodeTemplateMap.add("interface", classNodeTemplate);
+        diagram.nodeTemplateMap.add("enum", enumNodeTemplate);
         return diagram;
+    }
+
+    private accessModifierToSymbol = (accessModifier: string) => {
+        switch (accessModifier) {
+            case "public": return "+";
+            case "private": return "-";
+            case "protected": return "#";
+            case "internal": return "~";
+            default: return "";
+        }; 
+    }
+    private symbolToAccessModifier = (symbol: string) => {
+        switch(symbol) {
+            case "+": return "public";
+            case "-": return "private";
+            case "#": return "protected";
+            case "~": return "internal";
+            default: return "";
+        };
+    }
+    private filterViewableModifiers = (modifiers: string[]) => {
+        return modifiers.filter((modifier: string) => {
+            return ["public", "private", "protected", "internal"].includes(modifier);
+        })
+    }
+    private markLastItemAsLast = (parameters: string[]) => {
+        return parameters.map((parameter: any) => {
+            return {
+                ...parameter,
+                isLast: parameters.indexOf(parameter) == parameters.length - 1
+            };
+        });
     }
 
     render() {

@@ -40,6 +40,7 @@ namespace CodeDive {
         public int MagicNumber { get; set; }
 
         public int Add(int x, int y) {
+            MagicTrick magicTrick;
             int sum;
             sum = x + y;
             return sum;

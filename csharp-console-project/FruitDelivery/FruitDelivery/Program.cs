@@ -21,8 +21,10 @@ namespace FruitDelivery
     struct MyStruct
     {
         public int X { get; set; }
-        public int Add(int x, int y)
+        public IKnowAll Add(int x, int y)
         {
+            Salutes salute;
+            salute = Salutes.HiFive;
             return x + y;
         }
     }

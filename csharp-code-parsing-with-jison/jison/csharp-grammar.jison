@@ -278,12 +278,14 @@ if (!('endCurrentMethodDeclaration' in yy)) {
 var currentStatementUsedFieldsAndProperties = [];
 var currentStatementUsedConstructors = [];
 var currentStatementUsedMethods = [];
+var currentStatementUsedTypes = [];
 if (!('addVariableDeclaration' in yy)) {
 	yy.addVariableDeclaration = function addVariableDeclaration(type, name) {
 		declaredVariables.push({
 			type: type,
 			name: name
 		});
+		currentStatementUsedTypes.push(type);
 	};
 }
 if (!('addStatement' in yy)) {
@@ -292,12 +294,14 @@ if (!('addStatement' in yy)) {
 			statementText: text,
 			usedFieldsAndProperties: currentStatementUsedFieldsAndProperties,
 			usedConstructors: currentStatementUsedConstructors,
-			usedMethods: currentStatementUsedMethods
+			usedMethods: currentStatementUsedMethods,
+			usedTypes: currentStatementUsedTypes
 		});
 		// Cleanup
 		currentStatementUsedFieldsAndProperties = [];
 		currentStatementUsedConstructors = [];
 		currentStatementUsedMethods = [];
+		currentStatementUsedTypes = [];
 	};
 }
 if (!('addUsedMethod' in yy)) {
