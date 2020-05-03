@@ -30,6 +30,10 @@ class App extends React.Component<Props> {
     window.removeEventListener('message', this.windowEventListener as EventListener);
   }
 
+  // For debugging purposes
+  // TODO: remove this once its not needed
+  private parsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
+
   windowEventListener = (event: MessageEvent) => {
     const message = event.data; // The JSON data our extension sent
     switch (message.command) {
@@ -42,8 +46,8 @@ class App extends React.Component<Props> {
       case 'codeDiveAnalysisResults':
         var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
         
-        // TODO: show the visual representation of the code.
-        // For now, we only show the result of the code dive analysis as text.
+        // For debugging purposes
+        this.parsedTypes = codeDiveAnalysisResults;
         this.props.postTypes(codeDiveAnalysisResults);
         break;
     }
@@ -54,7 +58,7 @@ class App extends React.Component<Props> {
       <div>
         <header><h1>Welcome to Code Dive!</h1></header>
         <p>Hang on while we test a few things.</p>
-        <p>{JSON.stringify(this.props.types)}</p>
+        <p>{JSON.stringify(this.parsedTypes)}</p>
         <CodeDiagram types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types}></CodeDiagram>
       </div>
     );
