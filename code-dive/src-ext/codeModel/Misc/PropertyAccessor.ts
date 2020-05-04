@@ -1,14 +1,17 @@
 import { DeclaredVariable } from './DeclaredVariable';
-import { Statement } from "../Misc/Statement";
+import { Statement } from "./Statement";
+import { FixedParameter } from './FixedParameter';
 
 export class PropertyAccessor {
-    type: string;
+    name: string;
     declaredVariables: DeclaredVariable[];
+    parameters: FixedParameter[];
     body: Statement[];
 
-    public constructor(type: string, declaredVariables: DeclaredVariable[], body: Statement[]) {
-        this.type = type;
+    public constructor(name: string, declaredVariables: DeclaredVariable[], parameters: FixedParameter[], body: Statement[]) {
+        this.name = name;
         this.declaredVariables = declaredVariables;
+        this.parameters = parameters;
         this.body = body;
     }
 }

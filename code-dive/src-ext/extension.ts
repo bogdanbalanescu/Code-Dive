@@ -107,7 +107,7 @@ class ReactPanel {
 		var parsedTypesJobs = sourceFilesPaths.map(async (filePath: string) => {
 			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
 				return file.getText();
-			})
+			});
 			try {
 				return this.parseSourceCodeAsTypes(fileText);
 			}
@@ -119,7 +119,8 @@ class ReactPanel {
 				return new ParsedTypes([], [], [], []);
 			}
 		});
-		(await Promise.all(parsedTypesJobs)).forEach((parsedTypes: ParsedTypes) => {
+		var parsedTypes = await Promise.all(parsedTypesJobs);
+		parsedTypes.forEach((parsedTypes: ParsedTypes) => {
 			allParsedTypes.addClasses(parsedTypes.classes);
 			allParsedTypes.addStructs(parsedTypes.structs);
 			allParsedTypes.addInterfaces(parsedTypes.interfaces);

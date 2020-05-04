@@ -23,7 +23,7 @@ export class CodeDiagramHelper {
         const createStatementLinks = (type: IType, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementPort: string) =>
             CodeDiagramHelper.createStatementLinks(type, callable, statement, statementPort, typesGroupedByNamespace, linkData);
         const createParameterLinks = (type: IType, parameterType: string, parameterPort: string) =>
-            CodeDiagramHelper.createParameterLinks(type, parameterType, parameterPort, typesGroupedByNamespace, linkData);
+            {}// CodeDiagramHelper.createParameterLinks(type, parameterType, parameterPort, typesGroupedByNamespace, linkData);
 
         const mapField = (type: Class | Struct, field: Field) => {
             return {
@@ -40,9 +40,22 @@ export class CodeDiagramHelper {
                 portId: statementPort
             };
         };
+        const mapParameter = (type: Class | Struct | Interface, callable: Method | Constructor | PropertyAccessor, parameter: FixedParameter) => {
+            var parameterPort = CodeDiagramHelper.constructorOrMethodOrPropertyAccessorParameterPort(type, callable, parameter);
+            createParameterLinks(type, parameter.type, parameterPort);
+            return {
+                modifier: parameter.modifier,
+                name: parameter.name,
+                type: parameter.type,
+                portId: parameterPort
+            };
+        };
         const mapPropertyAccessor = (type: Class | Struct | Interface, property: Property, accessor :PropertyAccessor) => {
             return {
-                type: accessor.type,
+                name: accessor.name,
+                // TODO: analyze the need for a port here
+                // portId: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, accessor),
+                parameters: accessor.parameters.map(parameter => mapParameter(type, accessor, parameter)),
                 body: accessor.body.map((statement: Statement, index: number) => {
                     var statementPort = CodeDiagramHelper.propertyAccessorStatementPort(type, property, accessor, index);
                     return mapStatement(type, accessor, statement, statementPort);
@@ -58,21 +71,11 @@ export class CodeDiagramHelper {
                 accessors: property.accessors.map(accessor => mapPropertyAccessor(type, property, accessor))
             };
         };
-        const mapParameter = (type: Class | Struct | Interface, callable: Method | Constructor, parameter: FixedParameter) => {
-            var parameterPort = CodeDiagramHelper.constructorOrMethodParameterPort(type, callable, parameter);
-            createParameterLinks(type, parameter.type, parameterPort);
-            return {
-                modifier: parameter.modifier,
-                name: parameter.name,
-                type: parameter.type,
-                portId: parameterPort
-            };
-        };
         const mapConstructor = (type: Class | Struct | Interface, constructor: Constructor) => {
             return {
                 modifiers: constructor.modifiers,
                 name: constructor.name,
-                portId: CodeDiagramHelper.constructorOrMethodPort(type, constructor),
+                portId: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, constructor),
                 parameters: constructor.parameters.map(parameter => mapParameter(type, constructor, parameter)),
                 statements: constructor.statements.map((statement: Statement, index: number) => {
                     var statementPort = CodeDiagramHelper.constructorOrMethodStatementPort(type, constructor, index);
@@ -86,7 +89,7 @@ export class CodeDiagramHelper {
                 modifiers: method.modifiers,
                 name: method.name,
                 type: method.type,
-                portId: CodeDiagramHelper.constructorOrMethodPort(type, method),
+                portId: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, method),
                 parameters: method.parameters.map(parameter => mapParameter(type, method, parameter)),
                 statements: method.statements.map((statement: Statement, index: number) => {
                     var statementPort = CodeDiagramHelper.constructorOrMethodStatementPort(type, method, index);
@@ -201,13 +204,13 @@ export class CodeDiagramHelper {
     private static enumValuePort =
         (type: Enum, value: string) => `${CodeDiagramHelper.typeKey(type)}.${value}`;
     private static propertyAccessorStatementPort = 
-        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, index: number) => `${CodeDiagramHelper.fieldOrPropertyPort(type, property)}.${accessor.type}:${index}`;
-    private static constructorOrMethodPort = 
-        (type: IType, constructor: Constructor | Method) => `${CodeDiagramHelper.typeKey(type)}.${constructor.name}:${constructor.parameters.map(parameter => parameter.type).join('.')}:`;
-    private static constructorOrMethodParameterPort = 
-        (type: IType, constructor: Constructor | Method, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodPort(type, constructor)}.${parameter.name}`;
+        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, index: number) => `${CodeDiagramHelper.fieldOrPropertyPort(type, property)}.${accessor.name}:${index}`;
+    private static constructorOrMethodOrPropertyAccessorPort = 
+        (type: IType, constructor: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.typeKey(type)}.${constructor.name}:${constructor.parameters.map(parameter => parameter.type).join('.')}:`;
+    private static constructorOrMethodOrPropertyAccessorParameterPort = 
+        (type: IType, constructor: Constructor | Method | PropertyAccessor, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, constructor)}.${parameter.name}`;
     private static constructorOrMethodStatementPort = 
-        (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodPort(type, constructor)}${index}`;
+        (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, constructor)}${index}`;
 
     // Creating and adding links
     private static addLink = (from: string, fromPort: string, to: string, toPort: string, linkData: any) => linkData.push({
@@ -241,8 +244,8 @@ export class CodeDiagramHelper {
             }
         }
     }
-    private static addLinkFromStatementToConstructorOrMethod (type: IType, callableName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
-        var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, callableName, typesGroupedByNamespace);
+    private static addLinkFromStatementToConstructorOrMethod (type: IType, callableType: string, callableName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
+        var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, callableType, typesGroupedByNamespace);
         if (relevantType !== undefined) {
             var callable = CodeDiagramHelper.findConstructorOrMethodInType(relevantType, callableName);
             if (callable !== undefined) {
@@ -250,7 +253,7 @@ export class CodeDiagramHelper {
                     CodeDiagramHelper.typeKey(type),
                     statementPort,
                     CodeDiagramHelper.typeKey(relevantType as IType),
-                    CodeDiagramHelper.constructorOrMethodPort(relevantType as Class | Struct, callable as Constructor | Method),
+                    CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(relevantType as Class | Struct, callable as Constructor | Method),
                     linkData
                 )
             }
@@ -286,7 +289,7 @@ export class CodeDiagramHelper {
         if (returnType !== undefined) {
             CodeDiagramHelper.addLink(
                 CodeDiagramHelper.typeKey(type),
-                CodeDiagramHelper.constructorOrMethodPort(type, method),
+                CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, method),
                 CodeDiagramHelper.typeKey(returnType as IType),
                 CodeDiagramHelper.typeKey(returnType as IType),
                 linkData
@@ -297,7 +300,7 @@ export class CodeDiagramHelper {
         statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
             var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
             if (fieldOrPropertyAtoms.length > 1) { // if member access
-                var parametersIndex = callable instanceof PropertyAccessor ? -1 : callable.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
+                var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
                 var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
                 if (parametersIndex !== -1 && !(callable instanceof PropertyAccessor)) { // if type can be inferred from parameters
                     var parameter = callable.parameters[parametersIndex];
@@ -313,18 +316,45 @@ export class CodeDiagramHelper {
                 }
             }
             else { // if it refers to members present on the same type
-                CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementPort, typesGroupedByNamespace, linkData);
+                // TODO: analyze if this is needed at all
+                // CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementPort, typesGroupedByNamespace, linkData);
             }
         });
         statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
-            CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructor, statementPort, typesGroupedByNamespace, linkData);
+            var constructorAtoms = constructor.split('.'); // convention: constructor can have either 1 or 2 elements
+            if (constructorAtoms.length > 1) { // if member access
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementPort, typesGroupedByNamespace, linkData);
+            }
+            else { // if it refers to members present on the same type
+                // TODO: analyze if this is needed at all
+                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementPort, typesGroupedByNamespace, linkData);
+            }
         });
         statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
-            CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, method, statementPort, typesGroupedByNamespace, linkData);
+            var methodAtoms = method.split('.'); // convention: method can have either 1 or 2 elements
+            if (methodAtoms.length > 1) { // if member access
+                var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
+                var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
+                if (parametersIndex !== -1 && !(callable instanceof PropertyAccessor)) { // if type can be inferred from parameters
+                    var parameter = callable.parameters[parametersIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementPort, typesGroupedByNamespace, linkData);
+                }
+                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
+                    var declaredVariable = callable.declaredVariables[declaredVariablesIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, declaredVariable.type, methodAtoms[1], statementPort, typesGroupedByNamespace, linkData);
+                }
+                else { // if it is possibly a static member of a certain type
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementPort, typesGroupedByNamespace, linkData);
+                }
+            }
+            else {
+                // TODO: analyze if this is needed at all
+                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementPort, typesGroupedByNamespace, linkData);
+            }
         });
         statement.usedTypes.forEach((usedType: string) => {
-            CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementPort, typesGroupedByNamespace, linkData);
-        })
+            // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementPort, typesGroupedByNamespace, linkData);
+        });
     };
     private static createParameterLinks (type: IType, parameterType: string, parameterPort: string, typesGroupedByNamespace: any, linkData: any) {
         var referencedType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parameterType, typesGroupedByNamespace);

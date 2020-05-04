@@ -7,7 +7,6 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     /// MainApp startup class for Structural 
     /// Iterator Design Pattern.
     /// </summary>
-
     class MainApp
     {
         /// <summary>
@@ -24,7 +23,6 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             a[3] = "Item D";
  
             // Create Iterator and provide aggregate
-
             Iterator i;
             i = a.CreateIterator();
  
@@ -33,10 +31,17 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             object item;
             item = i.First();
             while (item != null)
-                item = i.Next();
- 
+                item = WriteCurrentAndGetNext(i, item);
+
             // Wait for user
             Console.ReadKey();
+        }
+
+        private static object WriteCurrentAndGetNext(Iterator i, object item)
+        {
+            Console.WriteLine(item);
+            item = i.Next();
+            return item;
         }
     }
  
@@ -54,10 +59,14 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     class ConcreteAggregate : Aggregate
     {
         private ArrayList _items;
- 
-        public override Iterator CreateIterator()
+
+        public ConcreteAggregate()
         {
             _items = new ArrayList();
+        }
+
+        public override Iterator CreateIterator()
+        {
             return new ConcreteIterator(this);
         }
  

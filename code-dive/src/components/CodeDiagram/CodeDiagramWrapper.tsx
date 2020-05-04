@@ -85,10 +85,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         layerSpacing: 25,
                         columnSpacing: 25,
                         cycleRemoveOption: go.LayeredDigraphLayout.CycleGreedy,
-                        layeringOption: go.LayeredDigraphLayout.LayerLongestPathSource,
+                        layeringOption: go.LayeredDigraphLayout.LayerOptimalLinkLength,
                         initializeOption: go.LayeredDigraphLayout.InitDepthFirstOut,
                         aggressiveOption: go.LayeredDigraphLayout.AggressiveLess,
-                        packOption: go.LayeredDigraphLayout.PackExpand,
+                        packOption: go.LayeredDigraphLayout.PackMedian,
                         setsPortSpots: true
                     })
                 });
@@ -160,16 +160,55 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     // (idea: return a string array with the atoms in a statement)
             );
 
-        // accessor template
-        var accessorTemplate =
+        // parameter template
+        var parameterTemplate = 
+                $(go.Panel, "Horizontal",
+                {
+                    fromSpot: go.Spot.TopSide,
+                    toSpot: go.Spot.BottomSide,
+                },
+                new go.Binding("portId", "portId"),
+                // parameter name
+                $(go.TextBlock,
+                    { isMultiline: false, editable: false, stroke: "green" },
+                    new go.Binding("text", "name")),
+                // :
+                $(go.TextBlock, ":"),
+                // parameter type
+                $(go.TextBlock,
+                    { isMultiline: false, editable: false, stroke: "blue" },
+                    new go.Binding("text", "type")),
+                // ,
+                $(go.TextBlock, ", ",
+                    { isMultiline: false, editable: false, stroke: "black" },
+                    new go.Binding("text", ", "),
+                    new go.Binding("visible", "isLast", isLast => { return isLast !== true }))
+            );
+
+        // property accessor template
+        var propertyAccessorTemplate =
             $(go.Panel, "Auto",
                 $(go.Shape, "RoundedRectangle", { fill: "white" }),
                 $(go.Panel, "Table",
                     { defaultRowSeparatorStroke: "black" },
                     // accessor type (get or set)
                     $(go.TextBlock,
-                        { row: 0, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
-                        new go.Binding("text", "type")),
+                        { row: 0, column: 0, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
+                        new go.Binding("text", "name")),
+                    // [
+                    $(go.TextBlock, "[", { row: 0, column: 1, width: 5 },
+                        new go.Binding("visible", "parameters", parameters => parameters.length > 0)),
+                    // method parameters
+                    $(go.Panel, "Horizontal",
+                        new go.Binding("itemArray", "parameters", this.markLastItemAsLast),
+                        {
+                            row: 0, column: 2, stretch: go.GraphObject.Fill,
+                            defaultAlignment: go.Spot.Left,
+                            itemTemplate: parameterTemplate
+                        }),
+                    // ]
+                    $(go.TextBlock, "]", { row: 0, column: 3, width: 5 },
+                    new go.Binding("visible", "parameters", parameters => parameters.length > 0)),
                     // statements
                     $(go.Panel, "Vertical",
                         new go.Binding("itemArray", "body"), 
@@ -216,33 +255,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         {
                             row: 1, columnSpan: 5, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
                             defaultAlignment: go.Spot.Left,
-                            itemTemplate: accessorTemplate
+                            itemTemplate: propertyAccessorTemplate
                         }))
-            );
-
-        // method parameter template
-        var methodParameterTemplate = 
-                $(go.Panel, "Horizontal",
-                {
-                    fromSpot: go.Spot.TopSide,
-                    toSpot: go.Spot.BottomSide,
-                },
-                new go.Binding("portId", "portId"),
-                // parameter name
-                $(go.TextBlock,
-                    { isMultiline: false, editable: false, stroke: "green" },
-                    new go.Binding("text", "name")),
-                // :
-                $(go.TextBlock, ":"),
-                // parameter type
-                $(go.TextBlock,
-                    { isMultiline: false, editable: false, stroke: "blue" },
-                    new go.Binding("text", "type")),
-                // ,
-                $(go.TextBlock, ", ",
-                    { isMultiline: false, editable: false, stroke: "black" },
-                    new go.Binding("text", ", "),
-                    new go.Binding("visible", "isLast", isLast => { return isLast !== true }))
             );
 
         // method template
@@ -277,7 +291,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         {
                             row: 0, column: 3, stretch: go.GraphObject.Fill,
                             defaultAlignment: go.Spot.Left,
-                            itemTemplate: methodParameterTemplate
+                            itemTemplate: parameterTemplate
                         }),
                     // )
                     $(go.TextBlock, ")", { row: 0, column: 4, width: 5 }),

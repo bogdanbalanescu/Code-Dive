@@ -186,12 +186,14 @@ if (!('addField' in yy)) {
 if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		propertyAccessors.push({
-			type: type,
+			name: type,
 			declaredVariables: declaredVariables,
+			parameters: currentInvocableMemberFixedParameters,
 			body: statements.length > 0 ? statements : [] // functionality not yet supported
 		});
 		// Cleanup
 		declaredVariables = [];
+		currentInvocableMemberFixedParameters = [];
 		statements = [];
 	};
 }
@@ -391,6 +393,7 @@ if (!('getParsedSourceFile' in yy)) {
 ((\+|\-|\*|\/|\%|\&|\||\^|\<\<|\>\>)?\=) return 'ASSIGNMENT_OPERATOR';
 (\<\<|\>\>)				return 'SHIFT_OPERATOR';
 (\<\=|\>\=|\<|\>)		return 'COMPARISON_OPERATOR';
+(\!\=|\=\=)				return 'EQUALITY_OPERATOR'
 (bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort) return 'IDENTIFIER';
 "void" 					return 'IDENTIFIER';
 [_a-zA-Z]+[_a-zA-Z0-9]*	return 'IDENTIFIER';
@@ -404,6 +407,7 @@ if (!('getParsedSourceFile' in yy)) {
 /* 0. Source file */
 source_file
 	: EOF /* in case the file is empty */
+        {return yy.getParsedSourceFile();}
 	| source_file_parts EOF
         {return yy.getParsedSourceFile();}
     ;
@@ -588,9 +592,13 @@ property_declaration
 		{yy.addProperty($2, $3);}
 	| modifiers array_type IDENTIFIER property_body
 		{yy.addProperty($2, $3);}
+	| modifiers IDENTIFIER THIS '[' formal_parameter_list ']' property_body
+		{yy.addProperty($2, $3);}
 	| IDENTIFIER IDENTIFIER property_body
 		{yy.addProperty($1, $2);}
 	| array_type IDENTIFIER property_body
+		{yy.addProperty($1, $2);}
+	| IDENTIFIER THIS '[' formal_parameter_list ']' property_body
 		{yy.addProperty($1, $2);}
 	;
 property_body
@@ -973,9 +981,7 @@ and_expression
     ;
 equality_expression
     : relational_expression
-    | equality_expression '==' relational_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | equality_expression '!=' relational_expression
+    | equality_expression EQUALITY_OPERATOR relational_expression
 		{$$ = $1 + ' ' + $2 + ' ' + $3;}
     ;
 relational_expression
@@ -1092,11 +1098,13 @@ element_access
 		 yy.addUsedFieldOrProperty($1);}
     ;
 this_access
-	: THIS '.' IDENTIFIER
+	: THIS
+	| THIS '.' IDENTIFIER
 		{$$ = $1 + $2 + $3;}
     ;
 base_access
-    : BASE '.' IDENTIFIER
+	: BASE
+    | BASE '.' IDENTIFIER
 		{$$ = $1 + $2 + $3;}
     ;
 %%
