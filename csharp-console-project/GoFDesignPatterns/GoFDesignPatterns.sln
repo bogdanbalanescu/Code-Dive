@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29609.76
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FruitDelivery", "FruitDelivery\FruitDelivery.csproj", "{F9E9E4BF-825D-4E39-970D-2A4A6BBC39DC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Iterator", "Iterator\Iterator.csproj", "{0E6F1583-BB6F-4A59-97E0-DA18467A1927}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F9E9E4BF-825D-4E39-970D-2A4A6BBC39DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9E9E4BF-825D-4E39-970D-2A4A6BBC39DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F9E9E4BF-825D-4E39-970D-2A4A6BBC39DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9E9E4BF-825D-4E39-970D-2A4A6BBC39DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E6F1583-BB6F-4A59-97E0-DA18467A1927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E6F1583-BB6F-4A59-97E0-DA18467A1927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E6F1583-BB6F-4A59-97E0-DA18467A1927}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E6F1583-BB6F-4A59-97E0-DA18467A1927}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {56008EE8-E61C-4AF9-B73E-6C81FFFCB292}
+		SolutionGuid = {149EEEEC-20A8-4D2F-B199-9BBFA2AFABE6}
 	EndGlobalSection
 EndGlobal
