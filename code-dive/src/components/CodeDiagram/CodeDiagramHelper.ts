@@ -97,14 +97,21 @@ export class CodeDiagramHelper {
                 }),
             };
         };
-        const mapClassOrStructToNode = (type: Class | Struct) => {
+
+        // Map Types (classes, structs, interfaces and enums)
+        const mapType = (type: IType) => {
             createInheritanceLinks(type);
             return {
-                category: type instanceof Class? "class": "struct",
                 key: CodeDiagramHelper.typeKey(type),
                 modifiers: type.modifiers,
                 name: type.name,
                 portId: CodeDiagramHelper.typePort(type),
+            };
+        }
+        const mapClassOrStructToNode = (type: Class | Struct) => {
+            return {
+                category: type instanceof Class? "class": "struct",
+                ...mapType(type),
                 fields: type.fields.map(field => mapField(type, field)),
                 properties: type.properties.map(property => mapProperty(type, property)),
                 constructors: type.constructors.map(constructor => mapConstructor(type, constructor)),
@@ -112,25 +119,17 @@ export class CodeDiagramHelper {
             };
         };
         const mapInterfaceToNode = (type: Interface) => {
-            createInheritanceLinks(type);
             return {
                 category: "interface",
-                key: CodeDiagramHelper.typeKey(type),
-                modifiers: type.modifiers,
-                name: type.name,
-                portId: CodeDiagramHelper.typePort(type),
+                ...mapType(type),
                 properties: type.properties.map(property => mapProperty(type, property)),
                 methods: type.methods.map(method => mapMethod(type, method))
             };
         }
         const mapEnumToNode = (type: Enum) => {
-            createInheritanceLinks(type);
             return {
                 category: "enum",
-                key: CodeDiagramHelper.typeKey(type),
-                modifiers: type.modifiers,
-                name: type.name,
-                portId: CodeDiagramHelper.typePort(type),
+                ...mapType(type),
                 values: type.values.map(value => {
                     return {
                         value: value,
