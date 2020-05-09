@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import './CodeDiagramWrapper.css';
 import { isDeepStrictEqual } from 'util';
+import { LinkType } from './LinkType';
 
 interface CodeDiagramProps { 
     nodeDataArray: Array<go.ObjectData>;
@@ -95,24 +96,36 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     })
                 });
 
+        // type node templates
         diagram.nodeTemplateMap.add("class", this.classNodeTemplate());
         diagram.nodeTemplateMap.add("struct", this.classNodeTemplate());
         diagram.nodeTemplateMap.add("interface", this.classNodeTemplate());
         diagram.nodeTemplateMap.add("enum", this.enumNodeTemplate());
 
-        diagram.linkTemplate =
-        $(go.Link,
-          { routing: go.Link.AvoidsNodes, // link route should avoid nodes
-            corner: 10,
-            curve: go.Link.JumpGap }, // rounded corners
-          $(go.Shape),
-          $(go.Shape, { toArrow: "Standard" })
-        );
+        // inheritance links
+        diagram.linkTemplateMap.add(LinkType.Realization, this.inheritanceLink());
+        diagram.linkTemplateMap.add(LinkType.Generalization, this.inheritanceLink());
+        // links to types
+        diagram.linkTemplateMap.add(LinkType.CallableReturnType, this.linksToTypes());
+        diagram.linkTemplateMap.add(LinkType.ParameterType, this.linksToTypes());
+        diagram.linkTemplateMap.add(LinkType.StatementUsesType, this.linksToTypes());
+        // links to members
+        diagram.linkTemplateMap.add(LinkType.StatementUsesEnumValue, this.linksToUsedMembers());
+        diagram.linkTemplateMap.add(LinkType.StatementUsesFieldOrProperty, this.linksToUsedMembers());
+        diagram.linkTemplateMap.add(LinkType.StatementUsesConstructorOrMethod, this.linksToUsedMembers());
 
         return diagram;
     }
 
     // type members and member components templates
+    private valueTemplate = () => {
+        return this.$(go.Panel, "Horizontal",
+            new go.Binding("portId", "portId"),
+            this.$(go.TextBlock,
+                { isMultiline: false, editable: false, stroke: "black" },
+                new go.Binding("text", "value")) 
+        );
+    }
     private accessModifierTemplate = () => {
         return this.$(go.Panel, "Horizontal",
             { margin: new go.Margin(0, 4, 0, 0) },
@@ -134,12 +147,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private fieldTemplate = () => {
         return this.$(go.Panel, "Auto",
-            this.$(go.Shape, "RoundedRectangle", { fill: "white" },
-            {
-                fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
-            },
-            new go.Binding("portId", "portId")),
+            this.$(go.Shape, "RoundedRectangle", { fill: "white" }, new go.Binding("portId", "portId")),
             this.$(go.Panel, "Table",
                 // field visibility access modifiers
                 this.$(go.Panel, "Horizontal",
@@ -164,10 +172,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private statementTemplate = () => {
         return this.$(go.Panel, "Horizontal",
-            {
-                fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
-            },
             new go.Binding("portId", "portId"),
             this.$(go.TextBlock,
                 { isMultiline: false, editable: false, stroke: "black" },
@@ -179,10 +183,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private parameterTemplate = () => {
         return this.$(go.Panel, "Horizontal",
-            {
-                fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide,
-            },
             new go.Binding("portId", "portId"),
             // parameter name
             this.$(go.TextBlock,
@@ -237,12 +237,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private propertyTemplate = () => {
         return this.$(go.Panel, "Auto",
-            this.$(go.Shape, "RoundedRectangle", { fill: "white" },
-            {
-                fromSpot: go.Spot.TopSide,
-                toSpot: go.Spot.BottomSide
-            },
-            new go.Binding("portId", "portId")),
+            this.$(go.Shape, "RoundedRectangle", { fill: "white" }, new go.Binding("portId", "portId")),
             this.$(go.Panel, "Table",
                 // property visibility access modifiers
                 this.$(go.Panel, "Horizontal",
@@ -275,12 +270,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private methodTemplate = () => {
         return this.$(go.Panel, "Auto",
-            this.$(go.Shape, "RoundedRectangle", { fill: "white" },
-            {
-                fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
-            },
-            new go.Binding("portId", "portId")),
+            this.$(go.Shape, "RoundedRectangle", { fill: "white" }, new go.Binding("portId", "portId")),
             this.$(go.Panel, "Table",
                 { defaultRowSeparatorStroke: "black" },
                 // method visibility access modifiers
@@ -330,12 +320,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
     // type templates (classes, structs, interfaces, enums)
     private classNodeTemplate = () => {
-        return this.$(go.Node, "Auto",
-            {
-                locationSpot: go.Spot.Center,
-                fromSpot: go.Spot.Top,
-                toSpot: go.Spot.Bottom
-            },
+        return this.$(go.Node, "Auto", 
+            { locationSpot: go.Spot.Center },
             new go.Binding("portId", "portId"),
             this.$(go.Shape, "RoundedRectangle", { fill: "white" }),
             this.$(go.Panel, "Table",
@@ -407,25 +393,9 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             )
         );
     }
-    private valueTemplate = () => {
-        return this.$(go.Panel, "Horizontal",
-            {
-                fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
-            },
-            new go.Binding("portId", "portId"),
-            this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: "black" },
-                new go.Binding("text", "value")) 
-        );
-    }
     private enumNodeTemplate = () => {
         return this.$(go.Node, "Auto",
-            {
-                locationSpot: go.Spot.Center,
-                fromSpot: go.Spot.TopSide,
-                toSpot: go.Spot.BottomSide
-            },
+            { locationSpot: go.Spot.Center },
             new go.Binding("portId", "portId"),
             this.$(go.Shape, "RoundedRectangle", { fill: "white" }),
             this.$(go.Panel, "Table",
@@ -453,6 +423,56 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     { row: 4, column: 1, alignment: go.Spot.TopRight, visible: false},
                     new go.Binding("visible", "values", values => values.length > 0)),
             )
+        );
+    }
+
+    // link templates
+    private inheritanceLink = () => {
+        return this.$(go.Link,
+            { 
+                routing: go.Link.AvoidsNodes, // link route should avoid nodes
+                corner: 10,
+                curve: go.Link.JumpGap, // rounded corners
+                fromEndSegmentLength: 15,
+                toEndSegmentLength: 15,
+                reshapable: false,
+                fromSpot: go.Spot.TopSide,
+                toSpot: go.Spot.BottomSide
+            },
+            this.$(go.Shape, new go.Binding("strokeDashArray", "category", category => category === LinkType.Realization? [4, 2]: [])),
+            this.$(go.Shape, { toArrow: "Triangle", fill: "white" })
+        );
+    }
+    private linksToTypes = () => {
+        return this.$(go.Link,
+            { 
+                routing: go.Link.AvoidsNodes, // link route should avoid nodes
+                corner: 10,
+                curve: go.Link.JumpGap, // rounded corners
+                fromEndSegmentLength: 15,
+                toEndSegmentLength: 15,
+                reshapable: false,
+                fromSpot: go.Spot.RightSide,
+                toSpot: go.Spot.LeftSide
+            },
+            this.$(go.Shape, { stroke: "blue" }),
+            this.$(go.Shape, { toArrow: "Standard", fill: "blue" }),
+        );
+    }
+    private linksToUsedMembers = () => {
+        return this.$(go.Link,
+            { 
+                routing: go.Link.AvoidsNodes, // link route should avoid nodes
+                corner: 10,
+                curve: go.Link.JumpGap, // rounded corners
+                fromEndSegmentLength: 15,
+                toEndSegmentLength: 15,
+                reshapable: false,
+                fromSpot: go.Spot.RightSide,
+                toSpot: go.Spot.LeftSide
+            },
+            this.$(go.Shape, { stroke: "orange" }),
+            this.$(go.Shape, { toArrow: "Standard", fill: "orange" }),
         );
     }
 

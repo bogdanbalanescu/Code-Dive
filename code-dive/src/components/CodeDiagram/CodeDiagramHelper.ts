@@ -11,6 +11,7 @@ import { Method } from '../../codeModel/Misc/Method';
 import { PropertyAccessor } from '../../codeModel/Misc/PropertyAccessor';
 import { FixedParameter } from '../../codeModel/Misc/FixedParameter';
 import { Statement } from '../../codeModel/Misc/Statement';
+import { LinkType } from './LinkType';
 
 export class CodeDiagramHelper {
     public static ComputeNodeAndLinkData(props: {types: IType[]}): {nodeDataArray: any, linkDataArray: any} {
@@ -23,7 +24,7 @@ export class CodeDiagramHelper {
         const createStatementLinks = (type: IType, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementPort: string) =>
             CodeDiagramHelper.createStatementLinks(type, callable, statement, statementPort, typesGroupedByNamespace, linkData);
         const createParameterLinks = (type: IType, parameterType: string, parameterPort: string) =>
-            {}// CodeDiagramHelper.createParameterLinks(type, parameterType, parameterPort, typesGroupedByNamespace, linkData);
+            CodeDiagramHelper.createParameterLinks(type, parameterType, parameterPort, typesGroupedByNamespace, linkData);
 
         const mapField = (type: Class | Struct, field: Field) => {
             return {
@@ -212,29 +213,19 @@ export class CodeDiagramHelper {
         (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, constructor)}${index}`;
 
     // Creating and adding links
-    private static addLink = (from: string, fromPort: string, to: string, toPort: string, linkData: any) => linkData.push({
-        key: linkData.length, from: from, fromPort: fromPort, to: to, toPort: toPort
-    });
-    private static addLinkFromStatementToFieldOrProperty (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
-        var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, fieldOrPropertyType, typesGroupedByNamespace);
-        if (relevantType !== undefined) { // if parameter type is a customly defined one
-            var fieldOrPropertyOfRelevantType = CodeDiagramHelper.findFieldOrPropertyInType(relevantType, fieldOrPropertyName);
-            if (fieldOrPropertyOfRelevantType !== undefined) {
-                CodeDiagramHelper.addLink(
-                    CodeDiagramHelper.typeKey(type), 
-                    statementPort, 
-                    CodeDiagramHelper.typeKey(relevantType as IType), 
-                    CodeDiagramHelper.fieldOrPropertyPort(relevantType as Class | Struct | Interface, fieldOrPropertyOfRelevantType as Field | Property),
-                    linkData);
-            }
-        }
-    };
+    private static addLink = (category: string, from: string, fromPort: string, to: string, toPort: string, linkData: any) => {
+        linkData.push({
+            key: linkData.length, category: category,
+            from: from, fromPort: fromPort, to: to, toPort: toPort
+        });
+    }
     private static addLinkFromStatementToEnumValue (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, fieldOrPropertyType, typesGroupedByNamespace);
         if (relevantType !== undefined && relevantType instanceof Enum) { // if parameter type is a customly defined one and an Enum
             var enumValueOfRelevantType = CodeDiagramHelper.findEnumInType(relevantType, fieldOrPropertyName);
             if (enumValueOfRelevantType !== undefined) {
                 CodeDiagramHelper.addLink(
+                    LinkType.StatementUsesEnumValue,
                     CodeDiagramHelper.typeKey(type), 
                     statementPort, 
                     CodeDiagramHelper.typeKey(relevantType as IType), 
@@ -243,12 +234,28 @@ export class CodeDiagramHelper {
             }
         }
     }
+    private static addLinkFromStatementToFieldOrProperty (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
+        var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, fieldOrPropertyType, typesGroupedByNamespace);
+        if (relevantType !== undefined) { // if parameter type is a customly defined one
+            var fieldOrPropertyOfRelevantType = CodeDiagramHelper.findFieldOrPropertyInType(relevantType, fieldOrPropertyName);
+            if (fieldOrPropertyOfRelevantType !== undefined) {
+                CodeDiagramHelper.addLink(
+                    LinkType.StatementUsesFieldOrProperty,
+                    CodeDiagramHelper.typeKey(type), 
+                    statementPort, 
+                    CodeDiagramHelper.typeKey(relevantType as IType), 
+                    CodeDiagramHelper.fieldOrPropertyPort(relevantType as Class | Struct | Interface, fieldOrPropertyOfRelevantType as Field | Property),
+                    linkData);
+            }
+        }
+    };
     private static addLinkFromStatementToConstructorOrMethod (type: IType, callableType: string, callableName: string, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, callableType, typesGroupedByNamespace);
         if (relevantType !== undefined) {
             var callable = CodeDiagramHelper.findConstructorOrMethodInType(relevantType, callableName);
             if (callable !== undefined) {
                 CodeDiagramHelper.addLink(
+                    LinkType.StatementUsesConstructorOrMethod,
                     CodeDiagramHelper.typeKey(type),
                     statementPort,
                     CodeDiagramHelper.typeKey(relevantType as IType),
@@ -262,10 +269,36 @@ export class CodeDiagramHelper {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, usedType, typesGroupedByNamespace);
         if (relevantType !== undefined) {
             CodeDiagramHelper.addLink(
+                LinkType.StatementUsesType,
                 CodeDiagramHelper.typeKey(type),
                 statementPort,
                 CodeDiagramHelper.typeKey(relevantType as IType),
                 CodeDiagramHelper.typeKey(relevantType as IType),
+                linkData
+            );
+        }
+    }
+    private static createParameterLinks (type: IType, parameterType: string, parameterPort: string, typesGroupedByNamespace: any, linkData: any) {
+        var referencedType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parameterType, typesGroupedByNamespace);
+        if (referencedType !== undefined) {
+            CodeDiagramHelper.addLink(
+                LinkType.ParameterType,
+                CodeDiagramHelper.typeKey(type), 
+                parameterPort, 
+                CodeDiagramHelper.typeKey(referencedType), 
+                CodeDiagramHelper.typePort(referencedType),
+                linkData);
+        }
+    }
+    private static createMethodTypeLink (type: Class | Struct | Interface, method: Method, typesGroupedByNamespace: any, linkData: any) {
+        var returnType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, method.type, typesGroupedByNamespace);
+        if (returnType !== undefined) {
+            CodeDiagramHelper.addLink(
+                LinkType.CallableReturnType,
+                CodeDiagramHelper.typeKey(type),
+                CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, method),
+                CodeDiagramHelper.typeKey(returnType as IType),
+                CodeDiagramHelper.typeKey(returnType as IType),
                 linkData
             );
         }
@@ -275,6 +308,7 @@ export class CodeDiagramHelper {
             var parent = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parentInheritance, typesGroupedByNamespace);
             if (parent !== undefined) {
                 CodeDiagramHelper.addLink(
+                    parent instanceof Interface || parent.modifiers.includes("abstract")? LinkType.Realization: LinkType.Generalization,
                     CodeDiagramHelper.typeKey(type), 
                     CodeDiagramHelper.typePort(type), 
                     CodeDiagramHelper.typeKey(parent), 
@@ -283,18 +317,6 @@ export class CodeDiagramHelper {
             }
         });
     };
-    private static createMethodTypeLink (type: Class | Struct | Interface, method: Method, typesGroupedByNamespace: any, linkData: any) {
-        var returnType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, method.type, typesGroupedByNamespace);
-        if (returnType !== undefined) {
-            CodeDiagramHelper.addLink(
-                CodeDiagramHelper.typeKey(type),
-                CodeDiagramHelper.constructorOrMethodOrPropertyAccessorPort(type, method),
-                CodeDiagramHelper.typeKey(returnType as IType),
-                CodeDiagramHelper.typeKey(returnType as IType),
-                linkData
-            );
-        }
-    }
     private static createStatementLinks (type: IType, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementPort: string, typesGroupedByNamespace: any, linkData: any) {
         statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
             var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
@@ -315,7 +337,7 @@ export class CodeDiagramHelper {
                 }
             }
             else { // if it refers to members present on the same type
-                // TODO: analyze if this is needed at all
+                // TODO: for now, do not show links toward members present on the same type
                 // CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementPort, typesGroupedByNamespace, linkData);
             }
         });
@@ -325,7 +347,7 @@ export class CodeDiagramHelper {
                 CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementPort, typesGroupedByNamespace, linkData);
             }
             else { // if it refers to members present on the same type
-                // TODO: analyze if this is needed at all
+                // TODO: for now, do not show links toward members present on the same type
                 // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementPort, typesGroupedByNamespace, linkData);
             }
         });
@@ -346,24 +368,14 @@ export class CodeDiagramHelper {
                     CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementPort, typesGroupedByNamespace, linkData);
                 }
             }
-            else {
-                // TODO: analyze if this is needed at all
+            else { // if it refers to members present on the same type
+                // TODO: for now, do not show links toward members present on the same type
                 // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementPort, typesGroupedByNamespace, linkData);
             }
         });
         statement.usedTypes.forEach((usedType: string) => {
+            // TODO: for now, do not show links toward types when no member of that type is used
             // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementPort, typesGroupedByNamespace, linkData);
         });
     };
-    private static createParameterLinks (type: IType, parameterType: string, parameterPort: string, typesGroupedByNamespace: any, linkData: any) {
-        var referencedType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parameterType, typesGroupedByNamespace);
-        if (referencedType !== undefined) {
-            CodeDiagramHelper.addLink(
-                CodeDiagramHelper.typeKey(type), 
-                parameterPort, 
-                CodeDiagramHelper.typeKey(referencedType), 
-                CodeDiagramHelper.typePort(referencedType),
-                linkData);
-        }
-    }
 }
