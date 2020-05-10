@@ -3,17 +3,21 @@ using System.Collections;
  
 namespace DoFactory.GangOfFour.Iterator.Structural
 {
+    public enum State {
+        Empty,
+        Half,
+        Full
+    }
+
     /// <summary>
     /// MainApp startup class for Structural 
     /// Iterator Design Pattern.
     /// </summary>
-
     class MainApp
     {
         /// <summary>
         /// Entry point into console application.
         /// </summary>
-
         static void Main()
         {
             ConcreteAggregate a;
@@ -24,7 +28,6 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             a[3] = "Item D";
  
             // Create Iterator and provide aggregate
-
             Iterator i;
             i = a.CreateIterator();
  
@@ -130,7 +133,6 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             return _aggregate[_current];
         }
         // Gets whether iterations are complete
-
         public override bool IsDone()
         {
             return _current >= _aggregate.Count;

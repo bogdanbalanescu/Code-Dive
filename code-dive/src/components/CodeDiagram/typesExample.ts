@@ -300,7 +300,13 @@ var parsedTypes: any = { classes:
                 usedTypes: [] } ] } ] } ],
  structs: [],
  interfaces: [],
- enums: [] }
+ enums: [ 
+  { namespaceDependecies: [ 'System', 'System.Collections' ],
+    namespace: 'DoFactory.GangOfFour.Iterator.Structural',
+    name: 'State',
+    modifiers: [ 'public' ],
+    parentInheritances: [],
+    values: [ 'Empty', 'Half', 'Full' ] } ] }
 export const types: IType[] = (parsedTypes as ParsedTypes).classes.map(type => new Class(type) as IType)
     .concat((parsedTypes as ParsedTypes).structs.map(type => new Struct(type)))
     .concat((parsedTypes as ParsedTypes).interfaces.map(type => new Interface(type)))

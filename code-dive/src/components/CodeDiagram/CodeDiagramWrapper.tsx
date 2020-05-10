@@ -88,7 +88,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         layerSpacing: 25,
                         columnSpacing: 25,
                         cycleRemoveOption: go.LayeredDigraphLayout.CycleGreedy,
-                        layeringOption: go.LayeredDigraphLayout.LayerLongestPathSource,
+                        layeringOption: go.LayeredDigraphLayout.LayerLongestPathSink,
                         initializeOption: go.LayeredDigraphLayout.InitDepthFirstOut,
                         aggressiveOption: go.LayeredDigraphLayout.AggressiveNone,
                         packOption: go.LayeredDigraphLayout.PackAll,
@@ -148,25 +148,20 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private fieldTemplate = () => {
         return this.$(go.Panel, "Auto",
             this.$(go.Shape, "RoundedRectangle", { fill: "white" }, new go.Binding("portId", "portId")),
-            this.$(go.Panel, "Table",
+            this.$(go.Panel, "Horizontal",
                 // field visibility access modifiers
                 this.$(go.Panel, "Horizontal",
-                    new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
-                    {
-                        row: 0, column: 0, stretch: go.GraphObject.Fill,
-                        defaultAlignment: go.Spot.Left, opacity: 1,
-                        itemTemplate: this.accessModifierTemplate()
-                    }),
+                    { stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left, itemTemplate: this.accessModifierTemplate() },
+                    new go.Binding("itemArray", "modifiers", this.filterViewableModifiers)),
                 // field name
                 this.$(go.TextBlock,
-                    { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green" },
+                    { margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green" },
                     new go.Binding("text", "name"),
                     new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
                 // :
-                this.$(go.TextBlock, ":", { row: 0, column: 2 }),
+                this.$(go.TextBlock, ":"),
                 // field type
-                this.$(go.TextBlock,
-                    { row: 0, column: 3, stroke: "blue" },
+                this.$(go.TextBlock, { stroke: "blue" },
                     new go.Binding("text", "type")))
         );
     }
@@ -208,7 +203,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 { defaultRowSeparatorStroke: "black" },
                 // accessor type (get or set)
                 this.$(go.TextBlock,
-                    { row: 0, column: 0, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
+                    { 
+                        row: 0, column: 0, margin: new go.Margin(0, 3, 0, 0),
+                        isMultiline: false, editable: false, stroke: "blue", 
+                        alignment: go.Spot.Left 
+                    },
                     new go.Binding("text", "name")),
                 // [
                 this.$(go.TextBlock, "[", { row: 0, column: 1, width: 5 },
@@ -222,8 +221,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         itemTemplate: this.parameterTemplate()
                     }),
                 // ]
-                this.$(go.TextBlock, "]", { row: 0, column: 3, width: 5 },
-                new go.Binding("visible", "parameters", parameters => parameters.length > 0)),
+                this.$(go.TextBlock, "]", { row: 0, column: 3, stretch: go.GraphObject.Fill },
+                    new go.Binding("visible", "parameters", parameters => parameters.length > 0)),
                 // statements
                 this.$(go.Panel, "Vertical",
                     new go.Binding("itemArray", "body"), 
@@ -241,28 +240,34 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Panel, "Table",
                 // property visibility access modifiers
                 this.$(go.Panel, "Horizontal",
-                    new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
-                    {
-                        row: 0, column: 0, stretch: go.GraphObject.Fill,
-                        defaultAlignment: go.Spot.Left, opacity: 1,
-                        itemTemplate: this.accessModifierTemplate()
-                    }),
+                    { 
+                        row: 0, column: 0, stretch: go.GraphObject.Fill, 
+                        defaultAlignment: go.Spot.Left, opacity: 1, 
+                        itemTemplate: this.accessModifierTemplate() 
+                    },
+                    new go.Binding("itemArray", "modifiers", this.filterViewableModifiers)),
                 // property name
                 this.$(go.TextBlock,
-                    { row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: "green" },
+                    { 
+                        row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), 
+                        isMultiline: false, editable: false, stroke: "green" 
+                    },
                     new go.Binding("text", "name"),
                     new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
                 // :
                 this.$(go.TextBlock, ":", { row: 0, column: 2 }),
                 // property type
                 this.$(go.TextBlock,
-                    { row: 0, column: 3, stroke: "blue" },
+                    { 
+                        row: 0, column: 3, stretch: go.GraphObject.Fill, 
+                        isMultiline: false, editable: false, stroke: "blue" 
+                    },
                     new go.Binding("text", "type")),
                 // property accessors
                 this.$(go.Panel, "Vertical",
                     new go.Binding("itemArray", "accessors"), 
                     {
-                        row: 1, columnSpan: 5, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
+                        row: 1, columnSpan: 4, stretch: go.GraphObject.Fill, // TODO increase the column span if you add more columns up top
                         defaultAlignment: go.Spot.Left,
                         itemTemplate: this.propertyAccessorTemplate()
                     }))
