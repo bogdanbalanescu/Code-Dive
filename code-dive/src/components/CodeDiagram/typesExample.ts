@@ -7,7 +7,7 @@ import { Enum } from "../../codeModel/Types/Enum";
 
 var parsedTypes: any = { classes:
   [ { namespaceDependecies: [ 'System', 'System.Collections' ],
-      namespace: 'DoFactory.GangOfFour.Iterator.Structural',
+      namespace: 'DoFactory.GangOfFour.Iterator.Structural',   
       name: 'MainApp',
       modifiers: [],
       parentInheritances: [],
@@ -114,10 +114,10 @@ var parsedTypes: any = { classes:
        [ { type: 'int',
            name: 'Count',
            modifiers: [ 'public' ],
+           parameters: [],
            accessors:
             [ { name: 'get',
                 declaredVariables: [],
-                parameters: [],
                 body:
                  [ { statementText: 'return _items.Count;',
                      usedFieldsAndProperties: [ '_items.Count' ],
@@ -127,10 +127,10 @@ var parsedTypes: any = { classes:
          { type: 'object',
            name: 'this',
            modifiers: [],
+           parameters: [ { type: 'int', name: 'index', modifier: '' } ],
            accessors:
             [ { name: 'get',
                 declaredVariables: [],
-                parameters: [ { type: 'int', name: 'index', modifier: '' } ],
                 body:
                  [ { statementText: 'return _items[index];',
                      usedFieldsAndProperties: [ 'index', '_items' ],
@@ -139,7 +139,6 @@ var parsedTypes: any = { classes:
                      usedTypes: [] } ] },
               { name: 'set',
                 declaredVariables: [],
-                parameters: [],
                 body:
                  [ { statementText: '_items.Insert(index, value);',
                      usedFieldsAndProperties: [ 'index', 'value' ],
@@ -300,13 +299,13 @@ var parsedTypes: any = { classes:
                 usedTypes: [] } ] } ] } ],
  structs: [],
  interfaces: [],
- enums: [ 
-  { namespaceDependecies: [ 'System', 'System.Collections' ],
-    namespace: 'DoFactory.GangOfFour.Iterator.Structural',
-    name: 'State',
-    modifiers: [ 'public' ],
-    parentInheritances: [],
-    values: [ 'Empty', 'Half', 'Full' ] } ] }
+ enums:
+  [ { namespaceDependecies: [ 'System', 'System.Collections' ],
+      namespace: 'DoFactory.GangOfFour.Iterator.Structural',
+      name: 'State',
+      modifiers: [ 'public' ],
+      parentInheritances: [],
+      values: [ 'Empty', 'Half', 'Full' ] } ] }
 export const types: IType[] = (parsedTypes as ParsedTypes).classes.map(type => new Class(type) as IType)
     .concat((parsedTypes as ParsedTypes).structs.map(type => new Struct(type)))
     .concat((parsedTypes as ParsedTypes).interfaces.map(type => new Interface(type)))

@@ -188,12 +188,10 @@ if (!('addPropertyAccessor' in yy)) {
 		propertyAccessors.push({
 			name: type,
 			declaredVariables: declaredVariables,
-			parameters: currentInvocableMemberFixedParameters,
 			body: statements.length > 0 ? statements : [] // functionality not yet supported
 		});
 		// Cleanup
 		declaredVariables = [];
-		currentInvocableMemberFixedParameters = [];
 		statements = [];
 	};
 }
@@ -203,10 +201,12 @@ if (!('addProperty' in yy)) {
 			type: type,
 			name: name,
 			modifiers : modifiers,
+			parameters: currentInvocableMemberFixedParameters,
 			accessors : propertyAccessors
 		});
 		// Cleanup after property
 		modifiers = [];
+		currentInvocableMemberFixedParameters = [];
 		propertyAccessors = [];
 	};
 }

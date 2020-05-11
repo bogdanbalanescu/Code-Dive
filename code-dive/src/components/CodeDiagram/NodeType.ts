@@ -15,13 +15,13 @@ export enum NodeType {
     // Statements
     Statement = "Statement",
     // Property Accessors
-    PropertyAccessorHeader = "PropertyAccessorHeader",
-    PropertyAccessorBody = "PropertyAccessorBody",
     PropertyAccessor = "PropertyAccessor",
-    PropertyAccessorHeaderContainer = "PropertyAccessorHeaderContainer",
-    PropertyAccessorBodyContainer = "PropertyAccessorBodyContainer",
     // Properties
+    PropertyHeader = "PropertyHeader",
+    PropertyBody = "PropertyBody",
     Property = "Property",
+    PropertyHeaderContainer = "PropertyHeaderContainer",
+    PropertyBodyContainer = "PropertyBodyContainer",
     PropertiesContainer = "PropertyContainer",
     // Constructors
     ConstructorHeader = "ConstructorHeader",

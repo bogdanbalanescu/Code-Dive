@@ -38,7 +38,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
         var nodeAndLinkData = CodeDiagramHelper.ComputeNodeAndLinkData(nextProps);
-
+        
         return {
             ...previousState,
             nodeDataArray: nodeAndLinkData.nodeDataArray,

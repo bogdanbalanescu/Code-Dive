@@ -16,15 +16,17 @@ import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 
 export class CodeDiagramHelper {
-    public static ComputeNodeAndLinkData(props: {types: IType[]}): {nodeDataArray: any, linkDataArray: any} {
+    public static ComputeNodeAndLinkData(props: {types: IType[]}): {nodeDataArray: any[], linkDataArray: any[]} {
         const typesGroupedByNamespace = CodeDiagramHelper.groupTypesByProperty(props.types, 'namespace');
         var linkData: any = [];
         const createInheritanceLinks = (type: IType) =>
             CodeDiagramHelper.createInheritanceLinks(type, typesGroupedByNamespace, linkData);
         const createMethodTypeLink = (type: Class | Struct | Interface, method: Method) =>
             CodeDiagramHelper.createMethodTypeLink(type, method, typesGroupedByNamespace, linkData);
-        const createStatementLinks = (type: IType, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementKey: string) =>
+        const createStatementLinks = (type: IType, callable: Method | Constructor, statement: Statement, statementKey: string) =>
             CodeDiagramHelper.createStatementLinks(type, callable, statement, statementKey, typesGroupedByNamespace, linkData);
+        const createPropertyAccessorStatementLinks = (type: IType, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string) =>
+            CodeDiagramHelper.createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey, typesGroupedByNamespace, linkData);
         const createParameterLinks = (type: IType, parameterType: string, parameterKey: string) =>
             CodeDiagramHelper.createParameterLinks(type, parameterType, parameterKey, typesGroupedByNamespace, linkData);
 
@@ -69,85 +71,96 @@ export class CodeDiagramHelper {
             type.fields.forEach(field => createNodeForField(type, field));
         }
         // Create nodes for parameters
-        const createNodeForParameter = (type: Class | Struct | Interface, callable: Method | Constructor | PropertyAccessor, parameter: FixedParameter) => {
-            var parameterKey = CodeDiagramHelper.constructorOrMethodOrPropertyAccessorParameterKey(type, callable, parameter);
+        const createNodeForParameter = (type: Class | Struct | Interface, callable: Method | Constructor | Property, parameter: FixedParameter, isLast: boolean) => {
+            var parameterKey = CodeDiagramHelper.constructorOrMethodOrPropertyParameterKey(type, callable, parameter);
             createParameterLinks(type, parameter.type, parameterKey);
             nodeData.push({
                 category: NodeType.Parameter,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderKey(type, callable),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderKey(type, callable),
                 key: parameterKey,
                 modifier: parameter.modifier,
                 name: parameter.name,
                 type: parameter.type,
+                isLast: isLast
             });
         };
         // Create nodes for statements
-        const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementKey: string) => {
+        const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement, statementKey: string) => {
             createStatementLinks(type, callable, statement, statementKey);
             nodeData.push({
                 category: NodeType.Statement,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyKey(type, callable),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, callable),
+                key: statementKey,
+                statementText: statement.statementText,
+            });
+        };
+        const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string) => {
+            createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey);
+            nodeData.push({
+                category: NodeType.Statement,
+                group: CodeDiagramHelper.propertyAccessorKey(type, property, accessor),
                 key: statementKey,
                 statementText: statement.statementText,
             });
         };
         // Create nodes for property accessor
-        const createNodeForPropertyAccessorHeader = (type: Class | Struct | Interface, accessor: PropertyAccessor) => {
+        const createNodeForAccesor = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => {
             nodeData.push({
-                category: NodeType.PropertyAccessorHeader,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, accessor),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderKey(type, accessor),
+                category: NodeType.PropertyAccessor,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, property),
+                key: CodeDiagramHelper.propertyAccessorKey(type, property, accessor),
                 name: accessor.name,
-                isGroup: true
-            });
-            accessor.parameters.forEach(parameter => createNodeForParameter(type, accessor, parameter));
-        };
-        const craeteNodeForPropertyAccessorBody = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => {
-            nodeData.push({
-                category: NodeType.PropertyAccessorBody,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, accessor),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyKey(type, accessor),
                 isGroup: true
             });
             accessor.body.forEach((statement: Statement, index: number) => {
                 var statementKey = CodeDiagramHelper.propertyAccessorStatementKey(type, property, accessor, index);
-                createNodeForStatement(type, accessor, statement, statementKey);
+                createNodeForPropertyAccessorStatement(type, property, accessor, statement, statementKey);
             });
         }
-        const createNodeForPropertyAccessor = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => {
+        // Create nodes for properties
+        const createNodeForPropertyHeader = (type: Class | Struct | Interface, property: Property) => {
             nodeData.push({
-                category: NodeType.PropertyAccessor,
-                group: CodeDiagramHelper.fieldOrPropertyKey(type, property),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, accessor),
+                category: NodeType.PropertyHeader,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, property),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderKey(type, property),
+                modifiers: property.modifiers,
+                name: property.name,
+                type: property.type,
                 isGroup: true
             });
-            // nodeData.push({
-            //     category: NodeType.PropertyAccessorHeaderContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, accessor),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderContainerKey(type, accessor),
-            //     isGroup: true
-            // });
-            // nodeData.push({
-            //     category: NodeType.PropertyAccessorBodyContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, accessor),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyContainerKey(type, accessor),
-            //     isGroup: true
-            // });
-            createNodeForPropertyAccessorHeader(type, accessor);
-            craeteNodeForPropertyAccessorBody(type, property, accessor);
+            property.parameters.forEach(parameter => createNodeForParameter(type, property, parameter, CodeDiagramHelper.isLastInCollection(property.parameters, parameter)));
         };
-        // Create nodes for properties
+        const createNodeForPropertyBody = (type: Class | Struct | Interface, property: Property) => {
+            nodeData.push({
+                category: NodeType.PropertyBody,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, property),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, property),
+                isGroup: true
+            });
+            property.accessors.forEach(accessor => createNodeForAccesor(type, property, accessor));
+        }
         const createNodeForProperty = (type: Class | Struct | Interface, property: Property) => {
             // TODO: see if you need links from properties to their types
             nodeData.push({
                 category: NodeType.Property,
                 group: CodeDiagramHelper.propertyContainerKey(type),
                 key: CodeDiagramHelper.fieldOrPropertyKey(type, property),
-                modifiers: property.modifiers,
-                name: property.name,
-                type: property.type,
+                isGroup: true
             });
-            property.accessors.forEach(accessor => createNodeForPropertyAccessor(type, property, accessor));
+            nodeData.push({
+                category: NodeType.PropertyHeaderContainer,
+                group: CodeDiagramHelper.fieldOrPropertyKey(type, property),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, property),
+                isGroup: true
+            });
+            nodeData.push({
+                category: NodeType.PropertyBodyContainer,
+                group: CodeDiagramHelper.fieldOrPropertyKey(type, property),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, property),
+                isGroup: true
+            });
+            createNodeForPropertyHeader(type, property);
+            createNodeForPropertyBody(type, property);
         };
         const createNodesForProperties = (type: Class | Struct | Interface) => {
             nodeData.push({
@@ -162,19 +175,19 @@ export class CodeDiagramHelper {
         const createNodeForConstructorHeader = (type: Class | Struct | Interface, constructor: Constructor) => {
             nodeData.push({
                 category: NodeType.ConstructorHeader,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderKey(type, constructor),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, constructor),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderKey(type, constructor),
                 modifiers: constructor.modifiers,
                 name: constructor.name,
                 isGroup: true
             });
-            constructor.parameters.forEach(parameter => createNodeForParameter(type, constructor, parameter));
+            constructor.parameters.forEach(parameter => createNodeForParameter(type, constructor, parameter, CodeDiagramHelper.isLastInCollection(constructor.parameters, parameter)));
         };
         const createNodeForConstructorBody = (type: Class | Struct | Interface, constructor: Constructor) => {
             nodeData.push({
                 category: NodeType.ConstructorBody,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyKey(type, constructor),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, constructor),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, constructor),
                 isGroup: true
             });
             constructor.statements.forEach((statement: Statement, index: number) => {
@@ -186,21 +199,21 @@ export class CodeDiagramHelper {
             nodeData.push({
                 category: NodeType.Constructor,
                 group: CodeDiagramHelper.constructorsContainerKey(type),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor),
                 isGroup: true
             });
-            // nodeData.push({
-            //     category: NodeType.ConstructorHeaderContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderContainerKey(type, constructor),
-            //     isGroup: true
-            // });
-            // nodeData.push({
-            //     category: NodeType.ConstructorBodyContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyContainerKey(type, constructor),
-            //     isGroup: true
-            // });
+            nodeData.push({
+                category: NodeType.ConstructorHeaderContainer,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, constructor),
+                isGroup: true
+            });
+            nodeData.push({
+                category: NodeType.ConstructorBodyContainer,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, constructor),
+                isGroup: true
+            });
             createNodeForConstructorHeader(type, constructor);
             createNodeForConstructorBody(type, constructor);
         };
@@ -217,20 +230,20 @@ export class CodeDiagramHelper {
         const createNodeForMethodHeader = (type: Class | Struct | Interface, method: Method) => {
             nodeData.push({
                 category: NodeType.MethodHeader,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderKey(type, method),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, method),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderKey(type, method),
                 modifiers: method.modifiers,
                 name: method.name,
                 type: method.type,
                 isGroup: true
             });
-            method.parameters.forEach(parameter => createNodeForParameter(type, method, parameter));
+            method.parameters.forEach(parameter => createNodeForParameter(type, method, parameter, CodeDiagramHelper.isLastInCollection(method.parameters, parameter)));
         };
         const createNodeForMethodBody = (type: Class | Struct | Interface, method: Method) => {
             nodeData.push({
                 category: NodeType.MethodBody,
-                group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyKey(type, method),
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, method),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, method),
                 isGroup: true
             });
             method.statements.forEach((statement: Statement, index: number) => {
@@ -243,21 +256,21 @@ export class CodeDiagramHelper {
             nodeData.push({
                 category: NodeType.Method,
                 group: CodeDiagramHelper.methodsContainerKey(type),
-                key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, method),
                 isGroup: true
             });
-            // nodeData.push({
-            //     category: NodeType.MethodHeaderContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorHeaderContainerKey(type, method),
-            //     isGroup: true
-            // });
-            // nodeData.push({
-            //     category: NodeType.MethodBodyContainer,
-            //     group: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
-            //     key: CodeDiagramHelper.constructorOrMethodOrPropertyAccessorBodyContainerKey(type, method),
-            //     isGroup: true
-            // });
+            nodeData.push({
+                category: NodeType.MethodHeaderContainer,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, method),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, method),
+                isGroup: true
+            });
+            nodeData.push({
+                category: NodeType.MethodBodyContainer,
+                group: CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, method),
+                key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyContainerKey(type, method),
+                isGroup: true
+            });
             createNodeForMethodHeader(type, method);
             createNodeForMethodBody(type, method);
         };
@@ -379,24 +392,27 @@ export class CodeDiagramHelper {
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Constructors`;
     private static methodsContainerKey =
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Methods`;
-    private static constructorOrMethodOrPropertyAccessorContainerKey = 
-        (type: IType, callable: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.typeKey(type)}.${callable.name}:${callable.parameters.map(parameter => parameter.type).join('.')}:Container`;
-    private static constructorOrMethodOrPropertyAccessorHeaderContainerKey =
-        (type: IType, callable: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, callable)}.HeaderContainer`;
-    private static constructorOrMethodOrPropertyAccessorBodyContainerKey =
-        (type: IType, callable: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, callable)}.BodyContainer`;
-    private static constructorOrMethodOrPropertyAccessorHeaderKey = 
-        (type: IType, callable: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, callable)}.Header`;
-    private static constructorOrMethodOrPropertyAccessorBodyKey = 
-        (type: IType, callable: Constructor | Method | PropertyAccessor) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, callable)}.Body`;
+    private static constructorOrMethodOrPropertyContainerKey = 
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.typeKey(type)}.${callable.name}:${callable.parameters.map(parameter => parameter.type).join('.')}:Container`;
+    private static constructorOrMethodOrPropertyHeaderContainerKey =
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.HeaderContainer`;
+    private static constructorOrMethodOrPropertyBodyContainerKey =
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.BodyContainer`;
+    private static constructorOrMethodOrPropertyHeaderKey = 
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.Header`;
+    private static constructorOrMethodOrPropertyBodyKey = 
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.Body`;
     // Create keys for parameters
-    private static constructorOrMethodOrPropertyAccessorParameterKey = 
-        (type: IType, constructor: Constructor | Method | PropertyAccessor, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor)}.${parameter.name}`;
+    private static constructorOrMethodOrPropertyParameterKey = 
+        (type: IType, constructor: Constructor | Method | Property, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}.${parameter.name}`;
     // Create keys for statements
     private static propertyAccessorStatementKey = 
         (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, index: number) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}:${index}`;
     private static constructorOrMethodStatementKey = 
-        (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, constructor)}${index}`;
+        (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${index}`;
+    // Create keys for property accessors
+    private static propertyAccessorKey = 
+        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}`;
 
     // Creating and adding links
     private static addLink = (category: string, from: string, to: string, linkData: any) => {
@@ -436,7 +452,7 @@ export class CodeDiagramHelper {
                 CodeDiagramHelper.addLink(
                     LinkType.StatementUsesConstructorOrMethod,
                     statementKey,
-                    CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(relevantType as Class | Struct, callable as Constructor | Method),
+                    CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(relevantType as Class | Struct, callable as Constructor | Method),
                     linkData
                 )
             }
@@ -468,7 +484,7 @@ export class CodeDiagramHelper {
         if (returnType !== undefined) {
             CodeDiagramHelper.addLink(
                 LinkType.CallableReturnType,
-                CodeDiagramHelper.constructorOrMethodOrPropertyAccessorContainerKey(type, method),
+                CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, method),
                 CodeDiagramHelper.typeKey(returnType as IType),
                 linkData
             );
@@ -486,13 +502,13 @@ export class CodeDiagramHelper {
             }
         });
     };
-    private static createStatementLinks (type: IType, callable: Method | Constructor | PropertyAccessor, statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+    private static createStatementLinks (type: IType, callable: Method | Constructor, statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
         statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
             var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
             if (fieldOrPropertyAtoms.length > 1) { // if member access
                 var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
                 var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
-                if (parametersIndex !== -1 && !(callable instanceof PropertyAccessor)) { // if type can be inferred from parameters
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
                     var parameter = callable.parameters[parametersIndex];
                     CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, parameter.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
                 }
@@ -525,7 +541,7 @@ export class CodeDiagramHelper {
             if (methodAtoms.length > 1) { // if member access
                 var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
                 var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
-                if (parametersIndex !== -1 && !(callable instanceof PropertyAccessor)) { // if type can be inferred from parameters
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
                     var parameter = callable.parameters[parametersIndex];
                     CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
                 }
@@ -547,4 +563,68 @@ export class CodeDiagramHelper {
             // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementKey, typesGroupedByNamespace, linkData);
         });
     };
+    static createPropertyAccessorStatementLinks(type: IType, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+        statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
+            var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
+            if (fieldOrPropertyAtoms.length > 1) { // if member access
+                var parametersIndex = property.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
+                var declaredVariablesIndex = accessor.declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
+                    var parameter = property.parameters[parametersIndex];
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, parameter.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
+                    var declaredVariable = accessor.declaredVariables[declaredVariablesIndex];
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, declaredVariable.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+                else { // if it is possibly a static member of a certain type
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                    CodeDiagramHelper.addLinkFromStatementToEnumValue(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+            }
+            else { // if it refers to members present on the same type
+                // TODO: for now, do not show links toward members present on the same type
+                // CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementKey, typesGroupedByNamespace, linkData);
+            }
+        });
+        statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
+            var constructorAtoms = constructor.split('.'); // convention: constructor can have either 1 or 2 elements
+            if (constructorAtoms.length > 1) { // if member access
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+            }
+            else { // if it refers to members present on the same type
+                // TODO: for now, do not show links toward members present on the same type
+                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData);
+            }
+        });
+        statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
+            var methodAtoms = method.split('.'); // convention: method can have either 1 or 2 elements
+            if (methodAtoms.length > 1) { // if member access
+                var parametersIndex = property.parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
+                var declaredVariablesIndex = accessor.declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
+                    var parameter = property.parameters[parametersIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
+                    var declaredVariable = accessor.declaredVariables[declaredVariablesIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, declaredVariable.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+                else { // if it is possibly a static member of a certain type
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
+                }
+            }
+            else { // if it refers to members present on the same type
+                // TODO: for now, do not show links toward members present on the same type
+                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementKey, typesGroupedByNamespace, linkData);
+            }
+        });
+        statement.usedTypes.forEach((usedType: string) => {
+            // TODO: for now, do not show links toward types when no member of that type is used
+            // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementKey, typesGroupedByNamespace, linkData);
+        });
+    }
+
+    // Helper functions
+    private static isLastInCollection = (collection: any[], item: any) => collection.indexOf(item) === collection.length - 1;
 }
