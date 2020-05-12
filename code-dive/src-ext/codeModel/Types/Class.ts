@@ -18,19 +18,19 @@ export class Class implements IType {
     constructors: Constructor[];
     methods: Method[];
 
-    public constructor(namespaceDependecies: string[], namespace: string, name: string, modifiers: string[], parentInheritances: string[],
-        fields: Field[], properties: Property[], constructors: Constructor[], methods: Method[]) {
+    public constructor(otherClass: Class) {
+        this.sourceFilePath = otherClass.sourceFilePath || "";
         
-        this.namespaceDependecies = namespaceDependecies;
-        this.namespace = namespace;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parentInheritances = parentInheritances;
+        this.namespaceDependecies = otherClass.namespaceDependecies;
+        this.namespace = otherClass.namespace;
+        this.name = otherClass.name;
+        this.modifiers = otherClass.modifiers;
+        this.parentInheritances = otherClass.parentInheritances;
 
-        this.fields = fields;
-        this.properties = properties;
-        this.constructors = constructors;
-        this.methods = methods;
+        this.fields = otherClass.fields;
+        this.properties = otherClass.properties;
+        this.constructors = otherClass.constructors;
+        this.methods = otherClass.methods;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

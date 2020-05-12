@@ -1,6 +1,6 @@
 import { Class } from "./Types/Class";
 import { Struct } from "./Types/Struct";
-import { Interface } from "readline";
+import { Interface } from "./Types/Interface";
 import { Enum } from "./Types/Enum";
 
 export class ParsedTypes {
@@ -31,4 +31,11 @@ export class ParsedTypes {
     public addEnums(enums: Enum[]): void {
         if (enums.length) this.enums = this.enums.concat(enums);
     }
+
+	setSourceFilePath(filePath: string) {
+        this.classes.forEach(type => type.setSourceFilePath(filePath));
+        this.structs.forEach(type => type.setSourceFilePath(filePath));
+        this.interfaces.forEach(type => type.setSourceFilePath(filePath));
+        this.enums.forEach(type => type.setSourceFilePath(filePath));
+	}
 }

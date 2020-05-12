@@ -484,7 +484,7 @@ export class CodeDiagramHelper {
         if (returnType !== undefined) {
             CodeDiagramHelper.addLink(
                 LinkType.CallableReturnType,
-                CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, method),
+                CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, method),
                 CodeDiagramHelper.typeKey(returnType as IType),
                 linkData
             );

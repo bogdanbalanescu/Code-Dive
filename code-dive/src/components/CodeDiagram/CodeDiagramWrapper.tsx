@@ -3,7 +3,6 @@ import { ReactDiagram } from 'gojs-react';
 import * as React from 'react';
 
 import './CodeDiagramWrapper.css';
-import { isDeepStrictEqual } from 'util';
 import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 
@@ -24,38 +23,39 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         this.$ = go.GraphObject.make;
     }
 
-    componentDidUpdate(prevProps: CodeDiagramProps, prevState: any, prevContext: any) {
+    componentDidUpdate = (prevProps: CodeDiagramProps, prevState: any, prevContext: any) => {
         if (this.props.nodeDataArray !== prevProps.nodeDataArray && this.diagramReference.current != null) {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram != null) {
                 diagram.startTransaction();
                 prevProps.linkDataArray.forEach(previousLink => {
                     if (diagram == null) return;
-                    if (this.props.linkDataArray.findIndex(currentLink => isDeepStrictEqual(previousLink, currentLink)) !== -1) { // if link no longer exists or was modified, delete it
+                    if (this.props.linkDataArray.findIndex(currentLink => this.jsonEqual(previousLink, currentLink)) === -1) { // if link no longer exists or was modified, delete it
                         var link = diagram.findLinkForKey(previousLink.key);
-                        if (link !== null) diagram.remove(link as go.Link);
+                        if (link !== null) diagram.remove(link);
                     }
                 });
                 prevProps.nodeDataArray.forEach(previousNode => {
                     if (diagram == null) return;
-                    if (this.props.nodeDataArray.findIndex(currentNode => isDeepStrictEqual(previousNode, currentNode)) !== -1) { // if node no longer exists or was modified, delete it
-                        var node = diagram.findNodeForKey(previousNode.key);
-                        if (node !== null) diagram.remove(node as go.Node);
+                    if (this.props.nodeDataArray.findIndex(currentNode => this.jsonEqual(previousNode, currentNode)) === -1) { // if node no longer exists or was modified, delete it
+                        var node = diagram.findPartForKey(previousNode.key);
+                        if (node !== null) diagram.remove(node);
                     }
                 })
                 this.props.nodeDataArray.forEach(currentNode => {
                     if (diagram == null) return;
-                    if (prevProps.nodeDataArray.findIndex(previousNode => isDeepStrictEqual(previousNode, currentNode)) === -1) {
+                    if (prevProps.nodeDataArray.findIndex(previousNode => this.jsonEqual(previousNode, currentNode)) === -1) {
                         diagram.model.addNodeData(currentNode);
                     }
                 })
                 this.props.linkDataArray.forEach(currentLink => {
                     if (diagram == null) return;
-                    if (prevProps.linkDataArray.findIndex(previousLink => isDeepStrictEqual(previousLink, currentLink)) === -1) {
+                    if (prevProps.linkDataArray.findIndex(previousLink => this.jsonEqual(previousLink, currentLink)) === -1) {
                         (diagram.model as go.GraphLinksModel).addLinkData(currentLink);
                     }
                 });
-                // TODO: the above logic can be improved to only update what is necessary for better performance.
+                // TODO: the above logic can be improved to only update what is absolutely necessary for better performance.
+                // For now, however, the nodes are small enough that an improvement might not be needed.
                 diagram.commitTransaction();
             }
         }
@@ -94,7 +94,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         aggressiveOption: go.LayeredDigraphLayout.AggressiveNone,
                         packOption: go.LayeredDigraphLayout.PackAll,
                         setsPortSpots: false
-                    })
+                    }),
                 });
 
         // enum value node and group templates
@@ -223,7 +223,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.TextBlock, "Fields",
                 { font: "italic bold 10pt sans-serif", margin: 5 },
                 new go.Binding("visible", "isSubGraphExpanded", (isSubGraphExpanded   => { return !isSubGraphExpanded} )).ofObject("Container")),
-            this.$(go.Placeholder, { column: 0, margin: 5 }),
+            this.$(go.Placeholder, { column: 0, margin: 5, alignment: go.Spot.Left }),
             this.$("SubGraphExpanderButton",
                 { column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true}),
         );
@@ -530,6 +530,9 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             };
         });
     }
+    
+    // helper functions
+    private jsonEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
     render() {
         return (

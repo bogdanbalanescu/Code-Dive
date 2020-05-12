@@ -17,16 +17,6 @@
         "command": "extension.code-dive",
         "title": "Start Code Dive",
         "category": "Code Dive"
-      },
-      {
-        "command": "extension.code-says-hello",
-        "title": "Code Dive Says Hello",
-        "category": "Code Dive"
-      },
-      {
-        "command": "extension.code-dive-analysis",
-        "title": "Code Dive Analysis",
-        "category": "Code Dive"
       }
     ]
   },

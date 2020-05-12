@@ -1,18 +1,11 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { parseSourceCode } from "./codeParser/ClassParser";
-import { IType } from './codeModel/Types/IType';
 import { ParsedTypes } from './codeModel/ParsedTypes';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
 		ReactPanel.createOrShow(context.extensionPath);
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('extension.code-says-hello', () => {
-		ReactPanel.sayHello();
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive-analysis', () => {
 		ReactPanel.startCodeDiveAnalysis();
 	}));
 }
@@ -22,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
  */
 class ReactPanel {
 	/**
-	 * Track the currently panel. Only allow a single panel to exist at a time.
+	 * Track the current panel. Only allow a single panel to exist at a time.
 	 */
 	public static currentPanel: ReactPanel | undefined;
 
@@ -49,7 +42,7 @@ class ReactPanel {
 		this._extensionPath = extensionPath;
 
 		// Create and show a new webview panel
-		this._panel = vscode.window.createWebviewPanel(ReactPanel.viewType, "React", column, {
+		this._panel = vscode.window.createWebviewPanel(ReactPanel.viewType, "Code Dive", column, {
 			// Enable javascript in the webview
 			enableScripts: true,
 
@@ -74,75 +67,49 @@ class ReactPanel {
 			switch (message.command) {
 				case 'alert':
 					vscode.window.showErrorMessage(message.text);
-					return;
+					break;
 				case 'startCodeDiveAnalysis':
-					var sourceFilesPaths = await this.readSourceFilesPathsFromCurrentWorkspace();
-					var parsedTypes = await this.parseSourceFilesAsTypes(sourceFilesPaths);
-					
+					var parsedTypes = await this.parseTypesFromCurrentWorkspaceSourceFilesAsync();
 					ReactPanel.postCodeDiveAnalysisResults(parsedTypes);
-					// TODO: continue from here -> async problem, parsed classes are not awaited and array is empty
-					// TODO: pass the classes as message to the extension
-					// TODO: show a visual representation of the classes
-					var x = parsedTypes;
+					break;
 			}
 		}, null, this._disposables);
+
+		this.registerCodeDiveSourceFileListeners();
 	}
 
-	private async readSourceFilesPathsFromCurrentWorkspace(): Promise<string[]> {
-		return await vscode.workspace.findFiles('**/*.cs', '**/obj/**').then((uris: vscode.Uri[]) => {
-			var sourceFilePaths : string[] = [];
-			uris.forEach((uri: vscode.Uri) => {
-				sourceFilePaths.push(uri.path); // TODO: consider uri.fspath as well OR even the uri itself
-
-				// log path
-				this._codeDiveChannel.appendLine(uri.path);
+	// read and parse source files from the current workspace
+	private parseTypesFromCurrentWorkspaceSourceFilesAsync = async (): Promise<ParsedTypes> => {
+		return await vscode.workspace.findFiles('**/*.cs', '**/obj/**').then(async (uris: vscode.Uri[]) => {
+			var allParsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
+			var parsedTypesJobs = uris.map(async (uri: vscode.Uri) => {
+				return await this.parseTypesFromSourceFile(uri.path); // TODO: consider uri.fspath as well OR even the uri itself
 			});
-			return sourceFilePaths;
+			var parsedTypes = await Promise.all(parsedTypesJobs);
+			parsedTypes.forEach((parsedTypes: ParsedTypes) => {
+				allParsedTypes.addClasses(parsedTypes.classes);
+				allParsedTypes.addStructs(parsedTypes.structs);
+				allParsedTypes.addInterfaces(parsedTypes.interfaces);
+				allParsedTypes.addEnums(parsedTypes.enums);
+			});
+			return allParsedTypes;
 		});
 	}
-	
-	private async parseSourceFilesAsTypes(sourceFilesPaths: string[]): Promise<ParsedTypes> {
-		// TODO: parse each source file as IType array when possible.
-		var allParsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
-		var parsedTypesJobs = sourceFilesPaths.map(async (filePath: string) => {
-			var fileText = await vscode.workspace.openTextDocument(filePath).then((file) => {
-				return file.getText();
-			});
+	private parseTypesFromSourceFile = async (filePath: string): Promise<ParsedTypes> => {
+		return await vscode.workspace.openTextDocument(filePath).then((file) => {
 			try {
-				return this.parseSourceCodeAsTypes(fileText);
+				return parseSourceCode(file.getText(), filePath);
 			}
 			catch (e) {
 				this._codeDiveChannel.appendLine(`Error while parsing file ${filePath}: ${e.message}`);
-
 				// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
 				// throw new Error("Unaccepted message occurred when parsing source file.");
 				return new ParsedTypes([], [], [], []);
 			}
 		});
-		var parsedTypes = await Promise.all(parsedTypesJobs);
-		parsedTypes.forEach((parsedTypes: ParsedTypes) => {
-			allParsedTypes.addClasses(parsedTypes.classes);
-			allParsedTypes.addStructs(parsedTypes.structs);
-			allParsedTypes.addInterfaces(parsedTypes.interfaces);
-			allParsedTypes.addEnums(parsedTypes.enums);
-		});
-		return allParsedTypes;
 	}
 
-	private parseSourceCodeAsTypes(sourceCode: string): ParsedTypes {
-		return parseSourceCode(sourceCode);
-	}
-
-	public static sayHello() {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
-		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'sayHello' });
-		} else {
-			// TODO: signal somehow that there is no panel
-		}
-	}
-
+	// start and post full code dive analysis
 	public static startCodeDiveAnalysis() {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
@@ -152,7 +119,6 @@ class ReactPanel {
 			// TODO: signal somehow that there is no panel
 		}
 	}
-
 	public static postCodeDiveAnalysisResults(parsedTypes: ParsedTypes) {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
@@ -161,6 +127,35 @@ class ReactPanel {
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
+	}
+	// update extension about with new code dive analysis
+	private static updateCodeDiveAnalysisResultsForFilePath(parsedTypes: ParsedTypes, filePath: string) {
+		// Send a message to the webview webview.
+		// You can send any JSON serializable data.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'updateDiveAnalysisResultsForFilePath', codeDiveAnalysisResults: parsedTypes, filePath: filePath });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
+	}
+
+	// register code dive file listeners
+	public registerCodeDiveSourceFileListeners = async () => {
+		var workspaceFolders = vscode.workspace.workspaceFolders;
+		var watcherPattern = workspaceFolders? new vscode.RelativePattern(workspaceFolders[0], "**/*.cs"): "**/*.cs"; // Note: does not listen to deleted folders
+		var watcher = vscode.workspace.createFileSystemWatcher(watcherPattern);
+
+		var onDidChangeWatcherDisposable = watcher.onDidChange(
+			async changedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(changedFileUri.path), changedFileUri.path));
+		this._disposables.push(onDidChangeWatcherDisposable);
+
+		var onDidCreateWatcherDisposable = watcher.onDidCreate(
+			async createdFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(createdFileUri.path), createdFileUri.path));
+		this._disposables.push(onDidCreateWatcherDisposable);
+
+		var onDidDeleteWatcherDisposable = watcher.onDidDelete(
+			deletedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(new ParsedTypes([], [], [], []), deletedFileUri.path));
+		this._disposables.push(onDidDeleteWatcherDisposable);
 	}
 
 	public dispose() {

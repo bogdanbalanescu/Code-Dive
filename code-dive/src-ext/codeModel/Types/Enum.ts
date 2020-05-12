@@ -11,16 +11,16 @@ export class Enum implements IType {
 
     values: string[];
 
-    public constructor(namespaceDependecies: string[], namespace: string, name: string, modifiers: string[], parentInheritances: string[],
-        values: string[]) {
-        
-        this.namespaceDependecies = namespaceDependecies;
-        this.namespace = namespace;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parentInheritances = parentInheritances;
+    public constructor(otherEnum: Enum) {
+        this.sourceFilePath = otherEnum.sourceFilePath || "";
 
-        this.values = values;
+        this.namespaceDependecies = otherEnum.namespaceDependecies;
+        this.namespace = otherEnum.namespace;
+        this.name = otherEnum.name;
+        this.modifiers = otherEnum.modifiers;
+        this.parentInheritances = otherEnum.parentInheritances;
+
+        this.values = otherEnum.values;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

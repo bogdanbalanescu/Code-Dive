@@ -3,7 +3,7 @@ import './App.css';
 
 import { RootState } from './redux';
 import { connect } from 'react-redux';
-import { postTypes } from './redux/modules/types';
+import { postTypes, updateTypesForFilePath } from './redux/modules/types';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 import { ParsedTypes } from './codeModel/ParsedTypes';
 import { ExtensionInteractor } from './interactors/ExtensionInteractor';
@@ -15,7 +15,7 @@ const mapStateToProps = (state: RootState) => ({
   interactor: state.interactor
 });
 
-const mapDispatchToProps = { postTypes }
+const mapDispatchToProps = { postTypes, updateTypesForFilePath }
 
 type Props = ReturnType<typeof mapStateToProps> & typeof mapDispatchToProps;
 
@@ -30,10 +30,6 @@ class App extends React.Component<Props> {
     window.removeEventListener('message', this.windowEventListener as EventListener);
   }
 
-  // For debugging purposes
-  // TODO: remove this once its not needed
-  private parsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
-
   windowEventListener = (event: MessageEvent) => {
     const message = event.data; // The JSON data our extension sent
     switch (message.command) {
@@ -45,10 +41,12 @@ class App extends React.Component<Props> {
         break;
       case 'codeDiveAnalysisResults':
         var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
-        
-        // For debugging purposes
-        this.parsedTypes = codeDiveAnalysisResults;
         this.props.postTypes(codeDiveAnalysisResults);
+        break;
+      case 'updateDiveAnalysisResultsForFilePath':
+        var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
+        var filePath = message.filePath;
+        this.props.updateTypesForFilePath(codeDiveAnalysisResults, filePath);
         break;
     }
   }
@@ -56,9 +54,7 @@ class App extends React.Component<Props> {
   public render() {
     return (
       <div>
-        <header><h1>Welcome to Code Dive!</h1></header>
-        <p>Hang on while we test a few things.</p>
-        <p>{JSON.stringify(this.parsedTypes)}</p>
+        <header><h1>Code Dive, a visual programming tool for textual based programming languages.</h1></header>
         <CodeDiagram types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types}></CodeDiagram>
       </div>
     );
