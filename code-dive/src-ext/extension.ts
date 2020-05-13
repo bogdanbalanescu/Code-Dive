@@ -144,6 +144,7 @@ class ReactPanel {
 		var workspaceFolders = vscode.workspace.workspaceFolders;
 		var watcherPattern = workspaceFolders? new vscode.RelativePattern(workspaceFolders[0], "**/*.cs"): "**/*.cs"; // Note: does not listen to deleted folders
 		var watcher = vscode.workspace.createFileSystemWatcher(watcherPattern);
+		this._disposables.push(watcher);
 
 		var onDidChangeWatcherDisposable = watcher.onDidChange(
 			async changedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(changedFileUri.path), changedFileUri.path));

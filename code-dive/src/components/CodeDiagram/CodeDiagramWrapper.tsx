@@ -5,6 +5,7 @@ import * as React from 'react';
 import './CodeDiagramWrapper.css';
 import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
+import { StatementAtomSemantic } from './StatementAtomSemantic';
 
 interface CodeDiagramProps { 
     nodeDataArray: Array<go.ObjectData>;
@@ -111,23 +112,23 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         diagram.groupTemplateMap.add(NodeType.PropertyAccessor, this.propertyAccessorGroupTemplate());
         // property node and group templates
         diagram.groupTemplateMap.add(NodeType.PropertyHeader, this.methodHeaderGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.PropertyBody, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.PropertyHeaderContainer, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.PropertyBodyContainer, this.methodBodyGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.PropertyBody, this.methodPartContainerGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.PropertyHeaderContainer, this.methodPartContainerGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.PropertyBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Property, this.methodGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.PropertiesContainer, this.methodsContainerGroupTemplate("Properties"));
         // constructor group templates
         diagram.groupTemplateMap.add(NodeType.ConstructorHeader, this.methodHeaderGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.ConstructorBody, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.ConstructorHeaderContainer, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.ConstructorBodyContainer, this.methodBodyGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.ConstructorHeaderContainer, this.methodPartContainerGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.ConstructorBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Constructor, this.methodGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.ConstructorsContainer, this.methodsContainerGroupTemplate("Constructors"));
         // method group templates
         diagram.groupTemplateMap.add(NodeType.MethodHeader, this.methodHeaderGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.MethodBody, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.MethodHeaderContainer, this.methodBodyGroupTemplate());
-        diagram.groupTemplateMap.add(NodeType.MethodBodyContainer, this.methodBodyGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.MethodHeaderContainer, this.methodPartContainerGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.MethodBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Method, this.methodGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.MethodsContainer, this.methodsContainerGroupTemplate("Methods"));
         // type group templates
@@ -250,15 +251,23 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         );
     }
     // statement template
+    private statementAtomTemplate = () => {
+        return this.$(go.Panel, "Auto",
+            this.$(go.TextBlock,
+                { isMultiline: false, stretch: go.GraphObject.Fill, stroke: "blue", margin: new go.Margin(0, 3, 0, 0) },
+                new go.Binding("text", "text"),
+                new go.Binding("stroke", "semantic", semantic => this.mapStatementAtomSemanticToStroke(semantic))),
+        );
+    }
     private statementNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
             { selectable: false },
-            this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: "black" },
-                new go.Binding("text", "statementText")) 
-                // TODO: see if we can make keywords and operators blue and fields, properties, constructors and methods green
-                // may need to also make a few adjustments to the code parser 
-                // (idea: return a string array with the atoms in a statement)
+            this.$(go.Panel, "Horizontal",
+                { 
+                    stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
+                    itemTemplate: this.statementAtomTemplate()
+                },
+                new go.Binding("itemArray", "statementAtoms")),
         );
     }
     // property accessor templates
@@ -282,13 +291,14 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private propertyAccessorGroupTemplate = () => {
         return this.$(go.Group, "Table",
             { selectable: false },
+            this.$(go.Shape, "RoundedRectangle", { fill: "white", stretch: go.GraphObject.Fill, rowSpan: 2 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             // method name
             this.$(go.TextBlock,
-                { row: 0, column: 0, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: "green", alignment: go.Spot.Left },
+                { row: 0, margin: new go.Margin(2, 2, 0, 2), isMultiline: false, editable: false, stroke: "green", alignment: go.Spot.Left },
                 new go.Binding("text", "name"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
-            this.$(go.Placeholder, { row: 1, column: 0 }),
+            this.$(go.Placeholder, { row: 1, margin: new go.Margin(2, 2, 2, 4) }),
             );
     }
     // property templates
@@ -356,7 +366,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 }),
             // method name
             this.$(go.TextBlock,
-                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: "green", alignment: go.Spot.Left },
+                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: "orange", alignment: go.Spot.Left },
                 new go.Binding("text", "name"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
             // (
@@ -376,6 +386,17 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             );
     }
     private methodBodyGroupTemplate = () => {
+        return this.$(go.Group, "Table",
+            { selectable: false },
+            this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
+            // drawn before row 1:
+            this.$(go.Panel, { row: 0, width: go.GraphObject.Fill, height: 0 }),
+            this.$(go.RowColumnDefinition,
+                { row: 1, separatorStrokeWidth: 1.5, separatorStroke: "black" }),
+            this.$(go.Placeholder, { row: 1 })
+            );
+    }
+    private methodPartContainerGroupTemplate = () => {
         return this.$(go.Group, "Table",
             { selectable: false },
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
@@ -529,6 +550,15 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 isLast: parameters.indexOf(parameter) == parameters.length - 1
             };
         });
+    }
+    private mapStatementAtomSemanticToStroke = (semantic: string): string => {
+        switch (semantic) {
+            case StatementAtomSemantic.FieldOrProperty: return "green";
+            case StatementAtomSemantic.Constructor: return "orange";
+            case StatementAtomSemantic.Method: return "orange";
+            case StatementAtomSemantic.Type: return "blue";
+            default: return "black";
+        }
     }
     
     // helper functions

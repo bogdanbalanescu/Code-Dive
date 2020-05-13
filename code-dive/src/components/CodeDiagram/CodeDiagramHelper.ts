@@ -14,6 +14,7 @@ import { Statement } from '../../codeModel/Misc/Statement';
 
 import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
+import { StatementAtomSemantic } from './StatementAtomSemantic';
 
 export class CodeDiagramHelper {
     public static ComputeNodeAndLinkData(props: {types: IType[]}): {nodeDataArray: any[], linkDataArray: any[]} {
@@ -87,20 +88,34 @@ export class CodeDiagramHelper {
         // Create nodes for statements
         const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement, statementKey: string) => {
             createStatementLinks(type, callable, statement, statementKey);
+            var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
+            var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
             nodeData.push({
                 category: NodeType.Statement,
                 group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, callable),
                 key: statementKey,
-                statementText: statement.statementText,
+                statementAtoms: statementAtoms.map(atom => {
+                    return {
+                        text: atom.trim(),
+                        semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
+                    }
+                })
             });
         };
         const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string) => {
             createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey);
+            var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
+            var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
             nodeData.push({
                 category: NodeType.Statement,
                 group: CodeDiagramHelper.propertyAccessorKey(type, property, accessor),
                 key: statementKey,
-                statementText: statement.statementText,
+                statementAtoms: statementAtoms.map(atom => {
+                    return {
+                        text: atom.trim(),
+                        semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
+                    }
+                })
             });
         };
         // Create nodes for property accessor
@@ -627,4 +642,18 @@ export class CodeDiagramHelper {
 
     // Helper functions
     private static isLastInCollection = (collection: any[], item: any) => collection.indexOf(item) === collection.length - 1;
+    private static mapStatementAtomToSemantic = (atom: string, statement: Statement): string => {
+        switch (true) {
+            case (statement.usedFieldsAndProperties.indexOf(atom) !== -1):
+                return StatementAtomSemantic.FieldOrProperty;
+            case (statement.usedConstructors.indexOf(atom) !== -1):
+                return StatementAtomSemantic.Constructor;
+            case (statement.usedMethods.indexOf(atom) !== -1):
+                return StatementAtomSemantic.Method;
+            case (statement.usedTypes.indexOf(atom) !== -1):
+                return StatementAtomSemantic.Type;
+            default:
+                return StatementAtomSemantic.Other;
+        }
+    }
 }
