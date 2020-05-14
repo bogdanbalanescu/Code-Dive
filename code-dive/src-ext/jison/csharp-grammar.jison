@@ -174,6 +174,7 @@ if (!('endCurrentEnumDeclaration' in yy)) {
 if (!('addField' in yy)) {
 	yy.addField = function addField(type, name) {
 		fields.push({
+			index: fields.length,
 			type: type,
 			name: name,
 			modifiers : modifiers
@@ -186,6 +187,7 @@ if (!('addField' in yy)) {
 if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
 		propertyAccessors.push({
+			index: propertyAccessors.length,
 			name: type,
 			declaredVariables: declaredVariables,
 			body: statements.length > 0 ? statements : [] // functionality not yet supported
@@ -198,6 +200,7 @@ if (!('addPropertyAccessor' in yy)) {
 if (!('addProperty' in yy)) {
 	yy.addProperty = function addProperty(type, name) {
 		properties.push({
+			index: properties.length,
 			type: type,
 			name: name,
 			modifiers : modifiers,
@@ -222,6 +225,7 @@ if (!('beginCurrentConstructorDeclaration' in yy)) {
 if (!('addFixedParameter' in yy)) {
 	yy.addFixedParameter = function addFixedParameter(type, name, modifier = "") {
 		currentInvocableMemberFixedParameters.push({
+			index: currentInvocableMemberFixedParameters.length,
 			type: type,
 			name: name,
 			modifier: modifier
@@ -233,6 +237,7 @@ if (!('addFixedParameter' in yy)) {
 if (!('endCurrentConstructorDeclaration' in yy)) {
 	yy.endCurrentConstructorDeclaration = function endCurrentConstructorDeclaration() {
 		constructors.push({
+			index: constructors.length,
 			name: currentInvocableMemberName,
 			modifiers: currentInvocableMemberModifiers,
 			parameters: currentInvocableMemberFixedParameters,
@@ -260,6 +265,7 @@ if (!('beginCurrentMethodDeclaration' in yy)) {
 if (!('endCurrentMethodDeclaration' in yy)) {
 	yy.endCurrentMethodDeclaration = function endCurrentMethodDeclaration() {
 		methods.push({
+			index: methods.length,
 			type: currentInvocableMemberType,
 			name: currentInvocableMemberName,
 			modifiers: currentInvocableMemberModifiers,
@@ -293,6 +299,7 @@ if (!('addVariableDeclaration' in yy)) {
 if (!('addStatement' in yy)) {
 	yy.addStatement = function addStatement(text) {
 		statements.push({
+			index: statements.length,
 			statementText: text,
 			usedFieldsAndProperties: currentStatementUsedFieldsAndProperties,
 			usedConstructors: currentStatementUsedConstructors,
@@ -323,7 +330,10 @@ if (!('addUsedConstructor' in yy)) {
 }
 if (!('addEnumValue' in yy)) {
 	yy.addEnumValue = function addEnumValue(name) {
-		currentEnumValues.push(name);
+		currentEnumValues.push({
+			index: currentEnumValues.length,
+			name: name
+		});
 	}
 }
 /* Parse complete output */

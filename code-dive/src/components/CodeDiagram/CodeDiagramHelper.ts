@@ -4,6 +4,7 @@ import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
 
+import { EnumValue } from '../../codeModel/Misc/EnumValue';
 import { Field } from '../../codeModel/Misc/Field';
 import { Property } from '../../codeModel/Misc/Property';
 import { Constructor } from '../../codeModel/Misc/Constructor';
@@ -33,12 +34,12 @@ export class CodeDiagramHelper {
 
         var nodeData: any = [];
         // Create nodes for enum values
-        const createNodeForEnumValue = (type: Enum, value: string) => {
+        const createNodeForEnumValue = (type: Enum, value: EnumValue) => {
             nodeData.push({
                 category: NodeType.EnumValue,
                 group: CodeDiagramHelper.enumValuesContainerKey(type),
                 key: CodeDiagramHelper.enumValueKey(type, value),
-                value: value
+                value: value.name
             });
         };
         const createNodesForEnumValues = (type: Enum) => {
@@ -86,7 +87,8 @@ export class CodeDiagramHelper {
             });
         };
         // Create nodes for statements
-        const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement, statementKey: string) => {
+        const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement) => {
+            var statementKey = CodeDiagramHelper.constructorOrMethodStatementKey(type, callable, statement);
             createStatementLinks(type, callable, statement, statementKey);
             var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
             var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
@@ -102,7 +104,8 @@ export class CodeDiagramHelper {
                 })
             });
         };
-        const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string) => {
+        const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => {
+            var statementKey = CodeDiagramHelper.propertyAccessorStatementKey(type, property, accessor, statement);
             createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey);
             var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
             var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
@@ -127,10 +130,7 @@ export class CodeDiagramHelper {
                 name: accessor.name,
                 isGroup: true
             });
-            accessor.body.forEach((statement: Statement, index: number) => {
-                var statementKey = CodeDiagramHelper.propertyAccessorStatementKey(type, property, accessor, index);
-                createNodeForPropertyAccessorStatement(type, property, accessor, statement, statementKey);
-            });
+            accessor.body.forEach(statement => createNodeForPropertyAccessorStatement(type, property, accessor, statement));
         }
         // Create nodes for properties
         const createNodeForPropertyHeader = (type: Class | Struct | Interface, property: Property) => {
@@ -205,10 +205,7 @@ export class CodeDiagramHelper {
                 key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, constructor),
                 isGroup: true
             });
-            constructor.statements.forEach((statement: Statement, index: number) => {
-                var statementKey = CodeDiagramHelper.constructorOrMethodStatementKey(type, constructor, index);
-                createNodeForStatement(type, constructor, statement, statementKey);
-            });
+            constructor.statements.forEach(statement => createNodeForStatement(type, constructor, statement));
         }
         const createNodeForConstructor = (type: Class | Struct | Interface, constructor: Constructor) => {
             nodeData.push({
@@ -261,10 +258,7 @@ export class CodeDiagramHelper {
                 key: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, method),
                 isGroup: true
             });
-            method.statements.forEach((statement: Statement, index: number) => {
-                var statementKey = CodeDiagramHelper.constructorOrMethodStatementKey(type, method, index);
-                createNodeForStatement(type, method, statement, statementKey);
-            });
+            method.statements.forEach(statement => createNodeForStatement(type, method, statement));
         }
         const createNodeForMethod = (type: Class | Struct | Interface, method: Method) => {
             createMethodTypeLink(type, method);
@@ -372,8 +366,8 @@ export class CodeDiagramHelper {
             if (property !== undefined) return property;
         }
     };
-    private static findEnumInType(type: Enum, enumValue: string): string | undefined {
-        var value = type.values.find(value => value == enumValue);
+    private static findEnumInType(type: Enum, enumValueName: string): EnumValue | undefined {
+        var value = type.values.find(value => value.name == enumValueName);
         if (value !== undefined) return value;
     }
     private static findConstructorOrMethodInType (type: IType | null, callableName: string): Constructor | undefined {
@@ -394,21 +388,21 @@ export class CodeDiagramHelper {
     private static enumValuesContainerKey =
         (type: Enum) => `${CodeDiagramHelper.typeKey(type)}.Values`;
     private static enumValueKey =
-        (type: Enum, value: string) => `${CodeDiagramHelper.typeKey(type)}.${value}`;
+        (type: Enum, value: EnumValue) => `${CodeDiagramHelper.typeKey(type)}.${value.index}`;
     // Create keys for fields and properties
     private static fieldsContainerKey =
         (type: Class | Struct) => `${CodeDiagramHelper.typeKey(type)}.Fields`;
     private static propertyContainerKey = 
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Properties`;
     private static fieldOrPropertyKey = 
-        (type: Class | Struct | Interface, fieldOrProperty: Field | Property) => `${CodeDiagramHelper.typeKey(type)}.${fieldOrProperty.name}`;
+        (type: Class | Struct | Interface, fieldOrProperty: Field | Property) => `${CodeDiagramHelper.typeKey(type)}.${fieldOrProperty.index}.${fieldOrProperty.name}`;
     // Create keys for callables
     private static constructorsContainerKey =
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Constructors`;
     private static methodsContainerKey =
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Methods`;
     private static constructorOrMethodOrPropertyContainerKey = 
-        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.typeKey(type)}.${callable.name}:${callable.parameters.map(parameter => parameter.type).join('.')}:Container`;
+        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.typeKey(type)}.${callable.index}.${callable.name}:${callable.parameters.map(parameter => parameter.type).join('.')}:Container`;
     private static constructorOrMethodOrPropertyHeaderContainerKey =
         (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.HeaderContainer`;
     private static constructorOrMethodOrPropertyBodyContainerKey =
@@ -419,16 +413,18 @@ export class CodeDiagramHelper {
         (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.Body`;
     // Create keys for parameters
     private static constructorOrMethodOrPropertyParameterKey = 
-        (type: IType, constructor: Constructor | Method | Property, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}.${parameter.name}`;
-    // Create keys for statements
-    private static propertyAccessorStatementKey = 
-        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, index: number) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}:${index}`;
-    private static constructorOrMethodStatementKey = 
-        (type: Class | Struct | Interface, constructor: Constructor | Method, index: number) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${index}`;
+        (type: IType, callable: Constructor | Method | Property, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.${parameter.index}.${parameter.name}`;
     // Create keys for property accessors
     private static propertyAccessorKey = 
-        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}`;
-
+        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}.${accessor.index}`;
+    // Create keys for statements
+    private static propertyAccessorStatementKey = 
+        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => 
+        `${CodeDiagramHelper.propertyAccessorKey(type, property, accessor)}:${statement.index}.${statement.statementText}`;
+    private static constructorOrMethodStatementKey = 
+        (type: Class | Struct | Interface, constructor: Constructor | Method, statement: Statement) => 
+        `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${statement.index}.${statement.statementText}`;
+    
     // Creating and adding links
     private static addLink = (category: string, from: string, to: string, linkData: any) => {
         linkData.push({ key: linkData.length, category: category, from: from, to: to });
@@ -440,8 +436,8 @@ export class CodeDiagramHelper {
             if (enumValueOfRelevantType !== undefined) {
                 CodeDiagramHelper.addLink(
                     LinkType.StatementUsesEnumValue,
-                    statementKey, 
-                    CodeDiagramHelper.enumValueKey(relevantType as Enum, enumValueOfRelevantType as string),
+                    statementKey,
+                    CodeDiagramHelper.enumValueKey(relevantType as Enum, enumValueOfRelevantType),
                     linkData);
             }
         }

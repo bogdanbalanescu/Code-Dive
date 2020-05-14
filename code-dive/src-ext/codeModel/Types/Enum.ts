@@ -1,4 +1,5 @@
 import { IType } from './IType';
+import { EnumValue } from '../Misc/EnumValue';
 
 export class Enum implements IType {
     sourceFilePath: string = "";
@@ -9,7 +10,7 @@ export class Enum implements IType {
     modifiers: string[];
     parentInheritances: string[];
 
-    values: string[];
+    values: EnumValue[];
 
     public constructor(otherEnum: Enum) {
         this.sourceFilePath = otherEnum.sourceFilePath || "";

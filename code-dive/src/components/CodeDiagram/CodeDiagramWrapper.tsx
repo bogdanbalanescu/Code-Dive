@@ -562,7 +562,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     
     // helper functions
-    private jsonEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+    private jsonEqual = (a: any, b: any) => this.jsonStringifyWithoutGoHashId(a) === this.jsonStringifyWithoutGoHashId(b);
+    private jsonStringifyWithoutGoHashId = (a: any) => JSON.stringify(a, (key, value) => {
+        if (key === "__gohashid") return undefined;
+        return value;
+    });
 
     render() {
         return (
