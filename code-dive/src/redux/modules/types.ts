@@ -12,35 +12,35 @@ const initialTypesState: IType[] = [];
 const SET_TYPES = 'SET_TYPES';
 interface SetTypesAction {
     type: typeof SET_TYPES,
-    types: IType[]
+    parsedTypes: ParsedTypes
 }
 const UPDATE_TYPES_FOR_FILE_PATH = 'UPDATE_TYPES_FOR_FILE_PATH';
 interface UpdateTypesAction {
     type: typeof UPDATE_TYPES_FOR_FILE_PATH,
-    types: IType[],
+    parsedTypes: ParsedTypes,
     filePath: string
 }
 type TypesActions = SetTypesAction | UpdateTypesAction;
 
-// Action Creators
-export function postTypes(parsedTypes: ParsedTypes): TypesActions {
-    var types: IType[] = parsedTypes.classes.map(type => new Class(type) as IType)
+const convertParsedTypesToTypeScriptTypes = (parsedTypes: ParsedTypes): IType[] => {
+    return parsedTypes
+        .classes.map(type => new Class(type) as IType)
         .concat(parsedTypes.structs.map(type => new Struct(type)))
         .concat(parsedTypes.interfaces.map(type => new Interface(type)))
         .concat(parsedTypes.enums.map(type => new Enum(type)));
+}
+
+// Action Creators
+export function postTypes(parsedTypes: ParsedTypes): TypesActions {
     return {
         type: SET_TYPES,
-        types: types
+        parsedTypes: parsedTypes
     };
 }
 export function updateTypesForFilePath(parsedTypes: ParsedTypes, filePath: string): TypesActions {
-    var types: IType[] = parsedTypes.classes.map(type => new Class(type) as IType)
-        .concat(parsedTypes.structs.map(type => new Struct(type)))
-        .concat(parsedTypes.interfaces.map(type => new Interface(type)))
-        .concat(parsedTypes.enums.map(type => new Enum(type)));
     return {
         type: UPDATE_TYPES_FOR_FILE_PATH,
-        types: types,
+        parsedTypes: parsedTypes,
         filePath: filePath
     };
 }
@@ -49,9 +49,9 @@ export function updateTypesForFilePath(parsedTypes: ParsedTypes, filePath: strin
 export function typesReducer(state = initialTypesState, action: TypesActions) {
     switch (action.type) {
         case SET_TYPES:
-            return action.types
+            return convertParsedTypesToTypeScriptTypes(action.parsedTypes);
         case UPDATE_TYPES_FOR_FILE_PATH:
-            return [...state.filter(type => type.sourceFilePath !== action.filePath), ...action.types]
+            return [...state.filter(type => type.sourceFilePath !== action.filePath), ...convertParsedTypesToTypeScriptTypes(action.parsedTypes)]
         default:
             return state
     }

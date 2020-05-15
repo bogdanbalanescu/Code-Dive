@@ -27,10 +27,10 @@ export class Struct implements IType {
         this.modifiers = otherStruct.modifiers;
         this.parentInheritances = otherStruct.parentInheritances;
 
-        this.fields = otherStruct.fields;
-        this.properties = otherStruct.properties;
-        this.constructors = otherStruct.constructors;
-        this.methods = otherStruct.methods;
+        this.fields = otherStruct.fields.map(field => new Field(field));
+        this.properties = otherStruct.properties.map(property => new Property(property));
+        this.constructors = otherStruct.constructors.map(constructor => new Constructor(constructor));
+        this.methods = otherStruct.methods.map(method => new Method(method));
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

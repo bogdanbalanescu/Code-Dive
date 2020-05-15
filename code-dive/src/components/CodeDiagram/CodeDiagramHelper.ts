@@ -395,14 +395,16 @@ export class CodeDiagramHelper {
     private static propertyContainerKey = 
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Properties`;
     private static fieldOrPropertyKey = 
-        (type: Class | Struct | Interface, fieldOrProperty: Field | Property) => `${CodeDiagramHelper.typeKey(type)}.${fieldOrProperty.index}.${fieldOrProperty.name}`;
+        (type: Class | Struct | Interface, fieldOrProperty: Field | Property) => 
+        `${CodeDiagramHelper.typeKey(type)}.${CodeDiagramHelper.mapMemberTypeToString(fieldOrProperty)}.${fieldOrProperty.index}`;
     // Create keys for callables
     private static constructorsContainerKey =
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Constructors`;
     private static methodsContainerKey =
         (type: Class | Struct | Interface) => `${CodeDiagramHelper.typeKey(type)}.Methods`;
     private static constructorOrMethodOrPropertyContainerKey = 
-        (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.typeKey(type)}.${callable.index}.${callable.name}:${callable.parameters.map(parameter => parameter.type).join('.')}:Container`;
+        (type: IType, callable: Constructor | Method | Property) => 
+        `${CodeDiagramHelper.typeKey(type)}.${CodeDiagramHelper.mapMemberTypeToString(callable)}.${callable.index}:Container`;
     private static constructorOrMethodOrPropertyHeaderContainerKey =
         (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.HeaderContainer`;
     private static constructorOrMethodOrPropertyBodyContainerKey =
@@ -413,17 +415,17 @@ export class CodeDiagramHelper {
         (type: IType, callable: Constructor | Method | Property) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.Body`;
     // Create keys for parameters
     private static constructorOrMethodOrPropertyParameterKey = 
-        (type: IType, callable: Constructor | Method | Property, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.${parameter.index}.${parameter.name}`;
+        (type: IType, callable: Constructor | Method | Property, parameter: FixedParameter) => `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, callable)}.${parameter.index}`;
     // Create keys for property accessors
     private static propertyAccessorKey = 
-        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.name}.${accessor.index}`;
+        (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor) => `${CodeDiagramHelper.fieldOrPropertyKey(type, property)}.${accessor.index}`;
     // Create keys for statements
     private static propertyAccessorStatementKey = 
         (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => 
-        `${CodeDiagramHelper.propertyAccessorKey(type, property, accessor)}:${statement.index}.${statement.statementText}`;
+        `${CodeDiagramHelper.propertyAccessorKey(type, property, accessor)}:${statement.index}`;
     private static constructorOrMethodStatementKey = 
         (type: Class | Struct | Interface, constructor: Constructor | Method, statement: Statement) => 
-        `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${statement.index}.${statement.statementText}`;
+        `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${statement.index}`;
     
     // Creating and adding links
     private static addLink = (category: string, from: string, to: string, linkData: any) => {
@@ -651,5 +653,14 @@ export class CodeDiagramHelper {
             default:
                 return StatementAtomSemantic.Other;
         }
+    }
+    private static mapMemberTypeToString = (member: Field | Property | Constructor | Method): string => {
+        switch (member.constructor) {
+            case (Field): return "Field";
+            case (Property): return "Property";
+            case (Constructor): return "Constructor";
+            case (Method): return "Method";
+        }
+        return "Unknown";
     }
 }

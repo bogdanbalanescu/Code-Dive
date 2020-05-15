@@ -23,8 +23,8 @@ export class Interface implements IType {
         this.modifiers = otherInterface.modifiers;
         this.parentInheritances = otherInterface.parentInheritances;
 
-        this.properties = otherInterface.properties;
-        this.methods = otherInterface.methods;
+        this.properties = otherInterface.properties.map(property => new Property(property));
+        this.methods = otherInterface.methods.map(method => new Method(method));
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

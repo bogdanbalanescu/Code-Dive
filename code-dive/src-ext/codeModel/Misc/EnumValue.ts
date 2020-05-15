@@ -2,8 +2,8 @@ export class EnumValue {
     index: number;
     name: string;
 
-    public constructor(index: number, name: string) {
-        this.index = index;
-        this.name = name;
+    public constructor(otherEnumValue: EnumValue) {
+        this.index = otherEnumValue.index;
+        this.name = otherEnumValue.name;
     }
 }

@@ -7,10 +7,10 @@ export class PropertyAccessor {
     declaredVariables: DeclaredVariable[];
     body: Statement[];
 
-    public constructor(index: number, name: string, declaredVariables: DeclaredVariable[], body: Statement[]) {
-        this.index = index;
-        this.name = name;
-        this.declaredVariables = declaredVariables;
-        this.body = body;
+    public constructor(otherPropertyAccessor: PropertyAccessor) {
+        this.index = otherPropertyAccessor.index;
+        this.name = otherPropertyAccessor.name;
+        this.declaredVariables = otherPropertyAccessor.declaredVariables.map(variable => new DeclaredVariable(variable));
+        this.body = otherPropertyAccessor.body.map(statement => new Statement(statement));
     }
 }

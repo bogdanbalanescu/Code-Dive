@@ -29,6 +29,29 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram != null) {
                 diagram.startTransaction();
+                // Nodes
+                prevProps.nodeDataArray.forEach(previousNode => {
+                    if (diagram == null) return;
+                    var nodeIndex = this.props.nodeDataArray.findIndex(currentNode => currentNode.key === previousNode.key);
+                    if (nodeIndex === -1) { // node does not exist any more
+                        var node = diagram.findPartForKey(previousNode.key);
+                        if (node !== null) diagram.remove(node);
+                    }
+                    else { // node exists
+                        var currentNode = this.props.nodeDataArray[nodeIndex];
+                        if (!this.jsonEqual(previousNode, currentNode)) { // node data has changed
+                            var node = diagram.findPartForKey(previousNode.key);
+                            if (node !== null) diagram.model.assignAllDataProperties(node.data, currentNode);
+                        }
+                    }
+                })
+                this.props.nodeDataArray.forEach(currentNode => {
+                    if (diagram == null) return;
+                    if (prevProps.nodeDataArray.findIndex(previousNode => previousNode.key === currentNode.key) === -1) { // node is new
+                        diagram.model.addNodeData(currentNode);
+                    }
+                })
+                // Links
                 prevProps.linkDataArray.forEach(previousLink => {
                     if (diagram == null) return;
                     if (this.props.linkDataArray.findIndex(currentLink => this.jsonEqual(previousLink, currentLink)) === -1) { // if link no longer exists or was modified, delete it
@@ -36,27 +59,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         if (link !== null) diagram.remove(link);
                     }
                 });
-                prevProps.nodeDataArray.forEach(previousNode => {
-                    if (diagram == null) return;
-                    if (this.props.nodeDataArray.findIndex(currentNode => this.jsonEqual(previousNode, currentNode)) === -1) { // if node no longer exists or was modified, delete it
-                        var node = diagram.findPartForKey(previousNode.key);
-                        if (node !== null) diagram.remove(node);
-                    }
-                })
-                this.props.nodeDataArray.forEach(currentNode => {
-                    if (diagram == null) return;
-                    if (prevProps.nodeDataArray.findIndex(previousNode => this.jsonEqual(previousNode, currentNode)) === -1) {
-                        diagram.model.addNodeData(currentNode);
-                    }
-                })
                 this.props.linkDataArray.forEach(currentLink => {
                     if (diagram == null) return;
                     if (prevProps.linkDataArray.findIndex(previousLink => this.jsonEqual(previousLink, currentLink)) === -1) {
                         (diagram.model as go.GraphLinksModel).addLinkData(currentLink);
                     }
                 });
-                // TODO: the above logic can be improved to only update what is absolutely necessary for better performance.
-                // For now, however, the nodes are small enough that an improvement might not be needed.
                 diagram.commitTransaction();
             }
         }

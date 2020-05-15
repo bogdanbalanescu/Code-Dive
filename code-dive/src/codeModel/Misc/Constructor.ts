@@ -10,12 +10,12 @@ export class Constructor {
     declaredVariables: DeclaredVariable[];
     statements: Statement[];
 
-    public constructor(index: number, name: string, modifiers: string[], parameters: FixedParameter[], declaredVariables: DeclaredVariable[], statements: Statement[]) {
-        this.index = index;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-        this.declaredVariables = declaredVariables;
-        this.statements = statements;
+    public constructor(otherConstructor: Constructor) {
+        this.index = otherConstructor.index;
+        this.name = otherConstructor.name;
+        this.modifiers = otherConstructor.modifiers;
+        this.parameters = otherConstructor.parameters.map(parameter => new FixedParameter(parameter));
+        this.declaredVariables = otherConstructor.declaredVariables.map(variable => new DeclaredVariable(variable));
+        this.statements = otherConstructor.statements.map(statement => new Statement(statement));
     }
 }

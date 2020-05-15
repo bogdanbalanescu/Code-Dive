@@ -27,10 +27,10 @@ export class Class implements IType {
         this.modifiers = otherClass.modifiers;
         this.parentInheritances = otherClass.parentInheritances;
 
-        this.fields = otherClass.fields;
-        this.properties = otherClass.properties;
-        this.constructors = otherClass.constructors;
-        this.methods = otherClass.methods;
+        this.fields = otherClass.fields.map(field => new Field(field));
+        this.properties = otherClass.properties.map(property => new Property(property));
+        this.constructors = otherClass.constructors.map(constructor => new Constructor(constructor));
+        this.methods = otherClass.methods.map(method => new Method(method));
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

@@ -4,10 +4,10 @@ export class Field {
     name: string;
     modifiers: string[];
 
-    public constructor(index: number, type: string, name: string, modifiers: string[]) {
-        this.index = index;
-        this.type = type;
-        this.name = name;
-        this.modifiers = modifiers;
+    public constructor(otherField: Field) {
+        this.index = otherField.index;
+        this.type = otherField.type;
+        this.name = otherField.name;
+        this.modifiers = otherField.modifiers;
     }
 }

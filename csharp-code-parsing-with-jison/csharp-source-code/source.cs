@@ -26,20 +26,27 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             a[1] = "Item B";
             a[2] = "Item C";
             a[3] = "Item D";
- 
+
             // Create Iterator and provide aggregate
             Iterator i;
             i = a.CreateIterator();
- 
+
             Console.WriteLine("Iterating over collection:");
- 
+
             object item;
             item = i.First();
             while (item != null)
-                item = i.Next();
- 
+                item = WriteCurrentAndGetNext(i, item);
+
             // Wait for user
             Console.ReadKey();
+        }
+
+        private static object WriteCurrentAndGetNext(Iterator i, object item)
+        {
+            Console.WriteLine(item);
+            item = i.Next();
+            return item;
         }
     }
  

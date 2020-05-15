@@ -11,13 +11,13 @@ export class Method {
     declaredVariables: DeclaredVariable[];
     statements: Statement[];
 
-    public constructor(index: number, type: string, name: string, modifiers: string[], parameters: FixedParameter[], declaredVariables: DeclaredVariable[], statements: Statement[]) {
-        this.index = index;
-        this.type = type;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-        this.declaredVariables = declaredVariables;
-        this.statements = statements;
+    public constructor(otherMethod: Method) {
+        this.index = otherMethod.index;
+        this.type = otherMethod.type;
+        this.name = otherMethod.name;
+        this.modifiers = otherMethod.modifiers;
+        this.parameters = otherMethod.parameters.map(parameter => new FixedParameter(parameter));
+        this.declaredVariables = otherMethod.declaredVariables.map(variable => new DeclaredVariable(variable));
+        this.statements = otherMethod.statements.map(statement => new Statement(statement));
     }
 }

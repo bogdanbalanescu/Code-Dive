@@ -9,12 +9,12 @@ export class Property {
     parameters: FixedParameter[];
     accessors: PropertyAccessor[];
 
-    public constructor(index: number, type: string, name: string, modifiers: string[], parameters: FixedParameter[], accessors: PropertyAccessor[]) {
-        this.index = index;
-        this.type = type;
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-        this.accessors = accessors;
+    public constructor(otherProperty: Property) {
+        this.index = otherProperty.index;
+        this.type = otherProperty.type;
+        this.name = otherProperty.name;
+        this.modifiers = otherProperty.modifiers;
+        this.parameters = otherProperty.parameters.map(parameter => new FixedParameter(parameter));
+        this.accessors = otherProperty.accessors.map(accessor => new PropertyAccessor(accessor));
     }
 }

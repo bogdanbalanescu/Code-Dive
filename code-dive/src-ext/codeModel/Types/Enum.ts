@@ -21,7 +21,7 @@ export class Enum implements IType {
         this.modifiers = otherEnum.modifiers;
         this.parentInheritances = otherEnum.parentInheritances;
 
-        this.values = otherEnum.values;
+        this.values = otherEnum.values.map(value => new EnumValue(value));
     }
 
     public setSourceFilePath(sourceFilePath: string): void {
