@@ -25,25 +25,21 @@ namespace DoFactory.GangOfFour.Iterator.Structural
             a[1] = "Item B";
             a[2] = "Item C";
             a[3] = "Item D";
-
+ 
             // Create Iterator and provide aggregate
             Iterator i = a.CreateIterator();
-
+ 
             Console.WriteLine("Iterating over collection:");
-
+ 
             object item = i.First();
             while (item != null)
-                item = WriteCurrentAndGetNext(i, item);
-
+            {
+                Console.WriteLine(item);
+                item = i.Next();
+            }
+ 
             // Wait for user
             Console.ReadKey();
-        }
-
-        private static object WriteCurrentAndGetNext(Iterator i, object item)
-        {
-            Console.WriteLine(item);
-            item = i.Next();
-            return item;
         }
     }
  
@@ -62,9 +58,12 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     {
         private ArrayList _items;
  
+        public ConcreteAggregate() {
+            _items = new ArrayList();
+        }
+
         public override Iterator CreateIterator()
         {
-            _items = new ArrayList();
             return new ConcreteIterator(this);
         }
  
@@ -92,7 +91,7 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         public abstract bool IsDone();
         public abstract object CurrentItem();
     }
-
+ 
     /// <summary>
     /// The 'ConcreteIterator' class
     /// </summary>
@@ -119,15 +118,11 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         {
             object ret = null;
             if (_current < _aggregate.Count - 1)
-                ret = MoveToNextItem();
+            {
+                ret = _aggregate[++_current];
+            }
  
             return ret;
-        }
-
-        private object MoveToNextItem() 
-        {
-            _current = _current + 1;
-            return _aggregate[_current];
         }
  
         // Gets current iteration item
@@ -135,6 +130,7 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         {
             return _aggregate[_current];
         }
+ 
         // Gets whether iterations are complete
         public override bool IsDone()
         {

@@ -100,8 +100,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         cycleRemoveOption: go.LayeredDigraphLayout.CycleGreedy,
                         layeringOption: go.LayeredDigraphLayout.LayerLongestPathSink,
                         initializeOption: go.LayeredDigraphLayout.InitDepthFirstOut,
-                        aggressiveOption: go.LayeredDigraphLayout.AggressiveNone,
-                        packOption: go.LayeredDigraphLayout.PackAll,
+                        aggressiveOption: go.LayeredDigraphLayout.AggressiveMore,
+                        packOption: go.LayeredDigraphLayout.PackExpand,
                         setsPortSpots: false
                     }),
                 });
@@ -270,6 +270,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private statementNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
             { selectable: false },
+            this.$(go.Panel, 
+                new go.Binding("width", "blockCount", blockCount => blockCount * 15)), //TODO: parameterize the value by which the width is computed
             this.$(go.Panel, "Horizontal",
                 { 
                     stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
@@ -397,10 +399,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         return this.$(go.Group, "Table",
             { selectable: false },
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
-            // drawn before row 1:
-            this.$(go.Panel, { row: 0, width: go.GraphObject.Fill, height: 0 }),
-            this.$(go.RowColumnDefinition,
-                { row: 1, separatorStrokeWidth: 1.5, separatorStroke: "black" }),
+            // // drawn before row 1:
+            // this.$(go.Panel, { row: 0, width: go.GraphObject.Fill, height: 0 }),
+            // this.$(go.RowColumnDefinition,
+            //     { row: 1, separatorStrokeWidth: 1.5, separatorStroke: "black" }),
             this.$(go.Placeholder, { row: 1 })
             );
     }

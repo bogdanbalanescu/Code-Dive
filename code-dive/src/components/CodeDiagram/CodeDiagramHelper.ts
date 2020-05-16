@@ -101,7 +101,8 @@ export class CodeDiagramHelper {
                         text: atom.trim(),
                         semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
                     }
-                })
+                }),
+                blockCount: statement.blockCount
             });
         };
         const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => {
@@ -118,7 +119,8 @@ export class CodeDiagramHelper {
                         text: atom.trim(),
                         semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
                     }
-                })
+                }),
+                blockCount: statement.blockCount
             });
         };
         // Create nodes for property accessor

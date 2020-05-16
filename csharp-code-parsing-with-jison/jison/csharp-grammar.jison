@@ -283,6 +283,7 @@ if (!('endCurrentMethodDeclaration' in yy)) {
 	}
 }
 /* Statements */
+var currentStatementBlockCount = 0;
 var currentStatementUsedFieldsAndProperties = [];
 var currentStatementUsedConstructors = [];
 var currentStatementUsedMethods = [];
@@ -301,6 +302,7 @@ if (!('addStatement' in yy)) {
 		statements.push({
 			index: statements.length,
 			statementText: text,
+			blockCount: currentStatementBlockCount,
 			usedFieldsAndProperties: currentStatementUsedFieldsAndProperties,
 			usedConstructors: currentStatementUsedConstructors,
 			usedMethods: currentStatementUsedMethods,
@@ -312,6 +314,18 @@ if (!('addStatement' in yy)) {
 		currentStatementUsedMethods = [];
 		currentStatementUsedTypes = [];
 	};
+}
+if (!('addOpenCurlyBracketAsStatement' in yy)) {
+	yy.addOpenCurlyBracketAsStatement = function addOpenCurlyBracketAsStatement() {
+		yy.addStatement('{');
+		currentStatementBlockCount += 1;
+	}
+}
+if (!('addClosedCurlyBracketAsStatement' in yy)) {
+	yy.addClosedCurlyBracketAsStatement = function addClosedCurlyBracketAsStatement() {
+		currentStatementBlockCount -= 1;
+		yy.addStatement('}');
+	}
 }
 if (!('addUsedMethod' in yy)) {
 	yy.addUsedMethod = function addUsedMethod(methodName) {
@@ -677,13 +691,21 @@ _subroutine_add_current_method
 /* 3.4.2 Method body */
 method_body
 	: block
-	/*Consider expression body: => expression ;*/
 	| semicolon
+	/*Consider expression body: => expression ;*/
 	;
 /*3.3.2.0 Block */
 block
-	: '{' statement_list '}'
-	| '{' '}'
+	: '{' _subroutine_add_open_curly_brackets_as_statement statement_list '}' _subroutine_add_closed_curly_brackets_as_statement
+	| '{' _subroutine_add_open_curly_brackets_as_statement '}' _subroutine_add_closed_curly_brackets_as_statement
+	;
+_subroutine_add_open_curly_brackets_as_statement
+	: /* empty */
+		{yy.addOpenCurlyBracketAsStatement();}
+	;
+_subroutine_add_closed_curly_brackets_as_statement
+	: /* empty */
+		{yy.addClosedCurlyBracketAsStatement();}
 	;
 statement_list
 	: statement_list statement
@@ -691,35 +713,29 @@ statement_list
 	;
 statement
 	: variable_declaration_statement
+		{yy.addStatement($$);}
 	| embedded_statement
-		{yy.addStatement($$);}
-	| selection_statement
-		{yy.addStatement($$);}
-	| iteration_statement
-		{yy.addStatement($$);}
-	| try_statement
 		{yy.addStatement($$);}
 	| return_statement
 		{yy.addStatement($$);}
+	| selection_statement
+	| iteration_statement
+	| try_statement
 	;
 /* 3.3.2.1 Variable declaration statement */
 variable_declaration_statement
 	: IDENTIFIER IDENTIFIER semicolon
 		{$$ = $1 + ' ' + $2 + $3;
-		 yy.addVariableDeclaration($1, $2);
-		 yy.addStatement($$);}
+		 yy.addVariableDeclaration($1, $2)}
 	| array_type IDENTIFIER semicolon
 		{$$ = $1 + ' ' + $2 + $3;
-		 yy.addVariableDeclaration($1, $2);
-		 yy.addStatement($$);}
+		 yy.addVariableDeclaration($1, $2)}
 	| IDENTIFIER IDENTIFIER assignment_expression semicolon
 		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4;
-		 yy.addVariableDeclaration($1, $2);
-		 yy.addStatement($$);}
+		 yy.addVariableDeclaration($1, $2)}
 	| array_type IDENTIFIER assignment_expression semicolon
 		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4;
-		 yy.addVariableDeclaration($1, $2);
-		 yy.addStatement($$);}
+		 yy.addVariableDeclaration($1, $2)}
 	;
 /* 3.3.2.2 Embedded statements */
 embedded_statement
@@ -802,11 +818,17 @@ selection_statement
     /*| switch_statement*/ /*Cannot support this right now*/
     ;
 if_statement
-    : IF '(' boolean_expression ')' embedded_statement
-		{$$ = $1 + $2 + $3 + $4 + ' ' + $5;}
-    | IF '(' boolean_expression ')' embedded_statement ELSE embedded_statement
-		{$$ = $1 + $2 + $3 + $4 + ' ' + $5 + ' ' + $6 + ' ' + $7;}
+    : IF '(' boolean_expression ')' _subroutine_add_if_statement block
+    | IF '(' boolean_expression ')' _subroutine_add_if_statement block ELSE _subroutine_add_else_statement block
     ;
+_subroutine_add_if_statement
+	: /* empty */
+		{yy.addStatement($-2 + $-1 + $0 + $1);}
+	;
+__subroutine_add_else_statement
+	: /* empty */
+		{yy.addStatement($1);}
+	;
 boolean_expression
 	: expression
 	;
@@ -818,16 +840,26 @@ iteration_statement
     | foreach_statement
     ;
 while_statement
-    : WHILE '(' boolean_expression ')' embedded_statement
-		{$$ = $1 + $2 + $3 + $4 + ' ' + $5;}
+    : WHILE '(' boolean_expression ')' _subroutine_add_while_statement block
     ;
+_subroutine_add_while_statement
+	: /* empty */
+		{yy.addStatement($-2 + $-1 + $0 + $1);}
+	;
 do_statement
-    : DO embedded_statement WHILE '(' boolean_expression ')' semicolon
-		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4 + $5 + $6 + $7;}
+    : DO _subroutine_add_do_statement block WHILE '(' boolean_expression ')' semicolon
+		{yy.addStatement($4 + $5 + $6 + $7 + $8);}
     ;
+_subroutine_add_do_statement
+	: /* empty */
+		{yy.addStatement($1);}
+	;
 for_statement
-	: FOR '(' for_initializer semicolon for_condition semicolon for_iterator ')' embedded_statement
-		{$$ = $1 + ' ' + $2 + $3 + $4 + ' ' + $5 + $6 + ' ' + $7 + $8 + ' ' + $9;}
+	: FOR '(' for_initializer semicolon for_condition semicolon for_iterator ')' _subroutine_add_for_statement block
+	;
+_subroutine_add_for_statement
+	: /* empty */
+		{yy.addStatement($-6 + ' ' + $-5 + $-4 + $-3 + ' ' + $-2 + $-1 + ' ' + $0 + $1);}
 	;
 for_initializer
 	: unary_expression assignment_expression
@@ -844,10 +876,13 @@ for_iterator
 		{$$ = $1 + ' ' + $2;}
 	;
 foreach_statement
-    : FOREACH '(' IDENTIFIER IDENTIFIER IN expression ')' embedded_statement
-		{$$ = $1 + ' ' + $2 + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + $7 + ' ' + $8;
-		 yy.addVariableDeclaration($3, $4);}
+    : FOREACH '(' IDENTIFIER IDENTIFIER IN expression ')' _subroutine_add_foreach_statement block
     ;
+_subroutine_add_foreach_statement
+	: /* empty */
+		{yy.addStatement($-5 + ' ' + $-4 + $-3 + ' ' + $-2 + ' ' + $-1 + ' ' + $0 + $1);
+		 yy.addVariableDeclaration($-3, $-2);}
+	;
 /* 3.3.2.5 Try statement (try, catch, finally) */
 try_statement
     : try_clause catch_clauses finally_clause
@@ -856,8 +891,11 @@ try_statement
 		{$$ = $1 + ' ' + $2;}
     ;
 try_clause
-	: TRY '{' embedded_statement '}'
-		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4;}
+	: TRY _subroutine_add_try_statement block
+	;
+_subroutine_add_try_statement
+	: /* empty */
+		{yy.addStatement($1);}
 	;
 catch_clauses
 	: catch_clauses catch_clause
@@ -865,14 +903,20 @@ catch_clauses
 	| catch_clause
 	;
 catch_clause
-    : CATCH '(' IDENTIFIER IDENTIFIER ')' '{' embedded_statement '}'
-		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4 + ' ' + $5 + ' ' + $6 + ' ' + $7 + ' ' + $8;
-		 yy.addVariableDeclaration($3, $4);}
+    : CATCH '(' IDENTIFIER IDENTIFIER ')' _subroutine_add_catch_statement block
     ;
+_subroutine_add_catch_statement
+	: /* empty */
+		{yy.addStatement($-3 + ' ' + $-2 + $-1 + ' ' + $0 + $1);
+		 yy.addVariableDeclaration($-1, $0);}
+	;
 finally_clause
-    : FINALLY '{' embedded_statement '}'
-		{$$ = $1 + ' ' + $2 + ' ' + $3 + ' ' + $4;}
+    : FINALLY _subroutine_add_finally_statement block
     ;
+_subroutine_add_finally_statement
+	: /* empty */
+		{yy.addStatement($1);}
+	;
 /*
  *
  *
