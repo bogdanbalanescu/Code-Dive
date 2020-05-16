@@ -195,7 +195,8 @@ var parsedTypes: any = { classes:
            type: 'object',
            name: 'this',
            modifiers: [],
-           parameters: [ { index: 0, type: 'int', name: 'index', modifier: '' } ],
+           parameters:
+            [ { index: 0, type: 'int', name: 'index', modifier: '', assignmentStatement: undefined } ],
            accessors:
             [ { index: 0,
                 name: 'get',
@@ -354,7 +355,12 @@ var parsedTypes: any = { classes:
        [ { index: 0,
            name: 'ConcreteIterator',
            modifiers: [ 'public' ],
-           parameters: [ { index: 0, type: 'ConcreteAggregate', name: 'aggregate', modifier: '' } ],
+           parameters:
+            [ { index: 0,
+                type: 'ConcreteAggregate',
+                name: 'aggregate',
+                modifier: '',
+                assignmentStatement: undefined } ],
            declaredVariables: [],
            statements:
             [ { index: 0,

@@ -237,27 +237,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 { column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true}),
         );
     };
-    // parameter template
-    private parameterNodeTemplate = () => {
-        return this.$(go.Node, "Horizontal",
-            { selectable: false },
-            // parameter name
-            this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: "green" },
-                new go.Binding("text", "name")),
-            // :
-            this.$(go.TextBlock, ":"),
-            // parameter type
-            this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: "blue" },
-                new go.Binding("text", "type")),
-            // ,
-            this.$(go.TextBlock, ", ",
-                { isMultiline: false, editable: false, stroke: "black" },
-                new go.Binding("text", ", "),
-                new go.Binding("visible", "isLast", isLast => { return isLast !== true }))
-        );
-    }
     // statement template
     private statementAtomTemplate = () => {
         return this.$(go.Panel, "Auto",
@@ -278,6 +257,35 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     itemTemplate: this.statementAtomTemplate()
                 },
                 new go.Binding("itemArray", "statementAtoms")),
+        );
+    }
+    // parameter template
+    private parameterNodeTemplate = () => {
+        return this.$(go.Node, "Horizontal",
+            { selectable: false },
+            // parameter name
+            this.$(go.TextBlock,
+                { isMultiline: false, editable: false, stroke: "green" },
+                new go.Binding("text", "name")),
+            // :
+            this.$(go.TextBlock, ":"),
+            // parameter type
+            this.$(go.TextBlock,
+                { isMultiline: false, editable: false, stroke: "blue" },
+                new go.Binding("text", "type"),
+                new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
+            // parameter default value
+            this.$(go.Panel, "Horizontal",
+                { 
+                    stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
+                    itemTemplate: this.statementAtomTemplate()
+                },
+                new go.Binding("itemArray", "statementAtoms")),
+            // ,
+            this.$(go.TextBlock, ", ",
+                { isMultiline: false, editable: false, stroke: "black" },
+                new go.Binding("text", ", "),
+                new go.Binding("visible", "isLast", isLast => { return isLast !== true })),
         );
     }
     // property accessor templates

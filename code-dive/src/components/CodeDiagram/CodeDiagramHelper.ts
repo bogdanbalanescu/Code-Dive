@@ -76,6 +76,8 @@ export class CodeDiagramHelper {
         const createNodeForParameter = (type: Class | Struct | Interface, callable: Method | Constructor | Property, parameter: FixedParameter, isLast: boolean) => {
             var parameterKey = CodeDiagramHelper.constructorOrMethodOrPropertyParameterKey(type, callable, parameter);
             createParameterLinks(type, parameter.type, parameterKey);
+            // TODO: add links for parameter assignemnt statement as well -> refactor the logic for adding statement links
+            var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(parameter.assignmentStatement);
             nodeData.push({
                 category: NodeType.Parameter,
                 group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderKey(type, callable),
@@ -83,43 +85,32 @@ export class CodeDiagramHelper {
                 modifier: parameter.modifier,
                 name: parameter.name,
                 type: parameter.type,
-                isLast: isLast
+                isLast: isLast,
+                statementAtoms: statementAtoms
             });
         };
         // Create nodes for statements
         const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement) => {
             var statementKey = CodeDiagramHelper.constructorOrMethodStatementKey(type, callable, statement);
             createStatementLinks(type, callable, statement, statementKey);
-            var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
-            var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
+            var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(statement);
             nodeData.push({
                 category: NodeType.Statement,
                 group: CodeDiagramHelper.constructorOrMethodOrPropertyBodyKey(type, callable),
                 key: statementKey,
-                statementAtoms: statementAtoms.map(atom => {
-                    return {
-                        text: atom.trim(),
-                        semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
-                    }
-                }),
+                statementAtoms: statementAtoms,
                 blockCount: statement.blockCount
             });
         };
         const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => {
             var statementKey = CodeDiagramHelper.propertyAccessorStatementKey(type, property, accessor, statement);
             createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey);
-            var delimiters = statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes)));
-            var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
+            var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(statement);
             nodeData.push({
                 category: NodeType.Statement,
                 group: CodeDiagramHelper.propertyAccessorKey(type, property, accessor),
                 key: statementKey,
-                statementAtoms: statementAtoms.map(atom => {
-                    return {
-                        text: atom.trim(),
-                        semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
-                    }
-                }),
+                statementAtoms: statementAtoms,
                 blockCount: statement.blockCount
             });
         };
@@ -641,6 +632,23 @@ export class CodeDiagramHelper {
 
     // Helper functions
     private static isLastInCollection = (collection: any[], item: any) => collection.indexOf(item) === collection.length - 1;
+    private static mapStatementToStatementAtoms = (statement: Statement | undefined): any[] => {
+        if (statement === undefined) return [];
+        var delimiters = ['using', 'namespace', 'class', 'new', 'public', 'protected', 
+        'internal', 'private', 'static', 'virtual', 'sealed', 'override', 'abstract', 
+        'extern', 'readonly', 'volatile', 'get', 'set', 'ref', 'out', 'this', 'base', 
+        'true', 'false', 'null', 'is', 'as', 'if', 'else', 'while', 'do', 'for', 
+        'foreach', 'in', 'try', 'catch', 'finally', 'throw', 'return', 'struct', 
+        'interface', 'enum']
+        .concat(statement.usedFieldsAndProperties.concat(statement.usedConstructors.concat(statement.usedMethods.concat(statement.usedTypes))));
+        var statementAtoms = statement.statementText.split(new RegExp(`(${delimiters.join('|')})`, 'g')).filter(x => x !== "");
+        return statementAtoms.map(atom => {
+            return {
+                text: atom.trim(),
+                semantic: CodeDiagramHelper.mapStatementAtomToSemantic(atom, statement)
+            }
+        });
+    }
     private static mapStatementAtomToSemantic = (atom: string, statement: Statement): string => {
         switch (true) {
             case (statement.usedFieldsAndProperties.indexOf(atom) !== -1):

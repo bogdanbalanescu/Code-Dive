@@ -228,10 +228,19 @@ if (!('addFixedParameter' in yy)) {
 			index: currentInvocableMemberFixedParameters.length,
 			type: type,
 			name: name,
-			modifier: modifier
+			modifier: modifier,
+			assignmentStatement: undefined
 		});
 		// Cleanup modifiers
 		modifiers = [];
+	}
+}
+if (!('addAssignmentExpressionForPreviousFixedParameter' in yy)) {
+	yy.addAssignmentExpressionForPreviousFixedParameter = function addAssignmentExpressionForPreviousFixedParameter(assignmentStatement) {
+		yy.addStatement(assignmentStatement);
+		var lastAddedFixedParameter = currentInvocableMemberFixedParameters.pop();
+		lastAddedFixedParameter.assignmentStatement = statements.pop();
+		currentInvocableMemberFixedParameters.push(lastAddedFixedParameter);
 	}
 }
 if (!('endCurrentConstructorDeclaration' in yy)) {
@@ -958,12 +967,20 @@ semicolon
 	;
 /* Misc. II: formal parameter list (for defining methods and constructors) */
 formal_parameter_list
-	: fixed_parameters
+	: parameters
 	/*TODO: see about params array*/
 	;
-fixed_parameters
-	: fixed_parameters ',' fixed_parameter
-	| fixed_parameter
+parameters
+	: parameters ',' parameter
+	| parameter
+	;
+parameter
+	: fixed_parameter
+	| optional_parameter
+	;
+optional_parameter
+	: fixed_parameter assignment_expression
+		{yy.addAssignmentExpressionForPreviousFixedParameter($2);}
 	;
 fixed_parameter
 	: modifier IDENTIFIER IDENTIFIER
