@@ -119,7 +119,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         // property accessor group templates
         diagram.groupTemplateMap.add(NodeType.PropertyAccessor, this.propertyAccessorGroupTemplate());
         // property node and group templates
-        diagram.groupTemplateMap.add(NodeType.PropertyHeader, this.methodHeaderGroupTemplate());
+        diagram.groupTemplateMap.add(NodeType.PropertyHeader, this.propertyHeaderGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.PropertyBody, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.PropertyHeaderContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.PropertyBodyContainer, this.methodPartContainerGroupTemplate());
@@ -221,7 +221,15 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 this.$(go.TextBlock, ":"),
                 // field type
                 this.$(go.TextBlock, { stroke: "blue" },
-                    new go.Binding("text", "type")))
+                    new go.Binding("text", "type"),
+                    new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
+                // parameter default value
+                this.$(go.Panel, "Horizontal",
+                    { 
+                        stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
+                        itemTemplate: this.statementAtomTemplate()
+                    },
+                    new go.Binding("itemArray", "statementAtoms"))),
         );
     }
     private fieldsContainerGroupTemplate = () => {
@@ -369,6 +377,47 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 { column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true}),
         );
     };
+    private propertyHeaderGroupTemplate = () => {
+        return this.$(go.Group, "Table",
+            { selectable: false, stretch: go.GraphObject.Fill },
+            // method visibility access modifiers
+            this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
+            this.$(go.Panel, "Horizontal",
+                new go.Binding("itemArray", "modifiers", this.filterViewableModifiers),
+                {
+                    row: 0, column: 0, stretch: go.GraphObject.Fill,
+                    defaultAlignment: go.Spot.Left, opacity: 0.75,
+                    itemTemplate: this.accessModifierTemplate()
+                }),
+            // method name
+            this.$(go.TextBlock,
+                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: "orange", alignment: go.Spot.Left },
+                new go.Binding("text", "name"),
+                new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
+            // (
+            this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5 }),
+            // parameters placeholder
+            this.$(go.Placeholder, { row: 0, column: 3 }),
+            // )
+            this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5 }),
+            // :
+            this.$(go.TextBlock, ":", 
+                { row:0, column: 5 },
+                new go.Binding("visible", "", method => method.type !== undefined)),
+            // method type
+            this.$(go.TextBlock,
+                { row: 0, column: 6, isMultiline: false, editable: false, stroke: "blue", alignment: go.Spot.Left },
+                new go.Binding("text", "type"),
+                new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
+            // parameter default value
+            this.$(go.Panel, "Horizontal",
+                {
+                    row: 0, column: 7, stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
+                    itemTemplate: this.statementAtomTemplate()
+                },
+                new go.Binding("itemArray", "statementAtoms")),
+            );
+    }
     // type method templates
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",

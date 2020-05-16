@@ -8,7 +8,7 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         Half,
         Full
     }
-
+    
     /// <summary>
     /// MainApp startup class for Structural 
     /// Iterator Design Pattern.
@@ -47,6 +47,7 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     /// The 'Aggregate' abstract class
     /// </summary>
     abstract class Aggregate
+
     {
         public abstract Iterator CreateIterator();
     }
@@ -56,12 +57,8 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     /// </summary>
     class ConcreteAggregate : Aggregate
     {
-        private ArrayList _items;
+        private ArrayList _items = new ArrayList();
  
-        public ConcreteAggregate() {
-            _items = new ArrayList();
-        }
-
         public override Iterator CreateIterator()
         {
             return new ConcreteIterator(this);
@@ -98,12 +95,11 @@ namespace DoFactory.GangOfFour.Iterator.Structural
     class ConcreteIterator : Iterator
     {
         private ConcreteAggregate _aggregate;
-        private int _current;
+        private int _current = 0;
  
         // Constructor
         public ConcreteIterator(ConcreteAggregate aggregate)
         {
-            _current = 0;
             this._aggregate = aggregate;
         }
  

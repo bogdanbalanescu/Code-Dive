@@ -7,24 +7,19 @@ namespace GoFDesignPatterns
     /// </summary>
     class ConcreteAggregate : Aggregate
     {
-        private ArrayList _items;
-
-        public ConcreteAggregate()
-        {
-            _items = new ArrayList();
-        }
-
+        private ArrayList _items = new ArrayList();
+ 
         public override Iterator CreateIterator()
         {
             return new ConcreteIterator(this);
         }
-
+ 
         // Gets item count
         public int Count
         {
             get { return _items.Count; }
         }
-
+ 
         // Indexer
         public object this[int index]
         {

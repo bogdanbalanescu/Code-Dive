@@ -183,6 +183,14 @@ if (!('addField' in yy)) {
 		modifiers = [];
 	};
 }
+if (!('addAssignmentExpressionForPreviousField' in yy)) {
+	yy.addAssignmentExpressionForPreviousField = function addAssignmentExpressionForPreviousField(assignmentStatement) {
+		yy.addStatement(assignmentStatement);
+		var lastField = fields.pop();
+		lastField.assignmentStatement = statements.pop();
+		fields.push(lastField);
+	}
+}
 /* 3.2 Property declaration */
 if (!('addPropertyAccessor' in yy)) {
 	yy.addPropertyAccessor = function addPropertyAccessor(type) {
@@ -212,6 +220,14 @@ if (!('addProperty' in yy)) {
 		currentInvocableMemberFixedParameters = [];
 		propertyAccessors = [];
 	};
+}
+if (!('addAssignmentExpressionForPreviousProperty' in yy)) {
+	yy.addAssignmentExpressionForPreviousProperty = function addAssignmentExpressionForPreviousProperty(assignmentStatement) {
+		yy.addStatement(assignmentStatement);
+		var lastProperty = properties.pop();
+		lastProperty.assignmentStatement = statements.pop();
+		properties.push(lastProperty);
+	}
 }
 /* 3.3 Constructor declaration */
 if (!('beginCurrentConstructorDeclaration' in yy)) {
@@ -607,13 +623,21 @@ enum_member_declaration
 */
 /* 3.1 Field declaration */
 field_declaration
-	: modifiers IDENTIFIER variable_declaration semicolon
+	: field_declaration_default semicolon
+	| field_declaration_with_initialization semicolon
+	;
+field_declaration_with_initialization
+	: field_declaration_default assignment_expression
+		{yy.addAssignmentExpressionForPreviousField($2);}
+	;
+field_declaration_default
+	: modifiers IDENTIFIER variable_declaration
 		{yy.addField($2, $3);}
-	| modifiers array_type variable_declaration semicolon
+	| modifiers array_type variable_declaration
 		{yy.addField($2, $3);}
-	| IDENTIFIER variable_declaration semicolon
+	| IDENTIFIER variable_declaration
 		{yy.addField($1, $2);}
-	| array_type variable_declaration semicolon
+	| array_type variable_declaration
 		{yy.addField($1, $2);}
 	;
 variable_declaration
@@ -621,6 +645,14 @@ variable_declaration
 	;
 /* 3.2 Property declaration */
 property_declaration
+	: property_declaration_default
+	| property_declaration_with_initialization
+	;
+property_declaration_with_initialization
+	: property_declaration_default assignment_expression semicolon
+		{yy.addAssignmentExpressionForPreviousProperty($2 + $3);}
+	;
+property_declaration_default
 	: modifiers IDENTIFIER IDENTIFIER property_body
 		{yy.addProperty($2, $3);}
 	| modifiers array_type IDENTIFIER property_body

@@ -54,6 +54,7 @@ export class CodeDiagramHelper {
         // Create nodes for fields
         const createNodeForField = (type: Class | Struct, field: Field) => {
             // TODO: see if you need links from field to their types
+            var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(field.assignmentStatement);
             nodeData.push({
                 category: NodeType.Field,
                 group: CodeDiagramHelper.fieldsContainerKey(type),
@@ -61,6 +62,7 @@ export class CodeDiagramHelper {
                 modifiers: field.modifiers,
                 name: field.name,
                 type: field.type,
+                statementAtoms: statementAtoms
             });
         };
         const createNodesForFields = (type: Class | Struct) => {
@@ -127,6 +129,8 @@ export class CodeDiagramHelper {
         }
         // Create nodes for properties
         const createNodeForPropertyHeader = (type: Class | Struct | Interface, property: Property) => {
+            // TODO: see if you need links from properties to their types
+            var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(property.assignmentStatement);
             nodeData.push({
                 category: NodeType.PropertyHeader,
                 group: CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, property),
@@ -134,6 +138,7 @@ export class CodeDiagramHelper {
                 modifiers: property.modifiers,
                 name: property.name,
                 type: property.type,
+                statementAtoms: statementAtoms,
                 isGroup: true
             });
             property.parameters.forEach(parameter => createNodeForParameter(type, property, parameter, CodeDiagramHelper.isLastInCollection(property.parameters, parameter)));
@@ -148,7 +153,6 @@ export class CodeDiagramHelper {
             property.accessors.forEach(accessor => createNodeForAccesor(type, property, accessor));
         }
         const createNodeForProperty = (type: Class | Struct | Interface, property: Property) => {
-            // TODO: see if you need links from properties to their types
             nodeData.push({
                 category: NodeType.Property,
                 group: CodeDiagramHelper.propertyContainerKey(type),
