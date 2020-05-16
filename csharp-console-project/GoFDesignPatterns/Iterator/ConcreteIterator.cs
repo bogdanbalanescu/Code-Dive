@@ -24,8 +24,7 @@
         // Gets next iteration item
         public override object Next()
         {
-            object ret;
-            ret = null;
+            object ret = null;
             if (_current < _aggregate.Count - 1)
                 ret = MoveToNextItem();
 

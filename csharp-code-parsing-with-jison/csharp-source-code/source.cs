@@ -20,21 +20,18 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         /// </summary>
         static void Main()
         {
-            ConcreteAggregate a;
-            a = new ConcreteAggregate();
+            ConcreteAggregate a = new ConcreteAggregate();
             a[0] = "Item A";
             a[1] = "Item B";
             a[2] = "Item C";
             a[3] = "Item D";
 
             // Create Iterator and provide aggregate
-            Iterator i;
-            i = a.CreateIterator();
+            Iterator i = a.CreateIterator();
 
             Console.WriteLine("Iterating over collection:");
 
-            object item;
-            item = i.First();
+            object item = i.First();
             while (item != null)
                 item = WriteCurrentAndGetNext(i, item);
 
@@ -120,8 +117,7 @@ namespace DoFactory.GangOfFour.Iterator.Structural
         // Gets next iteration item
         public override object Next()
         {
-            object ret;
-            ret = null;
+            object ret = null;
             if (_current < _aggregate.Count - 1)
                 ret = MoveToNextItem();
  

@@ -712,6 +712,14 @@ variable_declaration_statement
 		{$$ = $1 + ' ' + $2 + $3;
 		 yy.addVariableDeclaration($1, $2);
 		 yy.addStatement($$);}
+	| IDENTIFIER IDENTIFIER assignment_expression semicolon
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4;
+		 yy.addVariableDeclaration($1, $2);
+		 yy.addStatement($$);}
+	| array_type IDENTIFIER assignment_expression semicolon
+		{$$ = $1 + ' ' + $2 + ' ' + $3 + $4;
+		 yy.addVariableDeclaration($1, $2);
+		 yy.addStatement($$);}
 	;
 /* 3.3.2.2 Embedded statements */
 embedded_statement
@@ -745,16 +753,16 @@ expression_literal
     ;
 /* 3.3.2.2.3 Assignment statement (expression, invocation expression, object creation expression) */
 assignment_statement
-	: assignment_expression semicolon
-		{$$ = $1 + $2;}
+	: unary_expression assignment_expression semicolon
+		{$$ = $1 + ' ' + $2 + $3;}
 	;
 assignment_expression
-    : unary_expression assignment_operator expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-    | unary_expression assignment_operator object_creation_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
-	| unary_expression assignment_operator array_creation_expression
-		{$$ = $1 + ' ' + $2 + ' ' + $3;}
+    : assignment_operator expression
+		{$$ = $1 + ' ' + $2;}
+    | assignment_operator object_creation_expression
+		{$$ = $1 + ' ' + $2;}
+	| assignment_operator array_creation_expression
+		{$$ = $1 + ' ' + $2;}
 	;
 object_creation_expression
     : NEW IDENTIFIER '(' argument_list ')'
@@ -766,7 +774,8 @@ object_creation_expression
 	;
 array_creation_expression
     : NEW IDENTIFIER '[' expression_list ']'
-		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;}
+		{$$ = $1 + ' ' + $2 + $3 + $4 + $5;
+		 yy.addUsedConstructor($2);}
     ;
 /* 3.3.2.2.4 Throw statement */
 throw_statement
@@ -821,13 +830,18 @@ for_statement
 		{$$ = $1 + ' ' + $2 + $3 + $4 + ' ' + $5 + $6 + ' ' + $7 + $8 + ' ' + $9;}
 	;
 for_initializer
-	: assignment_expression
+	: unary_expression assignment_expression
+		{$$ = $1 + ' ' + $2;}
+	| IDENTIFIER unary_expression assignment_expression
+		{$$ = $1 + ' ' + $2 + ' ' + $3;
+		 yy.addVariableDeclaration($1, $2);}
 	;
 for_condition
 	: boolean_expression
 	;
 for_iterator
-	: assignment_expression
+	: unary_expression assignment_expression
+		{$$ = $1 + ' ' + $2;}
 	;
 foreach_statement
     : FOREACH '(' IDENTIFIER IDENTIFIER IN expression ')' embedded_statement

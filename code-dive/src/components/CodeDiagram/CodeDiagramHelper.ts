@@ -544,9 +544,8 @@ export class CodeDiagramHelper {
             if (constructorAtoms.length > 1) { // if member access
                 CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementKey, typesGroupedByNamespace, linkData);
             }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData);
+            else {
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData);
             }
         });
         statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
