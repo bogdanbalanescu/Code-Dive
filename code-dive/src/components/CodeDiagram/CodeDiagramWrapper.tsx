@@ -7,7 +7,7 @@ import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
 
-interface CodeDiagramProps { 
+interface CodeDiagramProps {
     nodeDataArray: Array<go.ObjectData>;
     linkDataArray: Array<go.ObjectData>;
     modelData: go.ObjectData;
@@ -78,12 +78,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
 
     private initDiagram = (): go.Diagram => {
-        const $ = go.GraphObject.make;
         // diagram
         const diagram = 
-            $(go.Diagram, 
+            this.$(go.Diagram, 
                 {
-                    model: $(go.GraphLinksModel, 
+                    model: this.$(go.GraphLinksModel, 
                     {
                         nodeKeyProperty: "key",
                         linkKeyProperty: "key",
@@ -92,7 +91,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         nodeCategoryProperty: "category",
                         linkCategoryProperty: "category"
                     }),
-                    layout: $(go.LayeredDigraphLayout, 
+                    layout: this.$(go.LayeredDigraphLayout, 
                     {
                         direction: 0,
                         layerSpacing: 25,

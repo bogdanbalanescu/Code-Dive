@@ -7,6 +7,7 @@ import { postTypes, updateTypesForFilePath } from './redux/modules/types';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 import { ParsedTypes } from './codeModel/ParsedTypes';
 import { ExtensionInteractor } from './interactors/ExtensionInteractor';
+import { Helmet } from 'react-helmet';
 
 import { types } from './components/CodeDiagram/typesExample';
 
@@ -54,7 +55,10 @@ class App extends React.Component<Props> {
   public render() {
     return (
       <div>
-        <header><h1>Code Dive, a visual programming tool for textual based programming languages.</h1></header>
+        <Helmet>
+          <meta charSet="utf-8" />
+          <title>Code Dive, a visual programming tool for textual based programming languages.</title>
+        </Helmet>
         <CodeDiagram types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types}></CodeDiagram>
       </div>
     );
