@@ -2,10 +2,12 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { parseSourceCode } from "./codeParser/ClassParser";
 import { ParsedTypes } from './codeModel/ParsedTypes';
+import { LinkCreationConfiguration } from './configuration/LinkCreationConfiguration';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
 		ReactPanel.createOrShow(context.extensionPath);
+		ReactPanel.startConfigurationLoad();
 		ReactPanel.startCodeDiveAnalysis();
 	}));
 }
@@ -67,6 +69,10 @@ class ReactPanel {
 			switch (message.command) {
 				case 'alert':
 					vscode.window.showErrorMessage(message.text);
+					break;
+				case 'loadConfiguration':
+					var linkCreationConfiguration = ReactPanel.loadConfiguration();
+					ReactPanel.postConfigurationResults(linkCreationConfiguration);
 					break;
 				case 'startCodeDiveAnalysis':
 					var parsedTypes = await this.parseTypesFromCurrentWorkspaceSourceFilesAsync();
@@ -138,7 +144,6 @@ class ReactPanel {
 			// TODO: signal somehow that there is no panel
 		}
 	}
-
 	// register code dive file listeners
 	public registerCodeDiveSourceFileListeners = async () => {
 		var workspaceFolders = vscode.workspace.workspaceFolders;
@@ -157,6 +162,39 @@ class ReactPanel {
 		var onDidDeleteWatcherDisposable = watcher.onDidDelete(
 			deletedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(new ParsedTypes([], [], [], []), deletedFileUri.path));
 		this._disposables.push(onDidDeleteWatcherDisposable);
+	}
+	// load configuration
+	public static startConfigurationLoad() {
+		// Send a message to the webview webview.
+		// You can send any JSON serializable data.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'loadConfiguration' });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
+	}
+	private static loadConfiguration(): LinkCreationConfiguration {
+		var config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+		var linkCreationConfiguration: LinkCreationConfiguration = {
+			linksToSameType: config.get('linkCreationConfiguration.linksToSameType') as boolean,
+			inheritance: config.get('linkCreationConfiguration.inheritance') as boolean,
+			memberType: config.get('linkCreationConfiguration.memberType') as boolean,
+			parameterType: config.get('linkCreationConfiguration.parameterType') as boolean,
+			variableDeclarationType: config.get('linkCreationConfiguration.variableDeclarationType') as boolean,
+			usedEnumValues: config.get('linkCreationConfiguration.usedEnumValues') as boolean,
+			usedFieldAndProperties: config.get('linkCreationConfiguration.usedFieldAndProperties') as boolean,
+			usedConstructorsAndMethods: config.get('linkCreationConfiguration.usedConstructorsAndMethods') as boolean
+		}
+		return linkCreationConfiguration;
+	}
+	private static postConfigurationResults(linkCreationConfiguration: LinkCreationConfiguration) {
+		// Send a message to the webview webview.
+		// You can send any JSON serializable data.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'configurationResults', linkCreationConfiguration: linkCreationConfiguration });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
 	}
 
 	public dispose() {

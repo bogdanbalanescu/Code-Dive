@@ -1,6 +1,8 @@
 import * as go from 'gojs';
 import * as React from 'react';
+import { ReflexContainer, ReflexElement} from 'react-reflex';
 
+import { LinkCreationConfiguration } from './LinkCreationConfiguration';
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
 import { CodeDiagramHelper } from './CodeDiagramHelper';
 import { IType } from '../../codeModel/Types/IType'
@@ -13,6 +15,7 @@ interface CodeDiagramState {
 }
 
 interface CodeDiagramProps {
+    configuration: LinkCreationConfiguration,
     types: IType[]
 }
 
@@ -37,7 +40,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
     }
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
-        var nodeAndLinkData = CodeDiagramHelper.ComputeNodeAndLinkData(nextProps);
+        var nodeAndLinkData = CodeDiagramHelper.ComputeNodeAndLinkData(nextProps.types, nextProps.configuration);
         
         return {
             ...previousState,
@@ -62,12 +65,19 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
 
     render() {
         return (
-            <CodeDiagramWrapper
-                nodeDataArray={this.state.nodeDataArray}
-                linkDataArray={this.state.linkDataArray}
-                modelData={this.state.modelData}
-                skipsDiagramUpdate={this.state.skipsDiagramUpdate}
-            />
+            <ReflexContainer style={{width: "100vw", height: "100vh"}} orientation="vertical">
+                {/* <ReflexElement flex={1}>
+                    Here should be settings buttons for configurations
+                </ReflexElement> */}
+                <ReflexElement flex={5}>
+                    <CodeDiagramWrapper
+                        nodeDataArray={this.state.nodeDataArray}
+                        linkDataArray={this.state.linkDataArray}
+                        modelData={this.state.modelData}
+                        skipsDiagramUpdate={this.state.skipsDiagramUpdate}
+                    />
+                </ReflexElement>
+            </ReflexContainer>
         );
     }
 }

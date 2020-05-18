@@ -1,8 +1,10 @@
 import * as React from 'react';
 import './App.css';
+import 'react-reflex/styles.css'
 
 import { RootState } from './redux';
 import { connect } from 'react-redux';
+import { postLinkCreationConfiguration } from './redux/modules/configuration'
 import { postTypes, updateTypesForFilePath } from './redux/modules/types';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 import { ParsedTypes } from './codeModel/ParsedTypes';
@@ -10,13 +12,15 @@ import { ExtensionInteractor } from './interactors/ExtensionInteractor';
 import { Helmet } from 'react-helmet';
 
 import { types } from './components/CodeDiagram/typesExample';
+import { LinkCreationConfiguration } from './components/CodeDiagram/LinkCreationConfiguration';
 
 const mapStateToProps = (state: RootState) => ({
+  configuration: state.configuration,
   types: state.types,
   interactor: state.interactor
 });
 
-const mapDispatchToProps = { postTypes, updateTypesForFilePath }
+const mapDispatchToProps = { postLinkCreationConfiguration, postTypes, updateTypesForFilePath }
 
 type Props = ReturnType<typeof mapStateToProps> & typeof mapDispatchToProps;
 
@@ -36,6 +40,13 @@ class App extends React.Component<Props> {
     switch (message.command) {
       case 'sayHello':
         this.props.interactor.alert('Just here to say hello! 👋')
+        break;
+      case 'loadConfiguration':
+        this.props.interactor.loadConfiguration();
+        break;
+      case 'configurationResults':
+        var linkCreationConfiguration: LinkCreationConfiguration = message.linkCreationConfiguration;
+        this.props.postLinkCreationConfiguration(linkCreationConfiguration);
         break;
       case 'startCodeDiveAnalysis':
         this.props.interactor.startCodeDiveAnalysis();
@@ -59,7 +70,10 @@ class App extends React.Component<Props> {
           <meta charSet="utf-8" />
           <title>Code Dive, a visual programming tool for textual based programming languages.</title>
         </Helmet>
-        <CodeDiagram types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types}></CodeDiagram>
+        <CodeDiagram 
+          types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types} 
+          configuration={this.props.interactor instanceof ExtensionInteractor? this.props.configuration: new LinkCreationConfiguration()}>
+        </CodeDiagram>
       </div>
     );
   }

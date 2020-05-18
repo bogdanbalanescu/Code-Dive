@@ -16,21 +16,22 @@ import { Statement } from '../../codeModel/Misc/Statement';
 import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
+import { DeclaredVariable } from '../../codeModel/Misc/DeclaredVariable';
+
+import { LinkCreationConfiguration } from './LinkCreationConfiguration';
 
 export class CodeDiagramHelper {
-    public static ComputeNodeAndLinkData(props: {types: IType[]}): {nodeDataArray: any[], linkDataArray: any[]} {
-        const typesGroupedByNamespace = CodeDiagramHelper.groupTypesByProperty(props.types, 'namespace');
+    public static ComputeNodeAndLinkData(types: IType[], linkCreationConfiguration: LinkCreationConfiguration): {nodeDataArray: any[], linkDataArray: any[]} {
+        const typesGroupedByNamespace = CodeDiagramHelper.groupTypesByProperty(types, 'namespace');
         var linkData: any = [];
         const createInheritanceLinks = (type: IType) =>
-            CodeDiagramHelper.createInheritanceLinks(type, typesGroupedByNamespace, linkData);
-        const createMethodTypeLink = (type: Class | Struct | Interface, method: Method) =>
-            CodeDiagramHelper.createMethodTypeLink(type, method, typesGroupedByNamespace, linkData);
-        const createStatementLinks = (type: IType, callable: Method | Constructor, statement: Statement, statementKey: string) =>
-            CodeDiagramHelper.createStatementLinks(type, callable, statement, statementKey, typesGroupedByNamespace, linkData);
-        const createPropertyAccessorStatementLinks = (type: IType, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string) =>
-            CodeDiagramHelper.createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey, typesGroupedByNamespace, linkData);
+            CodeDiagramHelper.createInheritanceLinks(type, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+        const createMemberTypeLink = (type: Class | Struct | Interface, member: Field | Property | Method) =>
+            CodeDiagramHelper.createMemberTypeLink(type, member, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+        const createStatementLinks = (type: IType, parameters: FixedParameter[], declaredVariables: DeclaredVariable[], statement: Statement, statementKey: string) =>
+            CodeDiagramHelper.createStatementLinks(type, parameters, declaredVariables, statement, statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
         const createParameterLinks = (type: IType, parameterType: string, parameterKey: string) =>
-            CodeDiagramHelper.createParameterLinks(type, parameterType, parameterKey, typesGroupedByNamespace, linkData);
+            CodeDiagramHelper.createParameterLinks(type, parameterType, parameterKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
 
         var nodeData: any = [];
         // Create nodes for enum values
@@ -53,7 +54,7 @@ export class CodeDiagramHelper {
         }
         // Create nodes for fields
         const createNodeForField = (type: Class | Struct, field: Field) => {
-            // TODO: see if you need links from field to their types
+            createMemberTypeLink(type, field);
             var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(field.assignmentStatement);
             nodeData.push({
                 category: NodeType.Field,
@@ -78,7 +79,6 @@ export class CodeDiagramHelper {
         const createNodeForParameter = (type: Class | Struct | Interface, callable: Method | Constructor | Property, parameter: FixedParameter, isLast: boolean) => {
             var parameterKey = CodeDiagramHelper.constructorOrMethodOrPropertyParameterKey(type, callable, parameter);
             createParameterLinks(type, parameter.type, parameterKey);
-            // TODO: add links for parameter assignemnt statement as well -> refactor the logic for adding statement links
             var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(parameter.assignmentStatement);
             nodeData.push({
                 category: NodeType.Parameter,
@@ -94,7 +94,7 @@ export class CodeDiagramHelper {
         // Create nodes for statements
         const createNodeForStatement = (type: Class | Struct | Interface, callable: Method | Constructor, statement: Statement) => {
             var statementKey = CodeDiagramHelper.constructorOrMethodStatementKey(type, callable, statement);
-            createStatementLinks(type, callable, statement, statementKey);
+            createStatementLinks(type, callable.parameters, callable.declaredVariables, statement, statementKey);
             var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(statement);
             nodeData.push({
                 category: NodeType.Statement,
@@ -106,7 +106,7 @@ export class CodeDiagramHelper {
         };
         const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => {
             var statementKey = CodeDiagramHelper.propertyAccessorStatementKey(type, property, accessor, statement);
-            createPropertyAccessorStatementLinks(type, property, accessor, statement, statementKey);
+            createStatementLinks(type, property.parameters, accessor.declaredVariables, statement, statementKey);
             var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(statement);
             nodeData.push({
                 category: NodeType.Statement,
@@ -129,7 +129,7 @@ export class CodeDiagramHelper {
         }
         // Create nodes for properties
         const createNodeForPropertyHeader = (type: Class | Struct | Interface, property: Property) => {
-            // TODO: see if you need links from properties to their types
+            createMemberTypeLink(type, property);
             var statementAtoms = CodeDiagramHelper.mapStatementToStatementAtoms(property.assignmentStatement);
             nodeData.push({
                 category: NodeType.PropertyHeader,
@@ -258,7 +258,7 @@ export class CodeDiagramHelper {
             method.statements.forEach(statement => createNodeForStatement(type, method, statement));
         }
         const createNodeForMethod = (type: Class | Struct | Interface, method: Method) => {
-            createMethodTypeLink(type, method);
+            createMemberTypeLink(type, method);
             nodeData.push({
                 category: NodeType.Method,
                 group: CodeDiagramHelper.methodsContainerKey(type),
@@ -325,10 +325,10 @@ export class CodeDiagramHelper {
             createNodesForEnumValues(type);
         }
 
-        props.types.filter(type => type instanceof Class).forEach(type => createNodesForClassOrStruct(type as Class));
-        props.types.filter(type => type instanceof Struct).forEach(type => createNodesForClassOrStruct(type as Struct));
-        props.types.filter(type => type instanceof Interface).forEach(type => createNodesForInterface(type as Interface));
-        props.types.filter(type => type instanceof Enum).forEach(type => createNodesForEnum(type as Enum));
+        types.filter(type => type instanceof Class).forEach(type => createNodesForClassOrStruct(type as Class));
+        types.filter(type => type instanceof Struct).forEach(type => createNodesForClassOrStruct(type as Struct));
+        types.filter(type => type instanceof Interface).forEach(type => createNodesForInterface(type as Interface));
+        types.filter(type => type instanceof Enum).forEach(type => createNodesForEnum(type as Enum));
 
         return {
             nodeDataArray: nodeData,
@@ -425,82 +425,168 @@ export class CodeDiagramHelper {
         `${CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(type, constructor)}:${statement.index}`;
     
     // Creating and adding links
-    private static addLink = (category: string, from: string, to: string, linkData: any) => {
+    private static addLink = (category: string, from: string, to: string, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) => {
+        switch (category) {
+            case (LinkType.Realization || LinkType.Generalization): if (!linkCreationConfiguration.inheritance) return; break;
+            case (LinkType.MemberType): if (!linkCreationConfiguration.memberType) return; break;
+            case (LinkType.ParameterType): if (!linkCreationConfiguration.parameterType) return; break;
+            case (LinkType.StatementUsesType): if (!linkCreationConfiguration.variableDeclarationType) return; break;
+            case (LinkType.StatementUsesConstructorOrMethod): if (!linkCreationConfiguration.usedConstructorsAndMethods) return; break;
+            case (LinkType.StatementUsesFieldOrProperty): if (!linkCreationConfiguration.usedFieldAndProperties) return; break;
+            case (LinkType.StatementUsesEnumValue): if (!linkCreationConfiguration.usedEnumValues) return; break;
+        }
         linkData.push({ key: linkData.length, category: category, from: from, to: to });
     }
-    private static addLinkFromStatementToEnumValue (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+    private static addLinkFromStatementToEnumValue (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, fieldOrPropertyType, typesGroupedByNamespace);
         if (relevantType !== undefined && relevantType instanceof Enum) { // if parameter type is a customly defined one and an Enum
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, relevantType)) return;
             var enumValueOfRelevantType = CodeDiagramHelper.findEnumInType(relevantType, fieldOrPropertyName);
             if (enumValueOfRelevantType !== undefined) {
                 CodeDiagramHelper.addLink(
                     LinkType.StatementUsesEnumValue,
                     statementKey,
                     CodeDiagramHelper.enumValueKey(relevantType as Enum, enumValueOfRelevantType),
-                    linkData);
+                    linkData,
+                    linkCreationConfiguration
+                );
             }
         }
     }
-    private static addLinkFromStatementToFieldOrProperty (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+    private static addLinkFromStatementToFieldOrProperty (type: IType, fieldOrPropertyType: string, fieldOrPropertyName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, fieldOrPropertyType, typesGroupedByNamespace);
         if (relevantType !== undefined) { // if parameter type is a customly defined one
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, relevantType)) return;
             var fieldOrPropertyOfRelevantType = CodeDiagramHelper.findFieldOrPropertyInType(relevantType, fieldOrPropertyName);
             if (fieldOrPropertyOfRelevantType !== undefined) {
                 CodeDiagramHelper.addLink(
                     LinkType.StatementUsesFieldOrProperty,
                     statementKey, 
                     CodeDiagramHelper.fieldOrPropertyKey(relevantType as Class | Struct | Interface, fieldOrPropertyOfRelevantType as Field | Property),
-                    linkData);
+                    linkData,
+                    linkCreationConfiguration
+                );
             }
         }
     };
-    private static addLinkFromStatementToConstructorOrMethod (type: IType, callableType: string, callableName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+    private static addLinkFromStatementToConstructorOrMethod (type: IType, callableType: string, callableName: string, statementKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, callableType, typesGroupedByNamespace);
         if (relevantType !== undefined) {
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, relevantType)) return;
             var callable = CodeDiagramHelper.findConstructorOrMethodInType(relevantType, callableName);
             if (callable !== undefined) {
                 CodeDiagramHelper.addLink(
                     LinkType.StatementUsesConstructorOrMethod,
                     statementKey,
                     CodeDiagramHelper.constructorOrMethodOrPropertyContainerKey(relevantType as Class | Struct, callable as Constructor | Method),
-                    linkData
-                )
+                    linkData,
+                    linkCreationConfiguration
+                );
             }
         }
     }
-    private static addLinkFromStatementToType (type: IType, usedType: string, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
+    private static addLinkFromStatementToType (type: IType, usedType: string, statementKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         var relevantType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, usedType, typesGroupedByNamespace);
         if (relevantType !== undefined) {
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, relevantType)) return;
             CodeDiagramHelper.addLink(
                 LinkType.StatementUsesType,
                 statementKey,
                 CodeDiagramHelper.typeKey(relevantType as IType),
-                linkData
+                linkData,
+                linkCreationConfiguration
             );
         }
     }
-    private static createParameterLinks (type: IType, parameterType: string, parameterKey: string, typesGroupedByNamespace: any, linkData: any) {
+    // parameter links
+    private static createParameterLinks (type: IType, parameterType: string, parameterKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         var referencedType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parameterType, typesGroupedByNamespace);
         if (referencedType !== undefined) {
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, referencedType)) return;
             CodeDiagramHelper.addLink(
                 LinkType.ParameterType,
                 parameterKey, 
                 CodeDiagramHelper.typeKey(referencedType),
-                linkData);
+                linkData,
+                linkCreationConfiguration);
         }
     }
-    private static createMethodTypeLink (type: Class | Struct | Interface, method: Method, typesGroupedByNamespace: any, linkData: any) {
-        var returnType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, method.type, typesGroupedByNamespace);
+    // statement links
+    private static createStatementLinks (type: IType, parameters: FixedParameter[], declaredVariables: DeclaredVariable[], statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
+        statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
+            var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
+            if (fieldOrPropertyAtoms.length > 1) { // if member access
+                var parametersIndex = parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
+                var declaredVariablesIndex = declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
+                    var parameter = parameters[parametersIndex];
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, parameter.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData,linkCreationConfiguration);
+                }
+                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
+                    var declaredVariable = declaredVariables[declaredVariablesIndex];
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, declaredVariable.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                }
+                else { // if it is possibly a static member of a certain type
+                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                    CodeDiagramHelper.addLinkFromStatementToEnumValue(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                }
+            }
+            else { // if it refers to members present on the same type
+                CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+            }
+        });
+        statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
+            var constructorAtoms = constructor.split('.'); // convention: constructor can have either 1 or 2 elements
+            if (constructorAtoms.length > 1) { // if member access
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+            }
+            else {
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+            }
+        });
+        statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
+            var methodAtoms = method.split('.'); // convention: method can have either 1 or 2 elements
+            if (methodAtoms.length > 1) { // if member access
+                var parametersIndex = parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
+                var declaredVariablesIndex = declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
+                if (parametersIndex !== -1) { // if type can be inferred from parameters
+                    var parameter = parameters[parametersIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                }
+                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
+                    var declaredVariable = declaredVariables[declaredVariablesIndex];
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, declaredVariable.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                }
+                else { // if it is possibly a static member of a certain type
+                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+                }
+            }
+            else { // if it refers to members present on the same type
+                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+            }
+        });
+        statement.usedTypes.forEach((usedType: string) => {
+            CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementKey, typesGroupedByNamespace, linkData, linkCreationConfiguration);
+        });
+    };
+    // member types links
+    private static createMemberTypeLink (type: Class | Struct | Interface, member: Field | Property | Method, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
+        var returnType = CodeDiagramHelper.findTypeInRelevantNamespaces(type, member.type, typesGroupedByNamespace);
         if (returnType !== undefined) {
+            if (CodeDiagramHelper.linkRefersToSameTypeAndIsNotAllowed(linkCreationConfiguration, type, returnType)) return;
             CodeDiagramHelper.addLink(
-                LinkType.CallableReturnType,
-                CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, method),
+                LinkType.MemberType,
+                member instanceof Field 
+                    ? CodeDiagramHelper.fieldOrPropertyKey(type, member as Field) 
+                    : CodeDiagramHelper.constructorOrMethodOrPropertyHeaderContainerKey(type, member),
                 CodeDiagramHelper.typeKey(returnType as IType),
-                linkData
+                linkData,
+                linkCreationConfiguration
             );
         }
     }
-    private static createInheritanceLinks (type: IType, typesGroupedByNamespace: any, linkData: any) {
+    // inheritance links
+    private static createInheritanceLinks (type: IType, typesGroupedByNamespace: any, linkData: any, linkCreationConfiguration: LinkCreationConfiguration) {
         type.parentInheritances.forEach((parentInheritance: string) => {
             var parent = CodeDiagramHelper.findTypeInRelevantNamespaces(type, parentInheritance, typesGroupedByNamespace);
             if (parent !== undefined) {
@@ -508,131 +594,11 @@ export class CodeDiagramHelper {
                     parent instanceof Interface || parent.modifiers.includes("abstract")? LinkType.Realization: LinkType.Generalization,
                     CodeDiagramHelper.typeKey(type), 
                     CodeDiagramHelper.typeKey(parent), 
-                    linkData);
+                    linkData,
+                    linkCreationConfiguration);
             }
         });
     };
-    private static createStatementLinks (type: IType, callable: Method | Constructor, statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
-        statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
-            var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
-            if (fieldOrPropertyAtoms.length > 1) { // if member access
-                var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
-                var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
-                if (parametersIndex !== -1) { // if type can be inferred from parameters
-                    var parameter = callable.parameters[parametersIndex];
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, parameter.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
-                    var declaredVariable = callable.declaredVariables[declaredVariablesIndex];
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, declaredVariable.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else { // if it is possibly a static member of a certain type
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                    CodeDiagramHelper.addLinkFromStatementToEnumValue(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-            }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
-            var constructorAtoms = constructor.split('.'); // convention: constructor can have either 1 or 2 elements
-            if (constructorAtoms.length > 1) { // if member access
-                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-            }
-            else {
-                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
-            var methodAtoms = method.split('.'); // convention: method can have either 1 or 2 elements
-            if (methodAtoms.length > 1) { // if member access
-                var parametersIndex = callable.parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
-                var declaredVariablesIndex = callable.declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
-                if (parametersIndex !== -1) { // if type can be inferred from parameters
-                    var parameter = callable.parameters[parametersIndex];
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
-                    var declaredVariable = callable.declaredVariables[declaredVariablesIndex];
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, declaredVariable.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else { // if it is possibly a static member of a certain type
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-            }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedTypes.forEach((usedType: string) => {
-            // TODO: for now, do not show links toward types when no member of that type is used
-            // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementKey, typesGroupedByNamespace, linkData);
-        });
-    };
-    static createPropertyAccessorStatementLinks(type: IType, property: Property, accessor: PropertyAccessor, statement: Statement, statementKey: string, typesGroupedByNamespace: any, linkData: any) {
-        statement.usedFieldsAndProperties.forEach((fieldOrProperty: string) => {
-            var fieldOrPropertyAtoms = fieldOrProperty.split('.'); // convention: fieldOrPropertyAtoms can have either 1 or 2 elements
-            if (fieldOrPropertyAtoms.length > 1) { // if member access
-                var parametersIndex = property.parameters.findIndex(parameter => parameter.name == fieldOrPropertyAtoms[0]);
-                var declaredVariablesIndex = accessor.declaredVariables.findIndex(declaredVariable => declaredVariable.name == fieldOrPropertyAtoms[0]);
-                if (parametersIndex !== -1) { // if type can be inferred from parameters
-                    var parameter = property.parameters[parametersIndex];
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, parameter.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
-                    var declaredVariable = accessor.declaredVariables[declaredVariablesIndex];
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, declaredVariable.type, fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else { // if it is possibly a static member of a certain type
-                    CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                    CodeDiagramHelper.addLinkFromStatementToEnumValue(type, fieldOrPropertyAtoms[0], fieldOrPropertyAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-            }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToFieldOrProperty(type, type.name, fieldOrPropertyAtoms[0], statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedConstructors.forEach((constructor: string) => { // Warning: currently, overloading is not supported
-            var constructorAtoms = constructor.split('.'); // convention: constructor can have either 1 or 2 elements
-            if (constructorAtoms.length > 1) { // if member access
-                CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[1], constructorAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-            }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, constructorAtoms[0], constructorAtoms[0], statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedMethods.forEach((method: string) => { // Warning: currently, overloading is not supported
-            var methodAtoms = method.split('.'); // convention: method can have either 1 or 2 elements
-            if (methodAtoms.length > 1) { // if member access
-                var parametersIndex = property.parameters.findIndex(parameter => parameter.name == methodAtoms[0]);
-                var declaredVariablesIndex = accessor.declaredVariables.findIndex(declaredVariable => declaredVariable.name == methodAtoms[0]);
-                if (parametersIndex !== -1) { // if type can be inferred from parameters
-                    var parameter = property.parameters[parametersIndex];
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, parameter.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else if (declaredVariablesIndex !== -1) { // if type can be inferred from declared variables
-                    var declaredVariable = accessor.declaredVariables[declaredVariablesIndex];
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, declaredVariable.type, methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-                else { // if it is possibly a static member of a certain type
-                    CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, methodAtoms[0], methodAtoms[1], statementKey, typesGroupedByNamespace, linkData);
-                }
-            }
-            else { // if it refers to members present on the same type
-                // TODO: for now, do not show links toward members present on the same type
-                // CodeDiagramHelper.addLinkFromStatementToConstructorOrMethod(type, type.name, method, statementKey, typesGroupedByNamespace, linkData);
-            }
-        });
-        statement.usedTypes.forEach((usedType: string) => {
-            // TODO: for now, do not show links toward types when no member of that type is used
-            // CodeDiagramHelper.addLinkFromStatementToType(type, usedType, statementKey, typesGroupedByNamespace, linkData);
-        });
-    }
 
     // Helper functions
     private static isLastInCollection = (collection: any[], item: any) => collection.indexOf(item) === collection.length - 1;
@@ -675,5 +641,8 @@ export class CodeDiagramHelper {
             case (Method): return "Method";
         }
         return "Unknown";
+    }
+    private static linkRefersToSameTypeAndIsNotAllowed = (linkCreationConfiguration: LinkCreationConfiguration, type: IType, otherType: IType): boolean => {
+        return linkCreationConfiguration.linksToSameType === false && type.name === otherType.name;
     }
 }

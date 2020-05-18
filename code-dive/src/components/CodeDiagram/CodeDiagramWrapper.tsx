@@ -79,7 +79,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
     private initDiagram = (): go.Diagram => {
         // diagram
-        const diagram = 
+        const diagram: go.Diagram = 
             this.$(go.Diagram, 
                 {
                     model: this.$(go.GraphLinksModel, 
@@ -148,7 +148,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         diagram.linkTemplateMap.add(LinkType.Realization, this.inheritanceLink());
         diagram.linkTemplateMap.add(LinkType.Generalization, this.inheritanceLink());
         // links to types
-        diagram.linkTemplateMap.add(LinkType.CallableReturnType, this.linksToTypes());
+        diagram.linkTemplateMap.add(LinkType.MemberType, this.linksToTypes());
         diagram.linkTemplateMap.add(LinkType.ParameterType, this.linksToTypes());
         diagram.linkTemplateMap.add(LinkType.StatementUsesType, this.linksToTypes());
         // links to members

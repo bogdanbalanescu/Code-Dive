@@ -13,6 +13,12 @@ export class ExtensionInteractor implements Interactor {
             text: message
         });
     }
+    
+    loadConfiguration(): void {
+        this.vsCodeApi.postMessage({
+            command: 'loadConfiguration'
+        });
+    }
 
     startCodeDiveAnalysis(): void {
         this.vsCodeApi.postMessage({

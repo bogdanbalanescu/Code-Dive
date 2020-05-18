@@ -3,7 +3,7 @@ export enum LinkType {
     Realization = "Realization",
     Generalization = "Generalization",
     // Used Types
-    CallableReturnType = "CallableReturnType",
+    MemberType = "CallableReturnType",
     ParameterType = "ParameterType",
     StatementUsesType = "StatementUsesType",
     // Used Fields, Properties, Constructors and Methods
