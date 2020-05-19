@@ -1,6 +1,5 @@
 import * as React from 'react';
 import './App.css';
-import 'react-reflex/styles.css'
 
 import { RootState } from './redux';
 import { connect } from 'react-redux';

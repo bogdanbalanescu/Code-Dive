@@ -48,6 +48,9 @@ class ReactPanel {
 			// Enable javascript in the webview
 			enableScripts: true,
 
+			// Retain context when hidden
+			retainContextWhenHidden: true,
+
 			// And restric the webview to only loading content from our extension's `media` directory.
 			localResourceRoots: [
 				vscode.Uri.file(path.join(this._extensionPath, 'build'))
@@ -82,6 +85,7 @@ class ReactPanel {
 		}, null, this._disposables);
 
 		this.registerCodeDiveSourceFileListeners();
+		this.registerConfigurationChangeListener();
 	}
 
 	// read and parse source files from the current workspace
@@ -145,7 +149,7 @@ class ReactPanel {
 		}
 	}
 	// register code dive file listeners
-	public registerCodeDiveSourceFileListeners = async () => {
+	private registerCodeDiveSourceFileListeners = async () => {
 		var workspaceFolders = vscode.workspace.workspaceFolders;
 		var watcherPattern = workspaceFolders? new vscode.RelativePattern(workspaceFolders[0], "**/*.cs"): "**/*.cs"; // Note: does not listen to deleted folders
 		var watcher = vscode.workspace.createFileSystemWatcher(watcherPattern);
@@ -195,6 +199,13 @@ class ReactPanel {
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
+	}
+	// register code dive configuration listener
+	private registerConfigurationChangeListener = async () => {
+		vscode.workspace.onDidChangeConfiguration(_ => {
+			var linkCreationConfiguration = ReactPanel.loadConfiguration();
+			ReactPanel.postConfigurationResults(linkCreationConfiguration);
+		});
 	}
 
 	public dispose() {
