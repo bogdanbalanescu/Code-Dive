@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { LinkCreationConfiguration } from './LinkCreationConfiguration';
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
-import { CodeDiagramHelper } from './CodeDiagramHelper';
+import { CodeDiagramDataMapper } from './CodeDiagramHelper';
 import { IType } from '../../codeModel/Types/IType'
 
 interface CodeDiagramState {
@@ -39,7 +39,8 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
     }
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
-        var nodeAndLinkData = CodeDiagramHelper.ComputeNodeAndLinkData(nextProps.types, nextProps.configuration);
+        var dataMapper = new CodeDiagramDataMapper(nextProps.types, nextProps.configuration);
+        var nodeAndLinkData = dataMapper.ComputeNodeAndLinkData();
         
         return {
             ...previousState,

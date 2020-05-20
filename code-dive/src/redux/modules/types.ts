@@ -14,21 +14,15 @@ interface SetTypesAction {
     type: typeof SET_TYPES,
     parsedTypes: ParsedTypes
 }
+
 const UPDATE_TYPES_FOR_FILE_PATH = 'UPDATE_TYPES_FOR_FILE_PATH';
 interface UpdateTypesAction {
     type: typeof UPDATE_TYPES_FOR_FILE_PATH,
     parsedTypes: ParsedTypes,
     filePath: string
 }
-type TypesActions = SetTypesAction | UpdateTypesAction;
 
-const convertParsedTypesToTypeScriptTypes = (parsedTypes: ParsedTypes): IType[] => {
-    return parsedTypes
-        .classes.map(type => new Class(type) as IType)
-        .concat(parsedTypes.structs.map(type => new Struct(type)))
-        .concat(parsedTypes.interfaces.map(type => new Interface(type)))
-        .concat(parsedTypes.enums.map(type => new Enum(type)));
-}
+type TypesActions = SetTypesAction | UpdateTypesAction;
 
 // Action Creators
 export function postTypes(parsedTypes: ParsedTypes): TypesActions {
@@ -43,6 +37,15 @@ export function updateTypesForFilePath(parsedTypes: ParsedTypes, filePath: strin
         parsedTypes: parsedTypes,
         filePath: filePath
     };
+}
+
+// Helper functions
+const convertParsedTypesToTypeScriptTypes = (parsedTypes: ParsedTypes): IType[] => {
+    return parsedTypes
+        .classes.map(type => new Class(type) as IType)
+        .concat(parsedTypes.structs.map(type => new Struct(type)))
+        .concat(parsedTypes.interfaces.map(type => new Interface(type)))
+        .concat(parsedTypes.enums.map(type => new Enum(type)));
 }
 
 // Reducers

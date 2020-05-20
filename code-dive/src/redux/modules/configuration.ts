@@ -9,6 +9,7 @@ interface SetLinksCreationConfigurationAction {
     type: typeof POST_LINK_CREATION_CONFIGURATION,
     linkCreationConfiguration: LinkCreationConfiguration
 }
+
 type ConfigurationActions = SetLinksCreationConfigurationAction;
 
 // Action Creators

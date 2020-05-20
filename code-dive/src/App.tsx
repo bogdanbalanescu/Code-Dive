@@ -1,14 +1,13 @@
 import * as React from 'react';
 import './App.css';
-
-import { RootState } from './redux';
 import { connect } from 'react-redux';
+import { Helmet } from 'react-helmet';
+import { RootState } from './redux';
 import { postLinkCreationConfiguration } from './redux/modules/configuration'
 import { postTypes, updateTypesForFilePath } from './redux/modules/types';
+import { ExtensionInteractor } from './interactors/ExtensionInteractor';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 import { ParsedTypes } from './codeModel/ParsedTypes';
-import { ExtensionInteractor } from './interactors/ExtensionInteractor';
-import { Helmet } from 'react-helmet';
 
 import { types } from './components/CodeDiagram/typesExample';
 import { LinkCreationConfiguration } from './components/CodeDiagram/LinkCreationConfiguration';
@@ -18,12 +17,11 @@ const mapStateToProps = (state: RootState) => ({
   types: state.types,
   interactor: state.interactor
 });
-
-const mapDispatchToProps = { postLinkCreationConfiguration, postTypes, updateTypesForFilePath }
+const mapDispatchToProps = { 
+  postLinkCreationConfiguration, postTypes, updateTypesForFilePath 
+}
 
 type Props = ReturnType<typeof mapStateToProps> & typeof mapDispatchToProps;
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 
 class App extends React.Component<Props> {
   componentDidMount() {
@@ -40,6 +38,7 @@ class App extends React.Component<Props> {
       case 'sayHello':
         this.props.interactor.alert('Just here to say hello! 👋')
         break;
+      // extension configuration/settings
       case 'loadConfiguration':
         this.props.interactor.loadConfiguration();
         break;
@@ -47,6 +46,7 @@ class App extends React.Component<Props> {
         var linkCreationConfiguration: LinkCreationConfiguration = message.linkCreationConfiguration;
         this.props.postLinkCreationConfiguration(linkCreationConfiguration);
         break;
+      // code dive analysis
       case 'startCodeDiveAnalysis':
         this.props.interactor.startCodeDiveAnalysis();
         break;
@@ -78,4 +78,5 @@ class App extends React.Component<Props> {
   }
 }
 
+const connector = connect(mapStateToProps, mapDispatchToProps);
 export default connector(App);

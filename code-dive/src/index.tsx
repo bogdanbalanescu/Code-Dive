@@ -3,9 +3,9 @@ import * as ReactDOM from 'react-dom';
 import App from './App';
 import './index.css';
 import { Provider } from 'react-redux';
-import thunk from "redux-thunk";
 import { compose, createStore, applyMiddleware } from 'redux';
 import { rootReducer } from './redux/index';
+import thunk from "redux-thunk";
 
 const composeEnhancers =
   (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;

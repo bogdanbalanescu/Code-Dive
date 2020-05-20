@@ -1,6 +1,6 @@
 import * as go from 'gojs';
-import { ReactDiagram } from 'gojs-react';
 import * as React from 'react';
+import { ReactDiagram } from 'gojs-react';
 
 import './CodeDiagramWrapper.css';
 import { LinkType } from './LinkType';
@@ -296,23 +296,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         );
     }
     // property accessor templates
-    private propertyAccessorHeaderGroupTemplate = () => {
-        return this.$(go.Group, "Horizontal",
-            { selectable: false },
-            this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: "black" },
-                new go.Binding("text", "value")),
-            this.$(go.GridLayout, { wrappingColumn: 5, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
-            this.$(go.Placeholder)
-            );
-    }
-    private propertyAccessorBodyGroupTemplate = () => {
-        return this.$(go.Group, "Horizontal",
-            { selectable: false },
-            this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
-            this.$(go.Placeholder)
-            );
-    }
     private propertyAccessorGroupTemplate = () => {
         return this.$(go.Group, "Table",
             { selectable: false },
@@ -327,55 +310,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             );
     }
     // property templates
-    private propertyGroupTemplate = () => {
-        return this.$(go.Group, "Auto",
-            this.$(go.Shape, "RoundedRectangle", { fill: "white" }, new go.Binding("portId", "portId")),
-            this.$(go.Panel, "Table",
-                // property visibility access modifiers
-                this.$(go.Panel, "Horizontal",
-                    { 
-                        row: 0, column: 0, stretch: go.GraphObject.Fill, 
-                        defaultAlignment: go.Spot.Left, opacity: 1, 
-                        itemTemplate: this.accessModifierTemplate() 
-                    },
-                    new go.Binding("itemArray", "modifiers", this.filterViewableModifiers)),
-                // property name
-                this.$(go.TextBlock,
-                    { 
-                        row: 0, column: 1, margin: new go.Margin(0, 1, 0, 0), 
-                        isMultiline: false, editable: false, stroke: "green" 
-                    },
-                    new go.Binding("text", "name"),
-                    new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
-                // :
-                this.$(go.TextBlock, ":", { row: 0, column: 2 }),
-                // property type
-                this.$(go.TextBlock,
-                    { 
-                        row: 0, column: 3, stretch: go.GraphObject.Fill, 
-                        isMultiline: false, editable: false, stroke: "blue" 
-                    },
-                    new go.Binding("text", "type")),
-                // property accessors
-                this.$(go.Placeholder, { name: "MEMBERS" },
-                    { row: 1, margin: 3, stretch: go.GraphObject.Fill }),
-                this.$("SubGraphExpanderButton", "MEMBERS",
-                    { row: 1, column: 1, alignment: go.Spot.TopRight, visible: true}))
-        );
-    }
-    private propertiesContainerGroupTemplate = () => {
-        return this.$(go.Group, "Table", { name: "Container" },
-            { selectable: false },
-            this.$(go.Shape, "RoundedRectangle", { fill: "white", stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2 }),
-            this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
-            this.$(go.TextBlock, "Properties",
-                { font: "italic bold 10pt sans-serif", margin: 5 },
-                new go.Binding("visible", "isSubGraphExpanded", (isSubGraphExpanded   => { return !isSubGraphExpanded} )).ofObject("Container")),
-            this.$(go.Placeholder, { column: 0, margin: 5 }),
-            this.$("SubGraphExpanderButton",
-                { column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true}),
-        );
-    };
     private propertyHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
             { selectable: false, stretch: go.GraphObject.Fill },
@@ -417,7 +351,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 new go.Binding("itemArray", "statementAtoms")),
             );
     }
-    // type method templates
+    // type method templates (also used for some parts of constructors and properties)
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
             { selectable: false, stretch: go.GraphObject.Fill },
@@ -608,14 +542,6 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         return modifiers.filter((modifier: string) => {
             return ["public", "private", "protected", "internal"].includes(modifier);
         })
-    }
-    private markLastItemAsLast = (parameters: string[]) => {
-        return parameters.map((parameter: any) => {
-            return {
-                ...parameter,
-                isLast: parameters.indexOf(parameter) == parameters.length - 1
-            };
-        });
     }
     private mapStatementAtomSemanticToStroke = (semantic: string): string => {
         switch (semantic) {

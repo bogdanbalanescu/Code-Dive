@@ -129,7 +129,7 @@ class ReactPanel {
 			// TODO: signal somehow that there is no panel
 		}
 	}
-	public static postCodeDiveAnalysisResults(parsedTypes: ParsedTypes) {
+	private static postCodeDiveAnalysisResults(parsedTypes: ParsedTypes) {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
 		if (ReactPanel.currentPanel) {
@@ -167,7 +167,8 @@ class ReactPanel {
 			deletedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(new ParsedTypes([], [], [], []), deletedFileUri.path));
 		this._disposables.push(onDidDeleteWatcherDisposable);
 	}
-	// load configuration
+
+	// start configuration load
 	public static startConfigurationLoad() {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
