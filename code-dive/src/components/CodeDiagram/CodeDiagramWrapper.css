@@ -1,6 +1,6 @@
 .code-diagram-component {
     width: 100vw;
     height: 100vh;
-    border: 1px solid white;
-    background: white;
+    border: 1px solid #222222;
+    background: #222222;
 }
