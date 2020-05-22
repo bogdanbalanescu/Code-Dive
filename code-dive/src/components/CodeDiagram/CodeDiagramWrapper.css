@@ -1,6 +1,12 @@
-.code-diagram-component {
+.code-diagram-component-dark-theme {
     width: 100vw;
     height: 100vh;
     border: 1px solid #222222;
     background: #222222;
+}
+.code-diagram-component-light-theme {
+    width: 100vw;
+    height: 100vh;
+    border: 1px solid white;
+    background: white;
 }

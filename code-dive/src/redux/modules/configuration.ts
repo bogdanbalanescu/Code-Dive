@@ -1,30 +1,30 @@
-import { LinkCreationConfiguration } from "../../components/CodeDiagram/LinkCreationConfiguration";
+import { CodeDiagramConfiguration } from "../../components/CodeDiagram/CodeDiagramConfiguration";
 
 // State
-const initialConfigurationState: LinkCreationConfiguration = new LinkCreationConfiguration();
+const initialConfigurationState: CodeDiagramConfiguration = new CodeDiagramConfiguration();
 
 // Actions
-const POST_LINK_CREATION_CONFIGURATION = 'POST_LINK_CREATION_CONFIGURATION';
-interface SetLinksCreationConfigurationAction {
-    type: typeof POST_LINK_CREATION_CONFIGURATION,
-    linkCreationConfiguration: LinkCreationConfiguration
+const POST_CONFIGURATION = 'POST_CONFIGURATION';
+interface SetConfigurationAction {
+    type: typeof POST_CONFIGURATION,
+    configuration: CodeDiagramConfiguration
 }
 
-type ConfigurationActions = SetLinksCreationConfigurationAction;
+type ConfigurationActions = SetConfigurationAction;
 
 // Action Creators
-export function postLinkCreationConfiguration(linkCreationConfiguration: LinkCreationConfiguration): ConfigurationActions {
+export function postConfiguration(configuration: CodeDiagramConfiguration): ConfigurationActions {
     return {
-        type: POST_LINK_CREATION_CONFIGURATION,
-        linkCreationConfiguration: linkCreationConfiguration
+        type: POST_CONFIGURATION,
+        configuration: configuration
     };
 }
 
 // Reducers
 export function configurationReducer(state = initialConfigurationState, action: ConfigurationActions) {
     switch (action.type) {
-        case POST_LINK_CREATION_CONFIGURATION:
-            return action.linkCreationConfiguration;
+        case POST_CONFIGURATION:
+            return action.configuration;
         default:
             return state
     }

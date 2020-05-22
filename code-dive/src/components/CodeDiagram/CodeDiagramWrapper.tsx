@@ -12,65 +12,61 @@ interface CodeDiagramProps {
     linkDataArray: Array<go.ObjectData>;
     modelData: go.ObjectData;
     skipsDiagramUpdate: boolean;
+    theme: string;
 }
 
-const itemBackgroundLine = "#555555";
-const itemBackground = "#333333";
-const typesNames = "#3663A5";
-const fieldNames = "#4F8D60";
-const callableNames = "#E2D171";
+class DarkThemeColors {
+    // Node Containers
+    NodeStroke: string = "#555555"; // Gray #333
+    NodeBackground: string = "#333333"; // Gray #555
+    
+    // Node and Link Components
+    Type: string = "#3663A5"; // Lapis Iazuli
+    Field: string = "#4F8D60"; // Middle green
+    Callable: string = "#E2D171"; // Arylide yellow
+    Default: string = "#57A3C1"; // Maximum blue
 
-class CodeDiagramNodeColors {
-    // Enums
-    static Enum: string = itemBackground;
-    static EnumName: string = typesNames
-    static EnumValuesContainer: string = itemBackground;
-    static EnumValue: string = "#57A3C1";
-    // Classes, Structs, Interfaces
-    static ClassOrStructOrInterface: string = itemBackground;
-    static ClassOrStructOrInterfaceName: string = typesNames;
-    // Misc
-    static AccessModifier: string = typesNames;
-    static ParameterName: string = fieldNames;
-    static MemberType: string = typesNames;
-    static Default: string = "#57A3C1";
-    static NodeStroke: string = itemBackgroundLine;
-    // Fields
-    static FieldsContainer: string = itemBackground;
-    static Field: string = itemBackground;
-    static FieldName: string = fieldNames;
-    // Properties Accessor
-    static PropertyAccessor: string = itemBackground;
-    static PropertyAccessorName: string = fieldNames;
-    // Properties, Constructors and Methods
-    static PropertiesOrConstructorsOrMethodsContainer: string = itemBackground;
-    static PropertyOrConstructorOrMethod: string = itemBackground;
-    static PropertyOrConstructorOrMethodName: string = callableNames;
-    static PropertyOrConstructorOrMethodType: string = fieldNames;
-    // Statements
-    static StatementAtomForFieldOrProperty: string = fieldNames;
-    static StatementAtomForConstructorOrMethod: string = callableNames;
-    // Subgraph expander button
-    static SubgraphExpanderButtonFillNormal: string = "#db9d47";
-    static SubgraphExpanderButtonStrokeNormal: string = "black";
-    static SubgraphExpanderButtonFillOver: string = "lightgreen";
-    static SubgraphExpanderButtonStrokeOver: string = "green";
-}
+    // Inheritance Link
+    Inheritance: string = "white";
 
-class CodeDiagramLinkColors {
-    static Type: string = typesNames;
-    static Member: string = callableNames;
-    static Inheritance: string = "white";
+    // Subgraph Expander Button
+    SubgraphExpanderButtonFillNormal: string = "#db9d47"; // Indian yellow
+    SubgraphExpanderButtonStrokeNormal: string = "black";
+    SubgraphExpanderButtonFillOver: string = "lightgreen";
+    SubgraphExpanderButtonStrokeOver: string = "green";
 }
+class LightThemeColors {
+    // Node Containers
+    NodeStroke: string = "black";
+    NodeBackground: string = "white";
+    
+    // Node and Link Components
+    Type: string = "blue"; // Lapis Iazuli
+    Field: string = "green"; // Middle green
+    Callable: string = "darkorange"; // Arylide yellow
+    Default: string = "black"; // Maximum blue
+
+    // Inheritance Link
+    Inheritance: string = "black";
+
+    // Subgraph Expander Button
+    SubgraphExpanderButtonFillNormal: string = "white"; // Indian yellow
+    SubgraphExpanderButtonStrokeNormal: string = "black";
+    SubgraphExpanderButtonFillOver: string = "lightgreen";
+    SubgraphExpanderButtonStrokeOver: string = "green";
+}
+type Theme = DarkThemeColors | LightThemeColors;
 
 export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private diagramReference: React.RefObject<ReactDiagram>;
     private $: any;
+    private theme: Theme; 
 
     constructor(props: CodeDiagramProps) {
         super(props);
         this.diagramReference = React.createRef();
         this.$ = go.GraphObject.make;
+        this.theme = this.props.theme === 'Dark' ? new DarkThemeColors(): new LightThemeColors();
     }
 
     componentDidUpdate = (prevProps: CodeDiagramProps, prevState: any, prevContext: any) => {
@@ -213,7 +209,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         return this.$(go.Node, "Horizontal",
             { selectable: false },
             this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.EnumValue },
+                { isMultiline: false, editable: false, stroke: this.theme.Default },
                 new go.Binding("text", "value")) 
         );
     }
@@ -223,21 +219,21 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Shape, "RoundedRectangle", 
                 { 
                     stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: CodeDiagramNodeColors.EnumValuesContainer, stroke: CodeDiagramNodeColors.NodeStroke
+                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
                 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, "Values",
-                { font: "italic bold 10pt sans-serif", stroke: CodeDiagramNodeColors.EnumValue, margin: 5 },
+                { font: "italic bold 10pt sans-serif", stroke: this.theme.Default, margin: 5 },
                 new go.Binding("visible", "isSubGraphExpanded", (isSubGraphExpanded   => { return !isSubGraphExpanded} )).ofObject("Container")),
             this.$(go.Placeholder, { column: 0, margin: 5 }),
             this.$("SubGraphExpanderButton",
                 { 
                     column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true,
-                    "_buttonFillNormal": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "ButtonBorder.fill": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "_buttonStrokeNormal": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeNormal,
-                    "_buttonFillOver": CodeDiagramNodeColors.SubgraphExpanderButtonFillOver,
-                    "_buttonStrokeOver": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeOver,
+                    "_buttonFillNormal": this.theme.SubgraphExpanderButtonFillNormal,
+                    "ButtonBorder.fill": this.theme.SubgraphExpanderButtonFillNormal,
+                    "_buttonStrokeNormal": this.theme.SubgraphExpanderButtonStrokeNormal,
+                    "_buttonFillOver": this.theme.SubgraphExpanderButtonFillOver,
+                    "_buttonStrokeOver": this.theme.SubgraphExpanderButtonStrokeOver,
                 }),
         );
     }
@@ -247,14 +243,14 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             { margin: new go.Margin(0, 4, 0, 0) },
             this.$(go.TextBlock,
                 {
-                    name: "SYMBOL", visible: true, textAlign: "center", stroke: CodeDiagramNodeColors.AccessModifier, cursor: "pointer",
+                    name: "SYMBOL", visible: true, textAlign: "center", stroke: this.theme.Type, cursor: "pointer",
                     click: (e: any, node: any) => node.visible = false
                 },
                 new go.Binding("text", "", this.accessModifierToSymbol),
                 new go.Binding("visible", "visible", (visible => !visible)).ofObject("ACCESSMODIFIER")),
             this.$(go.TextBlock,
                 {
-                    name: "ACCESSMODIFIER", visible: false, textAlign: "center", stroke: CodeDiagramNodeColors.AccessModifier, cursor: "pointer",
+                    name: "ACCESSMODIFIER", visible: false, textAlign: "center", stroke: this.theme.Type, cursor: "pointer",
                     click: (e: any, node: any) => node.visible = false
                 },
                 new go.Binding("text", ""),
@@ -265,7 +261,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private fieldNodeTemplate = () => {
         return this.$(go.Node, "Auto",
             { selectable: false },
-            this.$(go.Shape, "RoundedRectangle", { fill: CodeDiagramNodeColors.Field, stroke: CodeDiagramNodeColors.NodeStroke }),
+            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke }),
             this.$(go.Panel, "Horizontal",
                 // field visibility access modifiers
                 this.$(go.Panel, "Horizontal",
@@ -273,13 +269,13 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     new go.Binding("itemArray", "modifiers", this.filterViewableModifiers)),
                 // field name
                 this.$(go.TextBlock,
-                    { margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.FieldName },
+                    { margin: new go.Margin(0, 1, 0, 0), isMultiline: false, editable: false, stroke: this.theme.Field },
                     new go.Binding("text", "name"),
                     new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
                 // :
-                this.$(go.TextBlock, ":", { stroke: CodeDiagramNodeColors.Default }),
+                this.$(go.TextBlock, ":", { stroke: this.theme.Default }),
                 // field type
-                this.$(go.TextBlock, { stroke: CodeDiagramNodeColors.MemberType },
+                this.$(go.TextBlock, { stroke: this.theme.Type },
                     new go.Binding("text", "type"),
                     new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
                 // parameter default value
@@ -297,21 +293,21 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Shape, "RoundedRectangle", 
                 { 
                     stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: CodeDiagramNodeColors.FieldsContainer, stroke: CodeDiagramNodeColors.NodeStroke
+                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
                 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, "Fields",
-                { font: "italic bold 10pt sans-serif", stroke: CodeDiagramNodeColors.FieldName, margin: 5 },
+                { font: "italic bold 10pt sans-serif", stroke: this.theme.Field, margin: 5 },
                 new go.Binding("visible", "isSubGraphExpanded", (isSubGraphExpanded   => { return !isSubGraphExpanded} )).ofObject("Container")),
             this.$(go.Placeholder, { column: 0, margin: 5, alignment: go.Spot.Left }),
             this.$("SubGraphExpanderButton",
                 { 
                     column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true,
-                    "_buttonFillNormal": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "ButtonBorder.fill": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "_buttonStrokeNormal": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeNormal,
-                    "_buttonFillOver": CodeDiagramNodeColors.SubgraphExpanderButtonFillOver,
-                    "_buttonStrokeOver": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeOver,
+                    "_buttonFillNormal": this.theme.SubgraphExpanderButtonFillNormal,
+                    "ButtonBorder.fill": this.theme.SubgraphExpanderButtonFillNormal,
+                    "_buttonStrokeNormal": this.theme.SubgraphExpanderButtonStrokeNormal,
+                    "_buttonFillOver": this.theme.SubgraphExpanderButtonFillOver,
+                    "_buttonStrokeOver": this.theme.SubgraphExpanderButtonStrokeOver,
                 }),
         );
     };
@@ -343,13 +339,13 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             { selectable: false },
             // parameter name
             this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.ParameterName },
+                { isMultiline: false, editable: false, stroke: this.theme.Field },
                 new go.Binding("text", "name")),
             // :
-            this.$(go.TextBlock, ":", { stroke: CodeDiagramNodeColors.Default }),
+            this.$(go.TextBlock, ":", { stroke: this.theme.Default }),
             // parameter type
             this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.MemberType },
+                { isMultiline: false, editable: false, stroke: this.theme.Type },
                 new go.Binding("text", "type"),
                 new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
             // parameter default value
@@ -361,7 +357,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 new go.Binding("itemArray", "statementAtoms")),
             // ,
             this.$(go.TextBlock, ", ",
-                { isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.Default },
+                { isMultiline: false, editable: false, stroke: this.theme.Default },
                 new go.Binding("text", ", "),
                 new go.Binding("visible", "isLast", isLast => { return isLast !== true })),
         );
@@ -373,12 +369,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Shape, "RoundedRectangle", 
                 { 
                     stretch: go.GraphObject.Fill, rowSpan: 2,
-                    fill: CodeDiagramNodeColors.PropertyAccessor, stroke: CodeDiagramNodeColors.NodeStroke
+                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
                 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             // method name
             this.$(go.TextBlock,
-                { row: 0, margin: new go.Margin(2, 2, 0, 2), isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.PropertyAccessorName, alignment: go.Spot.Left },
+                { row: 0, margin: new go.Margin(2, 2, 0, 2), isMultiline: false, editable: false, stroke: this.theme.Field, alignment: go.Spot.Left },
                 new go.Binding("text", "name"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
             this.$(go.Placeholder, { row: 1, margin: new go.Margin(2, 2, 2, 4) }),
@@ -399,22 +395,22 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 }),
             // method name
             this.$(go.TextBlock,
-                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.PropertyOrConstructorOrMethodName, alignment: go.Spot.Left },
+                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: this.theme.Callable, alignment: go.Spot.Left },
                 new go.Binding("text", "name"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
             // (
-            this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5, stroke: CodeDiagramNodeColors.Default }),
+            this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5, stroke: this.theme.Default }),
             // parameters placeholder
             this.$(go.Placeholder, { row: 0, column: 3 }),
             // )
-            this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5, stroke: CodeDiagramNodeColors.Default }),
+            this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5, stroke: this.theme.Default }),
             // :
             this.$(go.TextBlock, ":", 
-                { row:0, column: 5, stroke: CodeDiagramNodeColors.Default },
+                { row:0, column: 5, stroke: this.theme.Default },
                 new go.Binding("visible", "", method => method.type !== undefined)),
             // method type
             this.$(go.TextBlock,
-                { row: 0, column: 6, isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.PropertyOrConstructorOrMethodType, alignment: go.Spot.Left },
+                { row: 0, column: 6, isMultiline: false, editable: false, stroke: this.theme.Type, alignment: go.Spot.Left },
                 new go.Binding("text", "type"),
                 new go.Binding("margin", "statementAtoms", statementAtoms => statementAtoms.length > 0 ? new go.Margin(0, 3, 0, 0): 0)),
             // parameter default value
@@ -441,22 +437,22 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 }),
             // method name
             this.$(go.TextBlock,
-                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.PropertyOrConstructorOrMethodName, alignment: go.Spot.Left },
+                { row: 0, column: 1, margin: new go.Margin(0, 2, 0, 0), isMultiline: false, editable: false, stroke: this.theme.Callable, alignment: go.Spot.Left },
                 new go.Binding("text", "name"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
             // (
-            this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5, stroke: CodeDiagramNodeColors.Default }),
+            this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5, stroke: this.theme.Default }),
             // parameters placeholder
             this.$(go.Placeholder, { row: 0, column: 3 }),
             // )
-            this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5, stroke: CodeDiagramNodeColors.Default }),
+            this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5, stroke: this.theme.Default }),
             // :
             this.$(go.TextBlock, ":", 
-                { row:0, column: 5, stroke: CodeDiagramNodeColors.Default },
+                { row:0, column: 5, stroke: this.theme.Default },
                 new go.Binding("visible", "", method => method.type !== undefined)),
             // method type
             this.$(go.TextBlock,
-                { row: 0, column: 6, isMultiline: false, editable: false, stroke: CodeDiagramNodeColors.PropertyOrConstructorOrMethodType, alignment: go.Spot.Left },
+                { row: 0, column: 6, isMultiline: false, editable: false, stroke: this.theme.Type, alignment: go.Spot.Left },
                 new go.Binding("text", "type")),
             );
     }
@@ -481,7 +477,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private methodGroupTemplate = () => {
         return this.$(go.Group, "Auto",
             { selectable: false },
-            this.$(go.Shape, "RoundedRectangle", { fill: CodeDiagramNodeColors.PropertyOrConstructorOrMethod, stroke: CodeDiagramNodeColors.NodeStroke }),
+            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             this.$(go.Placeholder),
             );
@@ -492,21 +488,21 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Shape, "RoundedRectangle", 
                 { 
                     stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: CodeDiagramNodeColors.PropertiesOrConstructorsOrMethodsContainer, stroke: CodeDiagramNodeColors.NodeStroke
+                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
                 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, groupName,
-                { font: "italic bold 10pt sans-serif", stroke: CodeDiagramNodeColors.PropertyOrConstructorOrMethodName, margin: 5 },
+                { font: "italic bold 10pt sans-serif", stroke: this.theme.Callable, margin: 5 },
                 new go.Binding("visible", "isSubGraphExpanded", (isSubGraphExpanded   => { return !isSubGraphExpanded} )).ofObject("Container")),
             this.$(go.Placeholder, { column: 0, margin: 5, alignment: go.Spot.Left }),
             this.$("SubGraphExpanderButton",
                 {
                     column: 1, margin: 5, alignment: go.Spot.TopRight, visible: true,
-                    "_buttonFillNormal": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "ButtonBorder.fill": CodeDiagramNodeColors.SubgraphExpanderButtonFillNormal,
-                    "_buttonStrokeNormal": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeNormal,
-                    "_buttonFillOver": CodeDiagramNodeColors.SubgraphExpanderButtonFillOver,
-                    "_buttonStrokeOver": CodeDiagramNodeColors.SubgraphExpanderButtonStrokeOver,
+                    "_buttonFillNormal": this.theme.SubgraphExpanderButtonFillNormal,
+                    "ButtonBorder.fill": this.theme.SubgraphExpanderButtonFillNormal,
+                    "_buttonStrokeNormal": this.theme.SubgraphExpanderButtonStrokeNormal,
+                    "_buttonFillOver": this.theme.SubgraphExpanderButtonFillOver,
+                    "_buttonStrokeOver": this.theme.SubgraphExpanderButtonStrokeOver,
                 }),
         );
     }
@@ -518,18 +514,18 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Shape, "RoundedRectangle", 
                 { 
                     stretch: go.GraphObject.Fill, strokeWidth: 2, rowSpan: 2,
-                    fill: CodeDiagramNodeColors.ClassOrStructOrInterface, stroke: CodeDiagramNodeColors.NodeStroke
+                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
                 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.Panel, "Table",
-                { defaultRowSeparatorStroke: CodeDiagramNodeColors.NodeStroke },
+                { defaultRowSeparatorStroke: this.theme.NodeStroke },
                 // class name
                 this.$(go.TextBlock,
                     {
                         row: 0, margin: 3, alignment: go.Spot.Center,
                         font: "bold 12pt sans-serif",
                         isMultiline: false, editable: false,
-                        stroke: CodeDiagramNodeColors.ClassOrStructOrInterfaceName
+                        stroke: this.theme.Type
                     },
                     new go.Binding("text", "name")),
                 // member groups
@@ -541,17 +537,17 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private enumGroupTemplate = () => {
         return this.$(go.Group, "Auto",
             { locationSpot: go.Spot.Center },
-            this.$(go.Shape, "RoundedRectangle", { fill: CodeDiagramNodeColors.Enum, stroke: CodeDiagramNodeColors.NodeStroke, strokeWidth: 2 }),
+            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke, strokeWidth: 2 }),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.Panel, "Table",
-                { defaultRowSeparatorStroke: CodeDiagramNodeColors.NodeStroke },
+                { defaultRowSeparatorStroke: this.theme.NodeStroke },
                 // enum name
                 this.$(go.TextBlock,
                     {
                         row: 0, margin: 3, alignment: go.Spot.Center,
                         isMultiline: false, editable: false,
                         font: "bold 12pt sans-serif",
-                        stroke: CodeDiagramNodeColors.EnumName
+                        stroke: this.theme.Type
                     },
                     new go.Binding("text", "name")),
                 // enum values
@@ -574,8 +570,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 fromSpot: go.Spot.TopSide,
                 toSpot: go.Spot.BottomSide
             },
-            this.$(go.Shape, { stroke: CodeDiagramLinkColors.Inheritance }, new go.Binding("strokeDashArray", "category", category => category === LinkType.Realization? [4, 2]: [])),
-            this.$(go.Shape, { toArrow: "Triangle", fill: CodeDiagramLinkColors.Inheritance, stroke: CodeDiagramLinkColors.Inheritance })
+            this.$(go.Shape, { stroke: this.theme.Inheritance }, new go.Binding("strokeDashArray", "category", category => category === LinkType.Realization? [4, 2]: [])),
+            this.$(go.Shape, { toArrow: "Triangle", fill: "white" })
         );
     }
     private linksToTypes = () => {
@@ -590,8 +586,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 fromSpot: go.Spot.RightSide,
                 toSpot: go.Spot.LeftSide
             },
-            this.$(go.Shape, { stroke: CodeDiagramLinkColors.Type }),
-            this.$(go.Shape, { toArrow: "Standard", fill: CodeDiagramLinkColors.Type, stroke: CodeDiagramLinkColors.Type }),
+            this.$(go.Shape, { stroke: this.theme.Type }),
+            this.$(go.Shape, { toArrow: "Standard", fill: this.theme.Type, stroke: this.theme.Type }),
         );
     }
     private linksToUsedMembers = () => {
@@ -606,8 +602,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 fromSpot: go.Spot.RightSide,
                 toSpot: go.Spot.LeftSide
             },
-            this.$(go.Shape, { stroke: CodeDiagramLinkColors.Member }),
-            this.$(go.Shape, { toArrow: "Standard", fill: CodeDiagramLinkColors.Member, stroke: CodeDiagramLinkColors.Member }),
+            this.$(go.Shape, { stroke: this.theme.Callable }),
+            this.$(go.Shape, { toArrow: "Standard", fill: this.theme.Callable, stroke: this.theme.Callable }),
         );
     }
 
@@ -637,11 +633,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private mapStatementAtomSemanticToStroke = (semantic: string): string => {
         switch (semantic) {
-            case StatementAtomSemantic.FieldOrProperty: return CodeDiagramNodeColors.StatementAtomForFieldOrProperty;
-            case StatementAtomSemantic.Constructor: return CodeDiagramNodeColors.StatementAtomForConstructorOrMethod;
-            case StatementAtomSemantic.Method: return CodeDiagramNodeColors.StatementAtomForConstructorOrMethod;
-            case StatementAtomSemantic.Type: return CodeDiagramNodeColors.ClassOrStructOrInterfaceName;
-            default: return CodeDiagramNodeColors.Default;
+            case StatementAtomSemantic.FieldOrProperty: return this.theme.Field;
+            case StatementAtomSemantic.Constructor: return this.theme.Callable;
+            case StatementAtomSemantic.Method: return this.theme.Callable;
+            case StatementAtomSemantic.Type: return this.theme.Type;
+            default: return this.theme.Default;
         }
     }
     
@@ -656,7 +652,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         return (
             <ReactDiagram
                 ref={this.diagramReference}
-                divClassName='code-diagram-component'
+                divClassName={this.props.theme === 'Dark'? 'code-diagram-component-dark-theme': 'code-diagram-component-light-theme'}
                 initDiagram={this.initDiagram}
                 nodeDataArray={this.props.nodeDataArray}
                 linkDataArray={this.props.linkDataArray}

@@ -1,4 +1,10 @@
-export class LinkCreationConfiguration {
+export class CodeDiagramConfiguration {
+    public linkCreationConfiguration: LinkCreationConfiguration = new LinkCreationConfiguration();
+    public theme: string = "Dark";
+    public isLoaded: boolean = false;
+}
+
+class LinkCreationConfiguration {
     public linksToSameType: boolean = false;
     public inheritance: boolean = true;
     public memberType: boolean = false;

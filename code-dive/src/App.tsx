@@ -3,14 +3,15 @@ import './App.css';
 import { connect } from 'react-redux';
 import { Helmet } from 'react-helmet';
 import { RootState } from './redux';
-import { postLinkCreationConfiguration } from './redux/modules/configuration'
+import { postConfiguration } from './redux/modules/configuration'
 import { postTypes, updateTypesForFilePath } from './redux/modules/types';
 import { ExtensionInteractor } from './interactors/ExtensionInteractor';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
 import { ParsedTypes } from './codeModel/ParsedTypes';
 
 import { types } from './components/CodeDiagram/typesExample';
-import { LinkCreationConfiguration } from './components/CodeDiagram/LinkCreationConfiguration';
+import { CodeDiagramConfiguration } from './components/CodeDiagram/CodeDiagramConfiguration';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const mapStateToProps = (state: RootState) => ({
   configuration: state.configuration,
@@ -18,7 +19,7 @@ const mapStateToProps = (state: RootState) => ({
   interactor: state.interactor
 });
 const mapDispatchToProps = { 
-  postLinkCreationConfiguration, postTypes, updateTypesForFilePath 
+  postConfiguration: postConfiguration, postTypes, updateTypesForFilePath 
 }
 
 type Props = ReturnType<typeof mapStateToProps> & typeof mapDispatchToProps;
@@ -43,8 +44,8 @@ class App extends React.Component<Props> {
         this.props.interactor.loadConfiguration();
         break;
       case 'configurationResults':
-        var linkCreationConfiguration: LinkCreationConfiguration = message.linkCreationConfiguration;
-        this.props.postLinkCreationConfiguration(linkCreationConfiguration);
+        var configuration: CodeDiagramConfiguration = message.configuration;
+        this.props.postConfiguration(configuration);
         break;
       // code dive analysis
       case 'startCodeDiveAnalysis':
@@ -69,10 +70,15 @@ class App extends React.Component<Props> {
           <meta charSet="utf-8" />
           <title>Code Dive, a visual programming tool for textual based programming languages.</title>
         </Helmet>
-        <CodeDiagram 
-          types={this.props.interactor instanceof ExtensionInteractor? this.props.types: types} 
-          configuration={this.props.interactor instanceof ExtensionInteractor? this.props.configuration: new LinkCreationConfiguration()}>
-        </CodeDiagram>
+        {
+          this.props.interactor instanceof ExtensionInteractor ?
+          (
+            this.props.configuration.isLoaded 
+            ? <CodeDiagram types={this.props.types} configuration={this.props.configuration} />
+            : <CircularProgress />
+          )
+          : <CodeDiagram types={types} configuration={new CodeDiagramConfiguration(true)} />
+        }
       </div>
     );
   }

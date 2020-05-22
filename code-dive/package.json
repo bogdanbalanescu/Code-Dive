@@ -61,11 +61,24 @@
           "type": "boolean",
           "default": true,
           "description": "Draw links to used constructors and methods."
+        },
+        "theme": {
+          "type": "string",
+          "default": "Dark",
+          "enum": [
+            "Dark",
+            "Light"
+          ],
+          "enumDescriptions": [
+            "Changes the extension theme to dark. Warning: this only takes effect after restarting the extension.",
+            "Changes the extension theme to light. Warning: this only takes effect after restarting the extension."
+          ]
         }
       }
     }
   },
   "dependencies": {
+    "@material-ui/core": "^4.9.14",
     "@types/react-helmet": "^6.0.0",
     "@types/react-redux": "^7.1.7",
     "gojs": "^2.1.14",

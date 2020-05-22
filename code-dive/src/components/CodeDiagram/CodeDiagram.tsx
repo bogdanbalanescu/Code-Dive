@@ -1,7 +1,7 @@
 import * as go from 'gojs';
 import * as React from 'react';
 
-import { LinkCreationConfiguration } from './LinkCreationConfiguration';
+import { CodeDiagramConfiguration } from './CodeDiagramConfiguration';
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
 import { CodeDiagramDataMapper } from './CodeDiagramHelper';
 import { IType } from '../../codeModel/Types/IType'
@@ -14,7 +14,7 @@ interface CodeDiagramState {
 }
 
 interface CodeDiagramProps {
-    configuration: LinkCreationConfiguration,
+    configuration: CodeDiagramConfiguration,
     types: IType[]
 }
 
@@ -39,7 +39,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
     }
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
-        var dataMapper = new CodeDiagramDataMapper(nextProps.types, nextProps.configuration);
+        var dataMapper = new CodeDiagramDataMapper(nextProps.types, nextProps.configuration.linkCreationConfiguration);
         var nodeAndLinkData = dataMapper.ComputeNodeAndLinkData();
         
         return {
@@ -70,6 +70,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 linkDataArray={this.state.linkDataArray}
                 modelData={this.state.modelData}
                 skipsDiagramUpdate={this.state.skipsDiagramUpdate}
+                theme={this.props.configuration.theme}
             />
         );
     }

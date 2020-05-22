@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { parseSourceCode } from "./codeParser/ClassParser";
 import { ParsedTypes } from './codeModel/ParsedTypes';
-import { LinkCreationConfiguration } from './configuration/LinkCreationConfiguration';
+import { CodeDiagramConfiguration } from './configuration/CodeDiagramConfiguration';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
@@ -74,8 +74,8 @@ class ReactPanel {
 					vscode.window.showErrorMessage(message.text);
 					break;
 				case 'loadConfiguration':
-					var linkCreationConfiguration = ReactPanel.loadConfiguration();
-					ReactPanel.postConfigurationResults(linkCreationConfiguration);
+					var configuration = ReactPanel.loadConfiguration();
+					ReactPanel.postConfigurationResults(configuration);
 					break;
 				case 'startCodeDiveAnalysis':
 					var parsedTypes = await this.parseTypesFromCurrentWorkspaceSourceFilesAsync();
@@ -178,25 +178,29 @@ class ReactPanel {
 			// TODO: signal somehow that there is no panel
 		}
 	}
-	private static loadConfiguration(): LinkCreationConfiguration {
+	private static loadConfiguration(): CodeDiagramConfiguration {
 		var config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
-		var linkCreationConfiguration: LinkCreationConfiguration = {
-			linksToSameType: config.get('linkCreationConfiguration.linksToSameType') as boolean,
-			inheritance: config.get('linkCreationConfiguration.inheritance') as boolean,
-			memberType: config.get('linkCreationConfiguration.memberType') as boolean,
-			parameterType: config.get('linkCreationConfiguration.parameterType') as boolean,
-			variableDeclarationType: config.get('linkCreationConfiguration.variableDeclarationType') as boolean,
-			usedEnumValues: config.get('linkCreationConfiguration.usedEnumValues') as boolean,
-			usedFieldAndProperties: config.get('linkCreationConfiguration.usedFieldAndProperties') as boolean,
-			usedConstructorsAndMethods: config.get('linkCreationConfiguration.usedConstructorsAndMethods') as boolean
+		var codeDiagaramConfiguration: CodeDiagramConfiguration = {
+			linkCreationConfiguration: {
+				linksToSameType: config.get('linkCreationConfiguration.linksToSameType') as boolean,
+				inheritance: config.get('linkCreationConfiguration.inheritance') as boolean,
+				memberType: config.get('linkCreationConfiguration.memberType') as boolean,
+				parameterType: config.get('linkCreationConfiguration.parameterType') as boolean,
+				variableDeclarationType: config.get('linkCreationConfiguration.variableDeclarationType') as boolean,
+				usedEnumValues: config.get('linkCreationConfiguration.usedEnumValues') as boolean,
+				usedFieldAndProperties: config.get('linkCreationConfiguration.usedFieldAndProperties') as boolean,
+				usedConstructorsAndMethods: config.get('linkCreationConfiguration.usedConstructorsAndMethods') as boolean
+			},
+			theme: config.get("theme") as string,
+			isLoaded: true
 		}
-		return linkCreationConfiguration;
+		return codeDiagaramConfiguration;
 	}
-	private static postConfigurationResults(linkCreationConfiguration: LinkCreationConfiguration) {
+	private static postConfigurationResults(configuration: CodeDiagramConfiguration) {
 		// Send a message to the webview webview.
 		// You can send any JSON serializable data.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'configurationResults', linkCreationConfiguration: linkCreationConfiguration });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'configurationResults', configuration: configuration });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}

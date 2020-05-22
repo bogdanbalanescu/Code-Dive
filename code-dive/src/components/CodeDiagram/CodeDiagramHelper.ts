@@ -18,7 +18,7 @@ import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { DeclaredVariable } from '../../codeModel/Misc/DeclaredVariable';
 
-import { LinkCreationConfiguration } from './LinkCreationConfiguration';
+import { LinkCreationConfiguration } from './CodeDiagramConfiguration';
 
 export class CodeDiagramDataMapper {
     private types: IType[];
@@ -31,7 +31,7 @@ export class CodeDiagramDataMapper {
     public constructor(types: IType[], linkCreationConfiguration: LinkCreationConfiguration) {
         this.types = types;
         this.typesGroupedByNamespace = this.groupTypesByProperty('namespace');
-        this.linkCreationConfiguration = linkCreationConfiguration;
+        this.linkCreationConfiguration = linkCreationConfiguration
 
         this.nodeData = [];
         this.linkData = [];
