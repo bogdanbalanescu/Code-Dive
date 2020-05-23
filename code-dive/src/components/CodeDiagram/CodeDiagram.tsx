@@ -71,6 +71,8 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 modelData={this.state.modelData}
                 skipsDiagramUpdate={this.state.skipsDiagramUpdate}
                 theme={this.props.configuration.theme}
+                highlightMaximumDepthRecursion={this.props.configuration.selectionHighlightsConfiguration.recursionDepth}
+                highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
             />
         );
     }

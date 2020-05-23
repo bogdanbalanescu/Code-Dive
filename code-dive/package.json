@@ -73,6 +73,18 @@
             "Changes the extension theme to dark. Warning: this only takes effect after restarting the extension.",
             "Changes the extension theme to light. Warning: this only takes effect after restarting the extension."
           ]
+        },
+        "selectionHighlights.recursionDepth": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "How many layers of linked items to be highlighted on any selection on the diagram."
+        },
+        "selectionHighlights.includeChildren": {
+          "type": "boolean",
+          "default": true,
+          "description": "Includes children of items when highlighting linked items on any selection on the diagram."
         }
       }
     }

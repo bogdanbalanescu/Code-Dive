@@ -13,12 +13,16 @@ interface CodeDiagramProps {
     modelData: go.ObjectData;
     skipsDiagramUpdate: boolean;
     theme: string;
+    highlightMaximumDepthRecursion: number;
+    highlightChildren: boolean;
 }
 
 class DarkThemeColors {
     // Node Containers
     NodeStroke: string = "#555555"; // Gray #333
     NodeBackground: string = "#333333"; // Gray #555
+    // Highlighted Stroke
+    HighlightedStroke: string = "pink"; // TODO: settle on a comfortable color
     
     // Node and Link Components
     Type: string = "#3663A5"; // Lapis Iazuli
@@ -39,18 +43,20 @@ class LightThemeColors {
     // Node Containers
     NodeStroke: string = "black";
     NodeBackground: string = "white";
+    // Highlighted Stroke
+    HighlightedStroke: string = "magenta";
     
     // Node and Link Components
-    Type: string = "blue"; // Lapis Iazuli
-    Field: string = "green"; // Middle green
-    Callable: string = "darkorange"; // Arylide yellow
-    Default: string = "black"; // Maximum blue
+    Type: string = "blue";
+    Field: string = "green";
+    Callable: string = "darkorange";
+    Default: string = "black";
 
     // Inheritance Link
     Inheritance: string = "black";
 
     // Subgraph Expander Button
-    SubgraphExpanderButtonFillNormal: string = "white"; // Indian yellow
+    SubgraphExpanderButtonFillNormal: string = "white";
     SubgraphExpanderButtonStrokeNormal: string = "black";
     SubgraphExpanderButtonFillOver: string = "lightgreen";
     SubgraphExpanderButtonStrokeOver: string = "green";
@@ -60,7 +66,7 @@ type Theme = DarkThemeColors | LightThemeColors;
 export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private diagramReference: React.RefObject<ReactDiagram>;
     private $: any;
-    private theme: Theme; 
+    private theme: Theme;
 
     constructor(props: CodeDiagramProps) {
         super(props);
@@ -115,10 +121,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         }
     }
 
-    componentDidMount() {
+    componentDidMount = () => {
         // Should add listeners to the diagram (if needed).
     }
-    componentWillUnmount() {
+    componentWillUnmount = () => {
         // Should remove listeners from the diagram.
     }
 
@@ -147,7 +153,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         aggressiveOption: go.LayeredDigraphLayout.AggressiveMore,
                         packOption: go.LayeredDigraphLayout.PackExpand,
                         setsPortSpots: false
-                    })
+                    }),
+                    click: this.onSelectionClick
                 });
 
         // enum value node and group templates
@@ -207,20 +214,19 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // enum value templates
     private enumValueNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.TextBlock,
-                { isMultiline: false, editable: false, stroke: this.theme.Default },
-                new go.Binding("text", "value")) 
+                { isMultiline: false, editable: false },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Default)).ofObject(),
+                new go.Binding("text", "value"))
         );
     }
     private enumValuesContainerGroupTemplate = () => {
         return this.$(go.Group, "Table", { name: "Container" },
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
-                { 
-                    stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
-                }),
+                { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, "Values",
                 { font: "italic bold 10pt sans-serif", stroke: this.theme.Default, margin: 5 },
@@ -260,8 +266,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // field templates
     private fieldNodeTemplate = () => {
         return this.$(go.Node, "Auto",
-            { selectable: false },
-            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke }),
+            { movable: false, click: this.onSelectionClick },
+            this.$(go.Shape, "RoundedRectangle", 
+                { fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.Panel, "Horizontal",
                 // field visibility access modifiers
                 this.$(go.Panel, "Horizontal",
@@ -289,12 +297,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private fieldsContainerGroupTemplate = () => {
         return this.$(go.Group, "Table", { name: "Container" },
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
-                { 
-                    stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
-                }),
+                { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, "Fields",
                 { font: "italic bold 10pt sans-serif", stroke: this.theme.Field, margin: 5 },
@@ -322,7 +328,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private statementNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.Panel, 
                 new go.Binding("width", "blockCount", blockCount => blockCount * 15)), //TODO: parameterize the value by which the width is computed
             this.$(go.Panel, "Horizontal",
@@ -336,7 +342,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // parameter template
     private parameterNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             // parameter name
             this.$(go.TextBlock,
                 { isMultiline: false, editable: false, stroke: this.theme.Field },
@@ -365,12 +371,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // property accessor templates
     private propertyAccessorGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
-                { 
-                    stretch: go.GraphObject.Fill, rowSpan: 2,
-                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
-                }),
+                { stretch: go.GraphObject.Fill, rowSpan: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             // method name
             this.$(go.TextBlock,
@@ -383,7 +387,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // property templates
     private propertyHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { selectable: false, stretch: go.GraphObject.Fill },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",
@@ -425,7 +429,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type method templates (also used for some parts of constructors and properties)
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { selectable: false, stretch: go.GraphObject.Fill },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",
@@ -458,7 +462,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private methodBodyGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             // // drawn before row 1:
             // this.$(go.Panel, { row: 0, width: go.GraphObject.Fill, height: 0 }),
@@ -469,27 +473,27 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private methodPartContainerGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             this.$(go.Placeholder)
             );
     }
     private methodGroupTemplate = () => {
         return this.$(go.Group, "Auto",
-            { selectable: false },
-            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke }),
+            { movable: false, click: this.onSelectionClick },
+            this.$(go.Shape, "RoundedRectangle", 
+                { fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }),
             this.$(go.Placeholder),
             );
     }
     private methodsContainerGroupTemplate = (groupName: string) => {
         return this.$(go.Group, "Table", { name: "Container" },
-            { selectable: false },
+            { movable: false, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
-                { 
-                    stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2,
-                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
-                }),
+                { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.TextBlock, groupName,
                 { font: "italic bold 10pt sans-serif", stroke: this.theme.Callable, margin: 5 },
@@ -510,12 +514,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type templates (classes, structs, interfaces, enums)
     private classGroupTemplate = () => {
         return this.$(go.Group, "Auto",
-            { locationSpot: go.Spot.Center },
+            { locationSpot: go.Spot.Center, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
-                { 
-                    stretch: go.GraphObject.Fill, strokeWidth: 2, rowSpan: 2,
-                    fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke
-                }),
+                { stretch: go.GraphObject.Fill, strokeWidth: 2, rowSpan: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.Panel, "Table",
                 { defaultRowSeparatorStroke: this.theme.NodeStroke },
@@ -536,8 +538,10 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private enumGroupTemplate = () => {
         return this.$(go.Group, "Auto",
-            { locationSpot: go.Spot.Center },
-            this.$(go.Shape, "RoundedRectangle", { fill: this.theme.NodeBackground, stroke: this.theme.NodeStroke, strokeWidth: 2 }),
+            { locationSpot: go.Spot.Center, click: this.onSelectionClick },
+            this.$(go.Shape, "RoundedRectangle", 
+                { strokeWidth: 2, fill: this.theme.NodeBackground },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 2) }),
             this.$(go.Panel, "Table",
                 { defaultRowSeparatorStroke: this.theme.NodeStroke },
@@ -568,10 +572,15 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 toEndSegmentLength: 15,
                 reshapable: false,
                 fromSpot: go.Spot.TopSide,
-                toSpot: go.Spot.BottomSide
+                toSpot: go.Spot.BottomSide,
+                click: this.onSelectionClick
             },
-            this.$(go.Shape, { stroke: this.theme.Inheritance }, new go.Binding("strokeDashArray", "category", category => category === LinkType.Realization? [4, 2]: [])),
-            this.$(go.Shape, { toArrow: "Triangle", fill: "white" })
+            this.$(go.Shape, 
+                new go.Binding("strokeDashArray", "category", category => category === LinkType.Realization? [4, 2]: []),
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Inheritance)).ofObject()),
+            this.$(go.Shape, 
+                { toArrow: "Triangle", fill: "white" },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Inheritance)).ofObject())
         );
     }
     private linksToTypes = () => {
@@ -584,10 +593,14 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 toEndSegmentLength: 15,
                 reshapable: false,
                 fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
+                toSpot: go.Spot.LeftSide,
+                click: this.onSelectionClick
             },
-            this.$(go.Shape, { stroke: this.theme.Type }),
-            this.$(go.Shape, { toArrow: "Standard", fill: this.theme.Type, stroke: this.theme.Type }),
+            this.$(go.Shape, 
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Type)).ofObject()),
+            this.$(go.Shape, 
+                { toArrow: "Standard", fill: this.theme.Type },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Type)).ofObject()),
         );
     }
     private linksToUsedMembers = () => {
@@ -600,11 +613,48 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 toEndSegmentLength: 15,
                 reshapable: false,
                 fromSpot: go.Spot.RightSide,
-                toSpot: go.Spot.LeftSide
+                toSpot: go.Spot.LeftSide,
+                click: this.onSelectionClick
             },
-            this.$(go.Shape, { stroke: this.theme.Callable }),
-            this.$(go.Shape, { toArrow: "Standard", fill: this.theme.Callable, stroke: this.theme.Callable }),
+            this.$(go.Shape, 
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Callable)).ofObject()),
+            this.$(go.Shape, 
+                { toArrow: "Standard", fill: this.theme.Callable },
+                new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Callable)).ofObject()),
         );
+    }
+
+    // part events
+    private onSelectionClick = (e: any, part: any) => { // highlight all Links and Nodes connected with a given Group, Node or Link
+        if (this.diagramReference.current !== null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram !== null) {
+                diagram.startTransaction("highlight");
+                diagram.clearHighlighteds();
+                diagram.selection.each(part => this.highlightPart(part));
+                diagram.commitTransaction("highlight");
+            }
+        }
+    }
+    private highlightPart = (part: go.Part, currentHighlightDepth: number = 0) => { // highlight all Links and Nodes connected with a given Part
+        if (part !== undefined && (part.isHighlighted === false || currentHighlightDepth === 0)) {
+            part.isHighlighted = true;
+            if (part instanceof go.Group && currentHighlightDepth < this.props.highlightMaximumDepthRecursion) {
+                if (this.props.highlightChildren) {
+                    part.memberParts.each(memberPart => this.highlightPart(memberPart, currentHighlightDepth + 1));
+                }
+                part.findLinksOutOf().each(link => this.highlightPart(link, currentHighlightDepth + 1));
+                part.findNodesOutOf().each(node => this.highlightPart(node, currentHighlightDepth + 1));
+            }
+            else if (part instanceof go.Node && currentHighlightDepth < this.props.highlightMaximumDepthRecursion) {
+                part.findLinksOutOf().each(link => this.highlightPart(link, currentHighlightDepth + 1));
+                part.findNodesOutOf().each(node => this.highlightPart(node, currentHighlightDepth + 1));
+            }
+            else if (part instanceof go.Link && currentHighlightDepth < this.props.highlightMaximumDepthRecursion) {
+                if (part.toNode !== null) this.highlightPart(part.toNode, currentHighlightDepth + 1)
+                if (part.fromNode !== null) part.fromNode.isHighlighted = true;
+            }
+        }
     }
 
     // conversion functions
@@ -640,7 +690,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             default: return this.theme.Default;
         }
     }
-    
+    private strokeOrHighlight = (isHighlighted: any, stroke: string): string => isHighlighted? this.theme.HighlightedStroke: stroke;
+
     // helper functions
     private jsonEqual = (a: any, b: any) => this.jsonStringifyWithoutGoHashId(a) === this.jsonStringifyWithoutGoHashId(b);
     private jsonStringifyWithoutGoHashId = (a: any) => JSON.stringify(a, (key, value) => {

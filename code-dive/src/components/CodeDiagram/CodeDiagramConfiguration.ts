@@ -1,5 +1,6 @@
 export class CodeDiagramConfiguration {
     linkCreationConfiguration: LinkCreationConfiguration = new LinkCreationConfiguration();
+    selectionHighlightsConfiguration: SelectionHighlightsConfiguration = new SelectionHighlightsConfiguration();
     theme: string = "Dark";
     isLoaded: boolean = false;
 
@@ -9,12 +10,17 @@ export class CodeDiagramConfiguration {
 }
 
 export class LinkCreationConfiguration {
-    public linksToSameType: boolean = false;
-    public inheritance: boolean = true;
-    public memberType: boolean = false;
-    public parameterType: boolean = true;
-    public variableDeclarationType: boolean = false;
-    public usedEnumValues: boolean = true;
-    public usedFieldAndProperties: boolean = true;
-    public usedConstructorsAndMethods: boolean = true;
+    linksToSameType: boolean = false;
+    inheritance: boolean = true;
+    memberType: boolean = false;
+    parameterType: boolean = true;
+    variableDeclarationType: boolean = false;
+    usedEnumValues: boolean = true;
+    usedFieldAndProperties: boolean = true;
+    usedConstructorsAndMethods: boolean = true;
+}
+
+export class SelectionHighlightsConfiguration {
+    recursionDepth: number = 1;
+    includeChildren: boolean = true;
 }

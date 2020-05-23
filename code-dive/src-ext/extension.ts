@@ -191,6 +191,10 @@ class ReactPanel {
 				usedFieldAndProperties: config.get('linkCreationConfiguration.usedFieldAndProperties') as boolean,
 				usedConstructorsAndMethods: config.get('linkCreationConfiguration.usedConstructorsAndMethods') as boolean
 			},
+			selectionHighlightsConfiguration: {
+				recursionDepth: config.get("selectionHighlights.recursionDepth") as number,
+				includeChildren: config.get("selectionHighlights.includeChildren") as boolean
+			},
 			theme: config.get("theme") as string,
 			isLoaded: true
 		}
