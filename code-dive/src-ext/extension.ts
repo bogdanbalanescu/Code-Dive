@@ -70,14 +70,14 @@ class ReactPanel {
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(async message => {
 			switch (message.command) {
-				case 'alert':
+				case 'extension:alert':
 					vscode.window.showErrorMessage(message.text);
 					break;
-				case 'loadConfiguration':
+				case 'extension:loadConfiguration':
 					var configuration = ReactPanel.loadConfiguration();
 					ReactPanel.postConfigurationResults(configuration);
 					break;
-				case 'startCodeDiveAnalysis':
+				case 'extension:startCodeDiveAnalysis':
 					var parsedTypes = await this.parseTypesFromCurrentWorkspaceSourceFilesAsync();
 					ReactPanel.postCodeDiveAnalysisResults(parsedTypes);
 					break;
@@ -112,8 +112,8 @@ class ReactPanel {
 			}
 			catch (e) {
 				this._codeDiveChannel.appendLine(`Error while parsing file ${filePath}: ${e.message}`);
-				// TODO: warn about source files that could not be parsed. (use something similar to 'alert')
-				// throw new Error("Unaccepted message occurred when parsing source file.");
+				this.alertWebview(`Error while parsing file ${filePath}: ${e.message}`);
+
 				return new ParsedTypes([], [], [], []);
 			}
 		});
@@ -121,29 +121,26 @@ class ReactPanel {
 
 	// start and post full code dive analysis
 	public static startCodeDiveAnalysis() {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
+		// Send a message to the webview.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'startCodeDiveAnalysis' });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:startCodeDiveAnalysis' });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
 	}
 	private static postCodeDiveAnalysisResults(parsedTypes: ParsedTypes) {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
+		// Send a message to the webview.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'codeDiveAnalysisResults', codeDiveAnalysisResults: parsedTypes });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:codeDiveAnalysisResults', codeDiveAnalysisResults: parsedTypes });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
 	}
 	// update extension about with new code dive analysis
 	private static updateCodeDiveAnalysisResultsForFilePath(parsedTypes: ParsedTypes, filePath: string) {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
+		// Send a message to the webview.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'updateDiveAnalysisResultsForFilePath', codeDiveAnalysisResults: parsedTypes, filePath: filePath });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:updateDiveAnalysisResultsForFilePath', codeDiveAnalysisResults: parsedTypes, filePath: filePath });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
@@ -170,10 +167,9 @@ class ReactPanel {
 
 	// start configuration load
 	public static startConfigurationLoad() {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
+		// Send a message to the webview.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'loadConfiguration' });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:loadConfiguration' });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
@@ -201,10 +197,9 @@ class ReactPanel {
 		return codeDiagaramConfiguration;
 	}
 	private static postConfigurationResults(configuration: CodeDiagramConfiguration) {
-		// Send a message to the webview webview.
-		// You can send any JSON serializable data.
+		// Send a message to the webview.
 		if (ReactPanel.currentPanel) {
-			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'configurationResults', configuration: configuration });
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:configurationResults', configuration: configuration });
 		} else {
 			// TODO: signal somehow that there is no panel
 		}
@@ -215,6 +210,16 @@ class ReactPanel {
 			var linkCreationConfiguration = ReactPanel.loadConfiguration();
 			ReactPanel.postConfigurationResults(linkCreationConfiguration);
 		});
+	}
+
+	// alert webivew
+	private alertWebview(message: string) {
+		// Send a message to the webview.
+		if (ReactPanel.currentPanel) {
+			ReactPanel.currentPanel._panel.webview.postMessage({ command: 'webview:alert', message: message });
+		} else {
+			// TODO: signal somehow that there is no panel
+		}
 	}
 
 	public dispose() {

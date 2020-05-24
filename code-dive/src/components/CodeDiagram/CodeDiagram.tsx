@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { CodeDiagramConfiguration } from './CodeDiagramConfiguration';
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
-import { CodeDiagramDataMapper } from './CodeDiagramHelper';
+import { CodeDiagramDataMapper } from './CodeDiagramDataMapper';
 import { IType } from '../../codeModel/Types/IType'
 
 interface CodeDiagramState {

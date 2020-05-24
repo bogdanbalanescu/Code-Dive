@@ -9,20 +9,20 @@ export class ExtensionInteractor implements Interactor {
 
     alert(message: string): void {
         this.vsCodeApi.postMessage({
-            command: 'alert',
+            command: 'extension:alert',
             text: message
         });
     }
     
     loadConfiguration(): void {
         this.vsCodeApi.postMessage({
-            command: 'loadConfiguration'
+            command: 'extension:loadConfiguration'
         });
     }
 
     startCodeDiveAnalysis(): void {
         this.vsCodeApi.postMessage({
-            command: 'startCodeDiveAnalysis'
+            command: 'extension:startCodeDiveAnalysis'
         });
     }
 }

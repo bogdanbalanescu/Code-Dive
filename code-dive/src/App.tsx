@@ -36,26 +36,27 @@ class App extends React.Component<Props> {
   windowEventListener = (event: MessageEvent) => {
     const message = event.data; // The JSON data our extension sent
     switch (message.command) {
-      case 'sayHello':
-        this.props.interactor.alert('Just here to say hello! 👋')
+      case 'webview:alert':
+        var text: string = message.message;
+        this.props.interactor.alert(text);
         break;
       // extension configuration/settings
-      case 'loadConfiguration':
+      case 'webview:loadConfiguration':
         this.props.interactor.loadConfiguration();
         break;
-      case 'configurationResults':
+      case 'webview:configurationResults':
         var configuration: CodeDiagramConfiguration = message.configuration;
         this.props.postConfiguration(configuration);
         break;
       // code dive analysis
-      case 'startCodeDiveAnalysis':
+      case 'webview:startCodeDiveAnalysis':
         this.props.interactor.startCodeDiveAnalysis();
         break;
-      case 'codeDiveAnalysisResults':
+      case 'webview:codeDiveAnalysisResults':
         var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
         this.props.postTypes(codeDiveAnalysisResults);
         break;
-      case 'updateDiveAnalysisResultsForFilePath':
+      case 'webview:updateDiveAnalysisResultsForFilePath':
         var codeDiveAnalysisResults: ParsedTypes = message.codeDiveAnalysisResults;
         var filePath = message.filePath;
         this.props.updateTypesForFilePath(codeDiveAnalysisResults, filePath);
