@@ -14,4 +14,8 @@ export class FixedParameter {
         this.modifier = otherFixedParameter.modifier;
         this.assignmentStatement = otherFixedParameter.assignmentStatement ? new Statement(otherFixedParameter.assignmentStatement): undefined;
     }
+
+    mapToSourceCode(): string {
+        return `${this.modifier} ${this.type} ${this.name} ${this.assignmentStatement? this.assignmentStatement.mapToSourceCode(): ''}`;
+    }
 }

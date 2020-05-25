@@ -14,4 +14,8 @@ export class Field {
         this.modifiers = otherField.modifiers;
         this.assignmentStatement = otherField.assignmentStatement ? new Statement(otherField.assignmentStatement): undefined;
     }
+
+    mapToSourceCode(): string {
+        return `${this.modifiers.join(' ')} ${this.type} ${this.name} ${this.assignmentStatement ? this.assignmentStatement.mapToSourceCode(): ';'}`;
+    }
 }

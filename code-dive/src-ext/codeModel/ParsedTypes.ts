@@ -10,10 +10,10 @@ export class ParsedTypes {
     enums: Enum[];
 
     public constructor(classes: Class[], structs: Struct[], interfaces: Interface[], enums: Enum[]) {
-        this.classes = classes;
-        this.structs = structs;
-        this.interfaces = interfaces;
-        this.enums = enums;        
+        this.classes = classes.map(type => new Class(type));
+        this.structs = structs.map(type => new Struct(type));
+        this.interfaces = interfaces.map(type => new Interface(type));
+        this.enums = enums.map(type => new Enum(type)); 
     }
 
     public addClasses(classes: Class[]): void {
@@ -37,5 +37,14 @@ export class ParsedTypes {
         this.structs.forEach(type => type.setSourceFilePath(filePath));
         this.interfaces.forEach(type => type.setSourceFilePath(filePath));
         this.enums.forEach(type => type.setSourceFilePath(filePath));
+    }
+    
+	mapToSourceCode(): string {
+        return [
+            this.classes.map(type => type.mapToSourceCode()),
+            this.structs.map(type => type.mapToSourceCode()),
+            this.interfaces.map(type => type.mapToSourceCode()),
+            this.enums.map(type => type.mapToSourceCode()),
+        ].join('\n');
 	}
 }

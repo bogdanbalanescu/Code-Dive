@@ -13,4 +13,8 @@ export class PropertyAccessor {
         this.declaredVariables = otherPropertyAccessor.declaredVariables.map(variable => new DeclaredVariable(variable));
         this.body = otherPropertyAccessor.body.map(statement => new Statement(statement));
     }
+
+    mapToSourceCode(): string {
+        return `${this.name} ${this.body.length > 0 ? `{\n${this.body.map(statement => statement.mapToSourceCode()).join('\n')}\n}`: `;`}`
+    }
 }

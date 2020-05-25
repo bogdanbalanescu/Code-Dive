@@ -20,4 +20,14 @@ export class Property {
         this.accessors = otherProperty.accessors.map(accessor => new PropertyAccessor(accessor));
         this.assignmentStatement = otherProperty.assignmentStatement ? new Statement(otherProperty.assignmentStatement): undefined;
     }
+
+    mapToSourceCode(): string {
+        return [
+            `${this.modifiers.join(' ')} ${this.type} ${this.name} ${this.parameters.length > 0 ? `[${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')}]`: ''}`,
+            `\n{`,
+            `${this.accessors.map(accessor => accessor.mapToSourceCode()).join('\n')}`,
+            `\n}`,
+            `${this.assignmentStatement ? this.assignmentStatement.mapToSourceCode(): ''}`,
+        ].join('');
+    }
 }

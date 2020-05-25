@@ -16,4 +16,8 @@ export class Statement {
         this.usedMethods = otherStatement.usedMethods;
         this.usedTypes = otherStatement.usedTypes;
     }
+
+    mapToSourceCode(): string {
+        return `${'\t'.repeat(this.blockCount + 2)}${this.statementText}`;
+    }
 }

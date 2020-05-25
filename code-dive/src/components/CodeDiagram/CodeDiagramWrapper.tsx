@@ -15,6 +15,7 @@ interface CodeDiagramProps {
     theme: string;
     highlightMaximumDepthRecursion: number;
     highlightChildren: boolean;
+    onUpdateNodeText: (nodeData: any, text: string) => void;
 }
 
 class DarkThemeColors {
@@ -123,9 +124,41 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
     componentDidMount = () => {
         // Should add listeners to the diagram (if needed).
+        if (this.diagramReference.current !== null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram !== null) {
+                diagram.addDiagramListener('TextEdited', this.updateNodeText);
+            }
+        }
     }
     componentWillUnmount = () => {
         // Should remove listeners from the diagram.
+        if (this.diagramReference.current !== null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram !== null) {
+                diagram.removeDiagramListener('TextEdited', this.updateNodeText);
+            }
+        }
+    }
+    private updateNodeText = (e: go.DiagramEvent) => {
+        try {
+            var code = (e.subject as go.TextBlock).text;
+            var textBlockTemplateBinder = (e.subject as go.GraphObject).findTemplateBinder();
+            if (textBlockTemplateBinder) {
+                var textBlockParent = textBlockTemplateBinder.findMainElement();
+                if (textBlockParent) {
+                    var textBlockParentTemplateBinder = textBlockParent.findTemplateBinder();
+                    if (textBlockParentTemplateBinder) {
+                        var data = textBlockParentTemplateBinder.data;
+                        (e.subject as go.TextBlock).text = data.code;
+                        this.props.onUpdateNodeText(data as go.ObjectData, code as string);
+                    }
+                }
+            }
+        }
+        catch (e) {
+            console.log(`Unexpected message on editing a node's or group's text: ${e.message}`);
+        }
     }
 
     private initDiagram = (): go.Diagram => {
@@ -336,7 +369,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     stretch: go.GraphObject.Fill, defaultAlignment: go.Spot.Left,
                     itemTemplate: this.statementAtomTemplate()
                 },
-                new go.Binding("itemArray", "statementAtoms")),
+                new go.Binding("itemArray", "statementAtoms"),
+                new go.Binding("visible", "isSelected", isSelected => !isSelected).ofObject()),
+            this.$(go.TextBlock, { editable: true, stroke: this.theme.Default },
+                new go.Binding("text", "code"),
+                new go.Binding("visible", "isSelected", isSelected => isSelected).ofObject()),
         );
     }
     // parameter template
@@ -429,7 +466,12 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type method templates (also used for some parts of constructors and properties)
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick,
+                doubleClick: (e: any, node: go.Node) => {
+                    console.log('double clicked', e, node);
+                    var sa = node.findObject("placeholder");
+                    if (sa !== null) sa.visible = false;
+                } },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",
@@ -447,7 +489,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             // (
             this.$(go.TextBlock, "(", { row: 0, column: 2, width: 5, stroke: this.theme.Default }),
             // parameters placeholder
-            this.$(go.Placeholder, { row: 0, column: 3 }),
+            this.$(go.Placeholder, { row: 0, column: 3 }, { name: "placeholder" }),
             // )
             this.$(go.TextBlock, ")", { row: 0, column: 4, width: 5, stroke: this.theme.Default }),
             // :

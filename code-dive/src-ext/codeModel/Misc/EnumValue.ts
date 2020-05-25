@@ -6,4 +6,8 @@ export class EnumValue {
         this.index = otherEnumValue.index;
         this.name = otherEnumValue.name;
     }
+
+    mapToSourceCode(): string {
+        return this.name;
+    }
 }

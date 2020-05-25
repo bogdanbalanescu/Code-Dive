@@ -30,4 +30,18 @@ export class Interface implements IType {
     public setSourceFilePath(sourceFilePath: string): void {
         this.sourceFilePath = sourceFilePath;
     }
+
+    mapToSourceCode(): string {
+        return [
+            `${this.namespaceDependecies.map(namespace => `using ${namespace};`).join('\n')}\n\n`,
+            `namespace ${this.namespace}\n`,
+            `{\n`,
+            `\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}interface ${this.name} ${this.parentInheritances.length > 0 ? `: ${this.parentInheritances.join(', ')}`: ''}\n`,
+            `\t{\n`,
+                `${this.properties.map(member => member.mapToSourceCode()).join('\n')}`,
+                `${this.methods.map(member => member.mapToSourceCode()).join('\n')}`,
+            '\t}\n',
+            '}\n',
+        ].join('');
+    }
 }

@@ -7,6 +7,7 @@ import { postConfiguration } from './redux/modules/configuration'
 import { postTypes, updateTypesForFilePath } from './redux/modules/types';
 import { ExtensionInteractor } from './interactors/ExtensionInteractor';
 import { CodeDiagram } from './components/CodeDiagram/CodeDiagram';
+import { IType } from './codeModel/Types/IType';
 import { ParsedTypes } from './codeModel/ParsedTypes';
 
 import { types } from './components/CodeDiagram/typesExample';
@@ -64,6 +65,10 @@ class App extends React.Component<Props> {
     }
   }
 
+  private handleUpdateCode = (typesToUpdate: IType[], path: string) => {
+    this.props.interactor.updateCode(typesToUpdate, path);
+  }
+
   public render() {
     return (
       <div>
@@ -75,10 +80,10 @@ class App extends React.Component<Props> {
           this.props.interactor instanceof ExtensionInteractor ?
           (
             this.props.configuration.isLoaded 
-            ? <CodeDiagram types={this.props.types} configuration={this.props.configuration} />
+            ? <CodeDiagram types={this.props.types} configuration={this.props.configuration} onUpdateCode={this.handleUpdateCode}/>
             : <CircularProgress />
           )
-          : <CodeDiagram types={types} configuration={new CodeDiagramConfiguration(true)} />
+          : <CodeDiagram types={types} configuration={new CodeDiagramConfiguration(true)} onUpdateCode={this.handleUpdateCode}/>
         }
       </div>
     );

@@ -20,4 +20,12 @@ export class Method {
         this.declaredVariables = otherMethod.declaredVariables.map(variable => new DeclaredVariable(variable));
         this.statements = otherMethod.statements.map(statement => new Statement(statement));
     }
+
+    mapToSourceCode(): string {
+        return [
+            `\t\t${this.modifiers.join(' ')} ${this.type} ${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})\n`,
+            `${this.statements.map(statement => statement.mapToSourceCode()).join('\n')}`,
+            '\n'
+        ].join('');
+    }
 }

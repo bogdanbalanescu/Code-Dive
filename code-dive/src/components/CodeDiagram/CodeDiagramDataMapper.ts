@@ -19,6 +19,7 @@ import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { DeclaredVariable } from '../../codeModel/Misc/DeclaredVariable';
 
 import { LinkCreationConfiguration } from './CodeDiagramConfiguration';
+import { CodeLocatorType } from './CodeLocatorType';
 
 export class CodeDiagramDataMapper {
     private types: IType[];
@@ -105,7 +106,16 @@ export class CodeDiagramDataMapper {
                 group: this.constructorOrMethodOrPropertyBodyKey(type, callable),
                 key: statementKey,
                 statementAtoms: statementAtoms,
-                blockCount: statement.blockCount
+                blockCount: statement.blockCount,
+                // metadata for editing
+                code: statement.statementText,
+                codeLocator: {
+                    type: callable instanceof Method? CodeLocatorType.MethodStatement: CodeLocatorType.ConstructorStatement,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    callableIndex: callable.index,
+                    statementIndex: statement.index
+                }
             });
         };
         const createNodeForPropertyAccessorStatement = (type: Class | Struct | Interface, property: Property, accessor: PropertyAccessor, statement: Statement) => {

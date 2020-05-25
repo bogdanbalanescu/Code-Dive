@@ -27,4 +27,17 @@ export class Enum implements IType {
     public setSourceFilePath(sourceFilePath: string): void {
         this.sourceFilePath = sourceFilePath;
     }
+
+    mapToSourceCode(): string {
+        return [
+            `${this.namespaceDependecies.map(namespace => `using ${namespace};`).join('\n')}\n\n`,
+            `namespace ${this.namespace}\n`,
+            `{\n`,
+            `\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}enum ${this.name} ${this.parentInheritances.length > 0 ? `: ${this.parentInheritances.join(', ')}`: ''}\n`,
+            `\t{\n`,
+                `${this.values.map(member => member.mapToSourceCode()).join('\n')}`,
+            '\t}\n',
+            '}\n',
+        ].join('');
+    }
 }

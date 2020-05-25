@@ -18,4 +18,12 @@ export class Constructor {
         this.declaredVariables = otherConstructor.declaredVariables.map(variable => new DeclaredVariable(variable));
         this.statements = otherConstructor.statements.map(statement => new Statement(statement));
     }
+
+    mapToSourceCode(): string {
+        return [
+            `\t\t${this.modifiers.join(' ')}${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})\n`,
+            `${this.statements.map(statement => statement.mapToSourceCode()).join('\n')}`,
+            '\n'
+        ].join('');
+    }
 }

@@ -1,8 +1,13 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { parseSourceCode } from "./codeParser/ClassParser";
 import { ParsedTypes } from './codeModel/ParsedTypes';
 import { CodeDiagramConfiguration } from './configuration/CodeDiagramConfiguration';
+import { Class } from './codeModel/Types/Class';
+import { Struct } from './codeModel/Types/Struct';
+import { Interface } from './codeModel/Types/Interface';
+import { Enum } from './codeModel/Types/Enum';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.code-dive', () => {
@@ -81,6 +86,20 @@ class ReactPanel {
 					var parsedTypes = await this.parseTypesFromCurrentWorkspaceSourceFilesAsync();
 					ReactPanel.postCodeDiveAnalysisResults(parsedTypes);
 					break;
+				case 'extension:updateCode':
+					var parsedTypesToUpdate = new ParsedTypes(
+						message.parsedTypesToUpdate.classes as Class[],
+						message.parsedTypesToUpdate.structs as Struct[],
+						message.parsedTypesToUpdate.interfaces as Interface[],
+						message.parsedTypesToUpdate.enums as Enum[])
+					var fsPath = message.path;
+					var sourceCode = parsedTypesToUpdate.mapToSourceCode();
+					// TODO: validate source code against the code parser and notify if the changes are not acceptable
+					// TODO: notify vscode workspace somehow of this changed file (it does not see it) - OR - change the fs watcher?
+					fs.writeFileSync(fsPath, sourceCode);
+					
+					ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(fsPath), fsPath);
+					break;
 			}
 		}, null, this._disposables);
 
@@ -93,7 +112,7 @@ class ReactPanel {
 		return await vscode.workspace.findFiles('**/*.cs', '**/obj/**').then(async (uris: vscode.Uri[]) => {
 			var allParsedTypes: ParsedTypes = new ParsedTypes([], [], [], []);
 			var parsedTypesJobs = uris.map(async (uri: vscode.Uri) => {
-				return await this.parseTypesFromSourceFile(uri.path); // TODO: consider uri.fspath as well OR even the uri itself
+				return await this.parseTypesFromSourceFile(uri.fsPath); // TODO: consider uri.fspath as well OR even the uri itself
 			});
 			var parsedTypes = await Promise.all(parsedTypesJobs);
 			parsedTypes.forEach((parsedTypes: ParsedTypes) => {
@@ -153,15 +172,15 @@ class ReactPanel {
 		this._disposables.push(watcher);
 
 		var onDidChangeWatcherDisposable = watcher.onDidChange(
-			async changedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(changedFileUri.path), changedFileUri.path));
+			async changedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(changedFileUri.fsPath), changedFileUri.fsPath));
 		this._disposables.push(onDidChangeWatcherDisposable);
 
 		var onDidCreateWatcherDisposable = watcher.onDidCreate(
-			async createdFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(createdFileUri.path), createdFileUri.path));
+			async createdFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(createdFileUri.fsPath), createdFileUri.fsPath));
 		this._disposables.push(onDidCreateWatcherDisposable);
 
 		var onDidDeleteWatcherDisposable = watcher.onDidDelete(
-			deletedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(new ParsedTypes([], [], [], []), deletedFileUri.path));
+			deletedFileUri => ReactPanel.updateCodeDiveAnalysisResultsForFilePath(new ParsedTypes([], [], [], []), deletedFileUri.fsPath));
 		this._disposables.push(onDidDeleteWatcherDisposable);
 	}
 
