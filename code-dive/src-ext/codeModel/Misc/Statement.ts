@@ -18,6 +18,6 @@ export class Statement {
     }
 
     mapToSourceCode(): string {
-        return `${'\t'.repeat(this.blockCount + 2)}${this.statementText}`;
+        return `${'\t'.repeat(this.blockCount)}${this.statementText}`;
     }
 }

@@ -11,6 +11,7 @@ import { Class } from '../../codeModel/Types/Class';
 import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
+import { CodeUpdater } from './CodeUpdater';
 
 interface CodeDiagramState {
     nodeDataArray: Array<go.ObjectData>;
@@ -26,6 +27,7 @@ interface CodeDiagramProps {
 }
 
 export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramState> {
+    private codeUpdater: CodeUpdater;
 
     constructor(props: CodeDiagramProps) {
         super(props);
@@ -36,6 +38,8 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             modelData: {},
             skipsDiagramUpdate: true
         };
+
+        this.codeUpdater = new CodeUpdater();
     }
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
@@ -53,20 +57,11 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         if (nodeData.code === code) return;
         try {
             var codeLocator = nodeData.codeLocator;
-            var relevantType = this.props.types.filter(type => type.namespace === codeLocator.typeNamespace && type.name === codeLocator.typeName)[0];
+            var relevantType = this.props.types.find(type => type.namespace === codeLocator.typeNamespace && type.name === codeLocator.typeName) as IType;
             var relevantTypeCopy = this.deepCopyType(relevantType);
-            switch(codeLocator.type) {
-                case (CodeLocatorType.ConstructorStatement):
-                    var relevantConstructor = (relevantTypeCopy as Class | Struct).constructors.filter(callable => callable.index === codeLocator.callableIndex)[0];
-                    var relevantStatement = relevantConstructor.statements.filter(statement => statement.index === codeLocator.statementIndex)[0];
-                    relevantStatement.statementText = code;
-                    break;
-                case (CodeLocatorType.MethodStatement):
-                    var relevantMethod = (relevantTypeCopy as Class | Struct | Interface).methods.filter(callable => callable.index === codeLocator.callableIndex)[0];
-                    var relevantStatement = relevantMethod.statements.filter(statement => statement.index === codeLocator.statementIndex)[0];
-                    relevantStatement.statementText = code;
-                    break;
-            }
+            
+            this.codeUpdater.updateCode(relevantTypeCopy, codeLocator, code);
+            
             var typesInSameFile = this.props.types.filter(type => type.sourceFilePath === relevantTypeCopy.sourceFilePath 
                 && (type.namespace !== relevantTypeCopy.namespace || type.name !== relevantTypeCopy.name))
                 .concat([relevantTypeCopy]);
@@ -77,12 +72,6 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         }
     }
     private deepCopyType(otherType: IType): IType {
-        // switch (otherType.constructor) {
-        //     case (Class): return new Class(otherType as Class);
-        //     case (Struct): return new Struct(otherType as Struct);
-        //     case (Interface): return new Interface(otherType as Interface);
-        //     default: return new Enum(otherType as Enum);
-        // }
         switch(true) {
             case (otherType instanceof Class): return new Class(otherType as Class);
             case (otherType instanceof Struct): return new Struct(otherType as Struct);

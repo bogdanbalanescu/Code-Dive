@@ -1,4 +1,5 @@
 export enum CodeLocatorType {
     MethodStatement,
-    ConstructorStatement
+    ConstructorStatement,
+    PropertyAccessorStatement
 }

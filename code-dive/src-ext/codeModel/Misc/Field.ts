@@ -16,6 +16,6 @@ export class Field {
     }
 
     mapToSourceCode(): string {
-        return `${this.modifiers.join(' ')} ${this.type} ${this.name} ${this.assignmentStatement ? this.assignmentStatement.mapToSourceCode(): ';'}`;
+        return `\t\t${this.modifiers.join(' ')} ${this.type} ${this.name} ${this.assignmentStatement ? this.assignmentStatement.mapToSourceCode(): ''};\n`;
     }
 }

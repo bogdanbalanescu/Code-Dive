@@ -24,7 +24,7 @@ export class Method {
     mapToSourceCode(): string {
         return [
             `\t\t${this.modifiers.join(' ')} ${this.type} ${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})\n`,
-            `${this.statements.map(statement => statement.mapToSourceCode()).join('\n')}`,
+            `${this.statements.map(statement => `\t\t${statement.mapToSourceCode()}`).join('\n')}`,
             '\n'
         ].join('');
     }

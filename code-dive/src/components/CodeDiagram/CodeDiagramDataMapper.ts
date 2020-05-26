@@ -127,7 +127,17 @@ export class CodeDiagramDataMapper {
                 group: this.propertyAccessorKey(type, property, accessor),
                 key: statementKey,
                 statementAtoms: statementAtoms,
-                blockCount: statement.blockCount
+                blockCount: statement.blockCount,
+                // metadata for editing
+                code: statement.statementText,
+                codeLocator: {
+                    type: CodeLocatorType.PropertyAccessorStatement,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    propertyIndex: property.index,
+                    accessorIndex: accessor.index,
+                    statementIndex: statement.index
+                }
             });
         };
         // Create nodes for property accessor
