@@ -6,6 +6,7 @@ import './CodeDiagramWrapper.css';
 import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
+import { Inspector } from '../DataInspector/DataInspector';
 
 interface CodeDiagramProps {
     nodeDataArray: Array<go.ObjectData>;
@@ -66,12 +67,14 @@ type Theme = DarkThemeColors | LightThemeColors;
 
 export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     private diagramReference: React.RefObject<ReactDiagram>;
+    private inspectorReference: React.RefObject<HTMLDivElement>;
     private $: any;
     private theme: Theme;
 
     constructor(props: CodeDiagramProps) {
         super(props);
         this.diagramReference = React.createRef();
+        this.inspectorReference = React.createRef<HTMLDivElement>();
         this.$ = go.GraphObject.make;
         this.theme = this.props.theme === 'Dark' ? new DarkThemeColors(): new LightThemeColors();
     }
@@ -123,16 +126,33 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
 
     componentDidMount = () => {
-        // Should add listeners to the diagram (if needed).
+        // Add listeners to the diagram.
         if (this.diagramReference.current !== null) {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram !== null) {
                 diagram.addDiagramListener('TextEdited', this.updateNodeText);
             }
         }
+        // Create the diagram inspector
+        if (this.diagramReference.current !== null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram !== null) {
+                var inspector = new Inspector(this.inspectorReference.current as HTMLDivElement, diagram, {
+                    includesOwnProperties: false,
+                    // TODO: add the properties which are to be shown for each node or group
+                    properties: {
+                        "code": { show: Inspector.showIfPresent }
+                    },
+                    // TODO: subscribe to property modified event handler (also consider disabling the automatic update of data on the diagram)
+                    propertyModified: (a: string, b: string, c: Inspector) => {
+                        console.log(`Changed property: ${a}, New value: ${b}, Object data: `, c.inspectedObject? c.inspectedObject.data : {});
+                    }
+                });
+            }
+        }
     }
     componentWillUnmount = () => {
-        // Should remove listeners from the diagram.
+        // Remove listeners from the diagram.
         if (this.diagramReference.current !== null) {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram !== null) {
@@ -743,16 +763,21 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
 
     render() {
         return (
-            <ReactDiagram
-                ref={this.diagramReference}
-                divClassName={this.props.theme === 'Dark'? 'code-diagram-component-dark-theme': 'code-diagram-component-light-theme'}
-                initDiagram={this.initDiagram}
-                nodeDataArray={this.props.nodeDataArray}
-                linkDataArray={this.props.linkDataArray}
-                modelData={this.props.modelData}
-                onModelChange={() => {console.log('for now, we do nothing when model changes')}}
-                skipsDiagramUpdate={this.props.skipsDiagramUpdate}
-            />
+            <div>
+                <div>
+                    <ReactDiagram
+                        ref={this.diagramReference}
+                        divClassName={this.props.theme === 'Dark'? 'code-diagram-component-dark-theme': 'code-diagram-component-light-theme'}
+                        initDiagram={this.initDiagram}
+                        nodeDataArray={this.props.nodeDataArray}
+                        linkDataArray={this.props.linkDataArray}
+                        modelData={this.props.modelData}
+                        onModelChange={() => {console.log('for now, we do nothing when model changes')}}
+                        skipsDiagramUpdate={this.props.skipsDiagramUpdate}
+                    />
+                </div>
+                <div ref={this.inspectorReference}></div>
+            </div>
         )
     }
 }
