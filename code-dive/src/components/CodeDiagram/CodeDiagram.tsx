@@ -6,7 +6,7 @@ import { CodeDiagramWrapper } from './CodeDiagramWrapper'
 import { CodeDiagramDataMapper } from './CodeDiagramDataMapper';
 import { IType } from '../../codeModel/Types/IType'
 import { NodeType } from './NodeType';
-import { CodeLocatorType } from './CodeLocatorType';
+import { CodeComponentType } from './CodeComponentType';
 import { Class } from '../../codeModel/Types/Class';
 import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
@@ -53,14 +53,13 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         };
     }
 
-    private handleUpdateCode = (nodeData: any, code: string) => {
-        if (nodeData.code === code) return;
+    private handleUpdateNode = (nodeData: any) => {
         try {
-            var codeLocator = nodeData.codeLocator;
-            var relevantType = this.props.types.find(type => type.namespace === codeLocator.typeNamespace && type.name === codeLocator.typeName) as IType;
+            var codeComponentLocation = nodeData.codeComponentLocation;
+            var relevantType = this.props.types.find(type => type.namespace === codeComponentLocation.typeNamespace && type.name === codeComponentLocation.typeName) as IType;
             var relevantTypeCopy = this.deepCopyType(relevantType);
             
-            this.codeUpdater.updateCode(relevantTypeCopy, codeLocator, code);
+            this.codeUpdater.updateCode(relevantTypeCopy, nodeData);
             
             var typesInSameFile = this.props.types.filter(type => type.sourceFilePath === relevantTypeCopy.sourceFilePath 
                 && (type.namespace !== relevantTypeCopy.namespace || type.name !== relevantTypeCopy.name))
@@ -90,7 +89,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 theme={this.props.configuration.theme}
                 highlightMaximumDepthRecursion={this.props.configuration.selectionHighlightsConfiguration.recursionDepth}
                 highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
-                onUpdateNodeText={this.handleUpdateCode}
+                onUpdateNode={this.handleUpdateNode}
             />
         );
     }

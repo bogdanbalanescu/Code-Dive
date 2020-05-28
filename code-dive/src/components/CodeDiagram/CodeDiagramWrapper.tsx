@@ -7,6 +7,7 @@ import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { Inspector } from '../DataInspector/DataInspector';
+const clone = require('rfdc')()
 
 interface CodeDiagramProps {
     nodeDataArray: Array<go.ObjectData>;
@@ -16,7 +17,7 @@ interface CodeDiagramProps {
     theme: string;
     highlightMaximumDepthRecursion: number;
     highlightChildren: boolean;
-    onUpdateNodeText: (nodeData: any, text: string) => void;
+    onUpdateNode: (nodeData: any) => void;
 }
 
 class DarkThemeColors {
@@ -137,15 +138,25 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         if (this.diagramReference.current !== null) {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram !== null) {
-                var inspector = new Inspector(this.inspectorReference.current as HTMLDivElement, diagram, {
+                new Inspector(this.inspectorReference.current as HTMLDivElement, diagram, {
                     includesOwnProperties: false,
+                    updateAffectedDiagramParts: false,
                     // TODO: add the properties which are to be shown for each node or group
                     properties: {
-                        "code": { show: Inspector.showIfPresent }
+                        "statementText": { name: "Statement", show: Inspector.showIfPresent }
                     },
-                    // TODO: subscribe to property modified event handler (also consider disabling the automatic update of data on the diagram)
-                    propertyModified: (a: string, b: string, c: Inspector) => {
-                        console.log(`Changed property: ${a}, New value: ${b}, Object data: `, c.inspectedObject? c.inspectedObject.data : {});
+                    propertyModified: (changedProperty: string, propertyValue: string, inspector: Inspector) => {
+                        if (inspector.inspectedObject && inspector.inspectedObject.data[changedProperty] !== propertyValue) {
+                            var dataClone = clone(inspector.inspectedObject.data);
+                            dataClone[changedProperty] = propertyValue;
+                            this.props.onUpdateNode(dataClone);
+                            // console.log(`Changed property: ${changedProperty}, New value: ${propertyValue}`,
+                            //     'Object data: ', 
+                            //     inspector.inspectedObject? inspector.inspectedObject.data : {},
+                            //     'Data clone: ',
+                            //     dataClone
+                            // );
+                        }
                     }
                 });
             }
@@ -170,8 +181,11 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     var textBlockParentTemplateBinder = textBlockParent.findTemplateBinder();
                     if (textBlockParentTemplateBinder) {
                         var data = textBlockParentTemplateBinder.data;
-                        (e.subject as go.TextBlock).text = data.code;
-                        this.props.onUpdateNodeText(data as go.ObjectData, code as string);
+                        (e.subject as go.TextBlock).text = data.statementText;
+
+                        var dataClone = clone(data);
+                        dataClone.statementText = code;
+                        this.props.onUpdateNode(dataClone as go.ObjectData);
                     }
                 }
             }
@@ -392,7 +406,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 new go.Binding("itemArray", "statementAtoms"),
                 new go.Binding("visible", "isSelected", isSelected => !isSelected).ofObject()),
             this.$(go.TextBlock, { editable: true, stroke: this.theme.Default },
-                new go.Binding("text", "code"),
+                new go.Binding("text", "statementText"),
                 new go.Binding("visible", "isSelected", isSelected => isSelected).ofObject()),
         );
     }

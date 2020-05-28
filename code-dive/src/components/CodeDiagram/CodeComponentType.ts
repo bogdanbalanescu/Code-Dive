@@ -1,4 +1,4 @@
-export enum CodeLocatorType {
+export enum CodeComponentType {
     MethodStatement,
     ConstructorStatement,
     PropertyAccessorStatement

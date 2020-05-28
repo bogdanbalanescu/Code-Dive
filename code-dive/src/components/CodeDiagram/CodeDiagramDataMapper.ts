@@ -19,7 +19,7 @@ import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { DeclaredVariable } from '../../codeModel/Misc/DeclaredVariable';
 
 import { LinkCreationConfiguration } from './CodeDiagramConfiguration';
-import { CodeLocatorType } from './CodeLocatorType';
+import { CodeComponentType } from './CodeComponentType';
 
 export class CodeDiagramDataMapper {
     private types: IType[];
@@ -108,9 +108,9 @@ export class CodeDiagramDataMapper {
                 statementAtoms: statementAtoms,
                 blockCount: statement.blockCount,
                 // metadata for editing
-                code: statement.statementText,
-                codeLocator: {
-                    type: callable instanceof Method? CodeLocatorType.MethodStatement: CodeLocatorType.ConstructorStatement,
+                statementText: statement.statementText,
+                codeComponentLocation: {
+                    type: callable instanceof Method? CodeComponentType.MethodStatement: CodeComponentType.ConstructorStatement,
                     typeNamespace: type.namespace,
                     typeName: type.name,
                     callableIndex: callable.index,
@@ -129,9 +129,9 @@ export class CodeDiagramDataMapper {
                 statementAtoms: statementAtoms,
                 blockCount: statement.blockCount,
                 // metadata for editing
-                code: statement.statementText,
-                codeLocator: {
-                    type: CodeLocatorType.PropertyAccessorStatement,
+                statementText: statement.statementText,
+                codeComponentLocation: {
+                    type: CodeComponentType.PropertyAccessorStatement,
                     typeNamespace: type.namespace,
                     typeName: type.name,
                     propertyIndex: property.index,

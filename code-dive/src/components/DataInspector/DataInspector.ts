@@ -77,6 +77,7 @@ export class Inspector {
   private _multipleSelection: boolean = false;
   private _showUnionProperties: boolean = false;
   private _showLimit: number = 0;
+  private _updateAffectedDiagramParts = true;
 
   // Private variables used to keep track of internal state
   private inspectedProperties: { [index: string]: any } = {};
@@ -113,6 +114,9 @@ export class Inspector {
       if (options.multipleSelection !== undefined) this._multipleSelection = options.multipleSelection;
       if (options.showUnionProperties !== undefined) this._showUnionProperties = options.showUnionProperties;
       if (options.showLimit !== undefined) this._showLimit = options.showLimit;
+      // Custom option added to enable stopping updates of affected diagram parts while still calling the _propertyModified handler.
+      // The reason behind is was that we wanted to validate those changes in an asynchronous way and only apply those changes once notified back to do so.
+      if (options.updateAffectedDiagramParts !== undefined) this._updateAffectedDiagramParts = options.updateAffectedDiagramParts;
     }
     // Prepare change listeners
     const self = this;
@@ -255,6 +259,19 @@ export class Inspector {
   set showLimit(val: number) {
     if (val !== this._showLimit) {
       this._showLimit = val;
+      this.inspectObject();
+    }
+  }
+
+  /**
+   * Gets or sets if diagram parts should be updated when modifications are made on inspected properties.
+   * 
+   * The default value is true, meaning diagram parts will be updated when inspected properties are modified.
+   */
+  get updatesAffectedDiagramParts(): boolean { return this._updateAffectedDiagramParts; }
+  set updatesAffectedDiagramParts(val: boolean) {
+    if (val !== this._updateAffectedDiagramParts) {
+      this._updateAffectedDiagramParts = val;
       this.inspectObject();
     }
   }
@@ -816,8 +833,8 @@ export class Inspector {
             // the value shown should match the actual value
             input.value = value;
 
-            // modify the data object in an undo-able fashion
-            diagram.model.setDataProperty(data, name, value);
+            // modify the data object in an undo-able fashion (if _updateAffectedDiagramParts is true)
+            if (this._updateAffectedDiagramParts) diagram.model.setDataProperty(data, name, value);
 
             // notify any listener
             if (this.propertyModified !== null) this.propertyModified(name, value, this);
@@ -856,8 +873,8 @@ export class Inspector {
       // the value shown should match the actual value
       input.value = value;
 
-      // modify the data object in an undo-able fashion
-      diagram.model.setDataProperty(data, name, value);
+      // modify the data object in an undo-able fashion (if _updateAffectedDiagramParts is true)
+      if (this._updateAffectedDiagramParts) diagram.model.setDataProperty(data, name, value);
 
       // notify any listener
       if (this.propertyModified !== null) this.propertyModified(name, value, this);
