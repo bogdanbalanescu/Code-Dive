@@ -10,6 +10,13 @@
 * See the Extensions intro page (https://gojs.net/latest/intro/extensions.html) for more information.
 */
 
+/**
+ * Custom modifications made to this extension:
+ *   - the constructor no longer takes string reference to the div where the inspector is rendered, but instead it takes an HTMLDivElement reference.
+ *   - one extra option was added: `updateAffectedDiagramParts` **boolean** see {@link #updateAffectedDiagramParts}
+ *     - when false, the inspected diagram parts are not updated anymore, but {@link #propertyModified} is still executed.
+ */
+
 import * as go from 'gojs';
 import './DataInspector.css';
 
@@ -95,12 +102,7 @@ export class Inspector {
    * @param {Object=} options an optional JS Object describing options for the inspector
    */
   constructor(divid: HTMLDivElement, diagram: go.Diagram, options?: { [index: string]: any }) {
-    // TODO: Document the custom modifications applied here and in the css file.
-
-    // const mainDiv = document.getElementById(divid.id) as HTMLDivElement;
-    // mainDiv.className = 'inspector';
-    // mainDiv.innerHTML = '';
-    this._div = divid;//mainDiv;
+    this._div = divid;
     this._div.className = 'inspector';
     this._div.innerHTML = '';
     this._diagram = diagram;

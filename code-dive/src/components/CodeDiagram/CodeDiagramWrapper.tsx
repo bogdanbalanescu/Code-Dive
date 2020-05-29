@@ -143,14 +143,29 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     updateAffectedDiagramParts: false,
                     // TODO: add the properties which are to be shown for each node or group
                     properties: {
-                        "statementText": { name: "Statement", show: Inspector.showIfPresent }
+                        // "keyword": { name: "Keyword", show: Inspector.showIfPresent, type: "select", choices: ["class", "struct", "interface", "enum"] },
+                        "namespaceDependecies": { name: "Imported Namespaces", show: Inspector.showIfPresent },
+                        "namespace": { name: "Namespace", show: Inspector.showIfPresent },
+                        "parentInheritance": { name: "Inheritances", show: Inspector.showIfPresent },
+                        "modifiers": { name: "Modifiers", show: Inspector.showIfPresent },
+                        "modifier": { name: "Modifier", show: Inspector.showIfPresent, type: "select", choices: ["", "ref", "out"] },
+                        "value": { name: "Value", show: Inspector.showIfPresent },
+                        "name": { name: "Name", show: Inspector.showIfPresent },
+                        "propertyAccessorName": { name: "Property Accessor Type", show: Inspector.showIfPresent, type: "select", choices: ["get", "set"] },
+                        "type": { name: "Type", show: Inspector.showIfPresent },
+                        "assignmentStatement": { name: "Initialization", show: Inspector.showIfPresent },
+                        "statementText": { name: "Statement", show: Inspector.showIfPresent },
                     },
                     propertyModified: (changedProperty: string, propertyValue: string, inspector: Inspector) => {
-                        if (inspector.inspectedObject && inspector.inspectedObject.data[changedProperty] !== propertyValue) {
+                        var newPropertyValue: any = ["modifiers", "namespaceDependecies", "parentInheritance"].indexOf(changedProperty) !== -1 ?
+                            newPropertyValue = propertyValue.split(' ').filter(x => x) :
+                            newPropertyValue = propertyValue;
+
+                        if (inspector.inspectedObject && JSON.stringify(inspector.inspectedObject.data[changedProperty]) !== JSON.stringify(newPropertyValue)) {
                             var dataClone = clone(inspector.inspectedObject.data);
-                            dataClone[changedProperty] = propertyValue;
+                            dataClone[changedProperty] = newPropertyValue;
                             this.props.onUpdateNode(dataClone);
-                            // console.log(`Changed property: ${changedProperty}, New value: ${propertyValue}`,
+                            // console.log(`Changed property: ${changedProperty}, New value: ${newPropertyValue}`,
                             //     'Object data: ', 
                             //     inspector.inspectedObject? inspector.inspectedObject.data : {},
                             //     'Data clone: ',
@@ -450,7 +465,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             // method name
             this.$(go.TextBlock,
                 { row: 0, margin: new go.Margin(2, 2, 0, 2), isMultiline: false, editable: false, stroke: this.theme.Field, alignment: go.Spot.Left },
-                new go.Binding("text", "name"),
+                new go.Binding("text", "propertyAccessorName"),
                 new go.Binding("isUnderline", "modifiers", modifiers => modifiers.includes("static"))),
             this.$(go.Placeholder, { row: 1, margin: new go.Margin(2, 2, 2, 4) }),
             );

@@ -45,7 +45,14 @@ export class CodeDiagramDataMapper {
                 category: NodeType.EnumValue,
                 group: this.enumValuesContainerKey(type),
                 key: this.enumValueKey(type, value),
-                value: value.name
+                value: value.name,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.EnumValue,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    valueIndex: value.index
+                }
             });
         };
         const createNodesForEnumValues = (type: Enum) => {
@@ -68,7 +75,15 @@ export class CodeDiagramDataMapper {
                 modifiers: field.modifiers,
                 name: field.name,
                 type: field.type,
-                statementAtoms: statementAtoms
+                statementAtoms: statementAtoms,
+                // metadata for editing
+                assignmentStatement: field.assignmentStatement ? field.assignmentStatement.statementText : '',
+                codeComponentLocation: {
+                    type: CodeComponentType.Field,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    fieldIndex: field.index
+                }
             });
         };
         const createNodesForFields = (type: Class | Struct) => {
@@ -93,7 +108,18 @@ export class CodeDiagramDataMapper {
                 name: parameter.name,
                 type: parameter.type,
                 isLast: isLast,
-                statementAtoms: statementAtoms
+                statementAtoms: statementAtoms,
+                // metadata for editing
+                assignmentStatement: parameter.assignmentStatement ? parameter.assignmentStatement.statementText : '',
+                codeComponentLocation: {
+                    type: CodeComponentType.Parameter,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    callableType: callable instanceof Method ? CodeComponentType.Method :
+                        callable instanceof Constructor ? CodeComponentType.Constructor : CodeComponentType.Property,
+                    callableIndex: callable.index,
+                    parameterIndex: parameter.index
+                }
             });
         };
         // Create nodes for statements
@@ -110,9 +136,10 @@ export class CodeDiagramDataMapper {
                 // metadata for editing
                 statementText: statement.statementText,
                 codeComponentLocation: {
-                    type: callable instanceof Method? CodeComponentType.MethodStatement: CodeComponentType.ConstructorStatement,
+                    type: CodeComponentType.ConstructorOrMethodStatement,
                     typeNamespace: type.namespace,
                     typeName: type.name,
+                    callableType: callable instanceof Method? CodeComponentType.Method: CodeComponentType.Constructor,
                     callableIndex: callable.index,
                     statementIndex: statement.index
                 }
@@ -146,8 +173,16 @@ export class CodeDiagramDataMapper {
                 category: NodeType.PropertyAccessor,
                 group: this.constructorOrMethodOrPropertyBodyKey(type, property),
                 key: this.propertyAccessorKey(type, property, accessor),
-                name: accessor.name,
-                isGroup: true
+                propertyAccessorName: accessor.name,
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.PropertyAccessor,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    propertyIndex: property.index,
+                    accessorIndex: accessor.index
+                }
             });
             accessor.body.forEach(statement => createNodeForPropertyAccessorStatement(type, property, accessor, statement));
         }
@@ -163,7 +198,15 @@ export class CodeDiagramDataMapper {
                 name: property.name,
                 type: property.type,
                 statementAtoms: statementAtoms,
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                assignmentStatement: property.assignmentStatement ? property.assignmentStatement.statementText : '',
+                codeComponentLocation: {
+                    type: CodeComponentType.Property,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    propertyIndex: property.index,
+                }
             });
             property.parameters.forEach(parameter => createNodeForParameter(type, property, parameter, this.isLastInCollection(property.parameters, parameter)));
         };
@@ -215,7 +258,14 @@ export class CodeDiagramDataMapper {
                 key: this.constructorOrMethodOrPropertyHeaderKey(type, constructor),
                 modifiers: constructor.modifiers,
                 name: constructor.name,
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.Constructor,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    constructorIndex: constructor.index,
+                }
             });
             constructor.parameters.forEach(parameter => createNodeForParameter(type, constructor, parameter, this.isLastInCollection(constructor.parameters, parameter)));
         };
@@ -268,7 +318,14 @@ export class CodeDiagramDataMapper {
                 modifiers: method.modifiers,
                 name: method.name,
                 type: method.type,
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.Method,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    methodIndex: method.index,
+                }
             });
             method.parameters.forEach(parameter => createNodeForParameter(type, method, parameter, this.isLastInCollection(method.parameters, parameter)));
         };
@@ -321,13 +378,24 @@ export class CodeDiagramDataMapper {
                 key: this.typeKey(type),
                 modifiers: type.modifiers,
                 name: type.name,
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                namespaceDependecies: type.namespaceDependecies,
+                namespace: type.namespace,
+                parentInheritances: type.parentInheritances,
+                codeComponentLocation: {
+                    type: CodeComponentType.Type,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             };
         }
         const createNodesForClassOrStruct = (type: Class | Struct) => {
             this.nodeData.push({
                 category: type instanceof Class? NodeType.Class: NodeType.Struct,
                 ...mapType(type),
+                // medata for editing
+                keyword: type instanceof Class? "class": "struct"
             });
             createNodesForFields(type);
             createNodesForProperties(type);
@@ -338,13 +406,17 @@ export class CodeDiagramDataMapper {
             this.nodeData.push({
                 category: NodeType.Interface,
                 ...mapType(type),
+                // medata for editing
+                keyword: "interface"
             });
             createNodesForProperties(type);
         }
         const createNodesForEnum = (type: Enum) => {
             this.nodeData.push({
                 category: NodeType.Enum,
-                ...mapType(type)
+                ...mapType(type),
+                // medata for editing
+                keyword: "enum"
             });
             createNodesForEnumValues(type);
         }

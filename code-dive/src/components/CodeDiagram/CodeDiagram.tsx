@@ -5,8 +5,6 @@ import { CodeDiagramConfiguration } from './CodeDiagramConfiguration';
 import { CodeDiagramWrapper } from './CodeDiagramWrapper'
 import { CodeDiagramDataMapper } from './CodeDiagramDataMapper';
 import { IType } from '../../codeModel/Types/IType'
-import { NodeType } from './NodeType';
-import { CodeComponentType } from './CodeComponentType';
 import { Class } from '../../codeModel/Types/Class';
 import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
@@ -62,7 +60,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             this.codeUpdater.updateCode(relevantTypeCopy, nodeData);
             
             var typesInSameFile = this.props.types.filter(type => type.sourceFilePath === relevantTypeCopy.sourceFilePath 
-                && (type.namespace !== relevantTypeCopy.namespace || type.name !== relevantTypeCopy.name))
+                && (type.namespace !== relevantType.namespace || type.name !== relevantType.name))
                 .concat([relevantTypeCopy]);
             this.props.onUpdateCode(typesInSameFile, relevantTypeCopy.sourceFilePath);
         }
