@@ -224,7 +224,14 @@ export class CodeDiagramDataMapper {
                 category: NodeType.Property,
                 group: this.propertyContainerKey(type),
                 key: this.fieldOrPropertyKey(type, property),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.Property,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    propertyIndex: property.index,
+                }
             });
             this.nodeData.push({
                 category: NodeType.PropertyHeaderContainer,
@@ -283,7 +290,14 @@ export class CodeDiagramDataMapper {
                 category: NodeType.Constructor,
                 group: this.constructorsContainerKey(type),
                 key: this.constructorOrMethodOrPropertyContainerKey(type, constructor),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.Constructor,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    constructorIndex: constructor.index,
+                }
             });
             this.nodeData.push({
                 category: NodeType.ConstructorHeaderContainer,
@@ -344,7 +358,14 @@ export class CodeDiagramDataMapper {
                 category: NodeType.Method,
                 group: this.methodsContainerKey(type),
                 key: this.constructorOrMethodOrPropertyContainerKey(type, method),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.Method,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                    methodIndex: method.index,
+                }
             });
             this.nodeData.push({
                 category: NodeType.MethodHeaderContainer,
@@ -431,8 +452,6 @@ export class CodeDiagramDataMapper {
             linkDataArray: this.linkData
         };
     }
-
-
 
     // helper functions for finding types and members
     private groupTypesByProperty (key: any): any {

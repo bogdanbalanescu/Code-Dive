@@ -14,6 +14,8 @@ export class Interface implements IType {
     properties: Property[];
     methods: Method[];
 
+    isUpToDate: boolean;
+
     public constructor(otherInterface: Interface) {
         this.sourceFilePath = otherInterface.sourceFilePath || "";
         
@@ -25,10 +27,16 @@ export class Interface implements IType {
 
         this.properties = otherInterface.properties.map(property => new Property(property));
         this.methods = otherInterface.methods.map(method => new Method(method));
+        
+        this.isUpToDate = otherInterface.isUpToDate;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {
         this.sourceFilePath = sourceFilePath;
+    }
+
+    public setIsUpdateToDate(isUpToDate: boolean): void {
+        this.isUpToDate = isUpToDate;
     }
 
     mapToSourceCode(): string {

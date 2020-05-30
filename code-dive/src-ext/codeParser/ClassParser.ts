@@ -19,5 +19,6 @@ export function parseSourceCode(sourceCode: string, sourceFilePath: string): Par
         parsedTypesResult.interfaces.map(type => new Interface(type as Interface)),
         parsedTypesResult.enums.map(type => new Enum(type as Enum)));
     parsedTypes.setSourceFilePath(sourceFilePath);
+    parsedTypes.setIsUpdateToDate(true);
     return parsedTypes;
 }

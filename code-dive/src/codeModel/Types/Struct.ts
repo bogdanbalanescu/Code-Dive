@@ -18,6 +18,8 @@ export class Struct implements IType {
     constructors: Constructor[];
     methods: Method[];
 
+    isUpToDate: boolean;
+
     public constructor(otherStruct: Struct) {
         this.sourceFilePath = otherStruct.sourceFilePath || "";
         
@@ -31,6 +33,8 @@ export class Struct implements IType {
         this.properties = otherStruct.properties.map(property => new Property(property));
         this.constructors = otherStruct.constructors.map(constructor => new Constructor(constructor));
         this.methods = otherStruct.methods.map(method => new Method(method));
+
+        this.isUpToDate = otherStruct.isUpToDate;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

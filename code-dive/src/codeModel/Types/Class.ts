@@ -18,6 +18,8 @@ export class Class implements IType {
     constructors: Constructor[];
     methods: Method[];
 
+    isUpToDate: boolean;
+
     public constructor(otherClass: Class) {
         this.sourceFilePath = otherClass.sourceFilePath || "";
         
@@ -31,6 +33,8 @@ export class Class implements IType {
         this.properties = otherClass.properties.map(property => new Property(property));
         this.constructors = otherClass.constructors.map(constructor => new Constructor(constructor));
         this.methods = otherClass.methods.map(method => new Method(method));
+
+        this.isUpToDate = otherClass.isUpToDate;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

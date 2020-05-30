@@ -18,6 +18,7 @@ interface CodeDiagramProps {
     highlightMaximumDepthRecursion: number;
     highlightChildren: boolean;
     onUpdateNode: (nodeData: any) => void;
+    onDeletedNodes: (nodeData: any[]) => void;
 }
 
 class DarkThemeColors {
@@ -209,6 +210,16 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             console.log(`Unexpected message on editing a node's or group's text: ${e.message}`);
         }
     }
+    private deleteSelectedNodes = () => {
+        if (this.diagramReference.current !== null) {
+            let diagram = this.diagramReference.current.getDiagram();
+            if (diagram !== null) {
+                var selectedParts = diagram.selection;
+                var selectedNodeData = selectedParts.map((part: go.Part) => part.data).toArray();
+                this.props.onDeletedNodes(selectedNodeData as go.ObjectData[]);
+            }
+        }
+    }
 
     private initDiagram = (): go.Diagram => {
         // diagram
@@ -236,7 +247,8 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         packOption: go.LayeredDigraphLayout.PackExpand,
                         setsPortSpots: false
                     }),
-                    click: this.onSelectionClick
+                    click: this.onSelectionClick,
+                    "commandHandler.deleteSelection": this.deleteSelectedNodes
                 });
 
         // enum value node and group templates
@@ -515,12 +527,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type method templates (also used for some parts of constructors and properties)
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick,
-                doubleClick: (e: any, node: go.Node) => {
-                    console.log('double clicked', e, node);
-                    var sa = node.findObject("placeholder");
-                    if (sa !== null) sa.visible = false;
-                } },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",

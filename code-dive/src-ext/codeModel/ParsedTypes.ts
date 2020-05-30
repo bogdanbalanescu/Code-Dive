@@ -38,6 +38,13 @@ export class ParsedTypes {
         this.interfaces.forEach(type => type.setSourceFilePath(filePath));
         this.enums.forEach(type => type.setSourceFilePath(filePath));
     }
+
+    setIsUpdateToDate(isUpToDate: boolean) {
+        this.classes.forEach(type => type.setIsUpdateToDate(isUpToDate));
+        this.structs.forEach(type => type.setIsUpdateToDate(isUpToDate));
+        this.interfaces.forEach(type => type.setIsUpdateToDate(isUpToDate));
+        this.enums.forEach(type => type.setIsUpdateToDate(isUpToDate));
+    }
     
 	mapToSourceCode(): string {
         return [

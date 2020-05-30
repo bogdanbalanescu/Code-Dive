@@ -9,7 +9,8 @@ import { Class } from '../../codeModel/Types/Class';
 import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
-import { CodeUpdater } from './CodeUpdater';
+import { SourceCodeDataMapper } from './SourceCodeDataMapper';
+import { CodeComponentType } from './CodeComponentType';
 
 interface CodeDiagramState {
     nodeDataArray: Array<go.ObjectData>;
@@ -25,7 +26,7 @@ interface CodeDiagramProps {
 }
 
 export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramState> {
-    private codeUpdater: CodeUpdater;
+    private sourceCodeDataMapper: SourceCodeDataMapper;
 
     constructor(props: CodeDiagramProps) {
         super(props);
@@ -37,7 +38,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             skipsDiagramUpdate: true
         };
 
-        this.codeUpdater = new CodeUpdater();
+        this.sourceCodeDataMapper = new SourceCodeDataMapper();
     }
 
     static getDerivedStateFromProps(nextProps: CodeDiagramProps, previousState: CodeDiagramState): CodeDiagramState {
@@ -53,21 +54,51 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
 
     private handleUpdateNode = (nodeData: any) => {
         try {
-            var codeComponentLocation = nodeData.codeComponentLocation;
-            var relevantType = this.props.types.find(type => type.namespace === codeComponentLocation.typeNamespace && type.name === codeComponentLocation.typeName) as IType;
-            var relevantTypeCopy = this.deepCopyType(relevantType);
-            
-            this.codeUpdater.updateCode(relevantTypeCopy, nodeData);
-            
-            var typesInSameFile = this.props.types.filter(type => type.sourceFilePath === relevantTypeCopy.sourceFilePath 
-                && (type.namespace !== relevantType.namespace || type.name !== relevantType.name))
-                .concat([relevantTypeCopy]);
-            this.props.onUpdateCode(typesInSameFile, relevantTypeCopy.sourceFilePath);
+            var typesCopy = this.props.types.map(type => this.deepCopyType(type));
+            var updatedTypes = this.sourceCodeDataMapper.updateCodeForNode(typesCopy, nodeData);
+            var updatedTypesGroupedBySourceFilePath = this.groupTypesByProperty(updatedTypes, 'sourceFilePath');
+
+            for (const sourceFilePath in updatedTypesGroupedBySourceFilePath) {
+                this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
+            }
         }
         catch (e) {
-            console.log(`Unexpected error while updating node text: ${e.message}`)
+            console.log(`Unexpected error while updating node data: ${e.message}`)
         }
     }
+    private handleDeletedNodes = (deletedNodesData: any[]) => {
+        try {
+            var typesCopy = this.props.types.map(type => this.deepCopyType(type));
+            var updatedTypes = this.sourceCodeDataMapper.deleteCodeForNodes(typesCopy, deletedNodesData);
+
+            var existingSourceFiles = this.props.types.map(type => type.sourceFilePath).filter((value, index, self) => self.indexOf(value) === index);
+            var updatedTypesGroupedBySourceFilePath = this.groupTypesByProperty(updatedTypes, 'sourceFilePath');
+
+            // update types in existing source files (TODO: remove source files if there are no more types there)
+            existingSourceFiles.forEach(sourceFilePath => {
+                updatedTypesGroupedBySourceFilePath[sourceFilePath] ?
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath]) :
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, []); //this.removeSourceFile(sourceFilePath);
+            });
+            // update types in new source files
+            for (const sourceFilePath in updatedTypesGroupedBySourceFilePath) {
+                if (existingSourceFiles.indexOf(sourceFilePath) === -1)
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
+            }
+        }
+        catch(e) {
+            console.log(`Unexpected error while deleting nodes: ${e.message}`)
+        }
+    }
+    private updateCodeInSourceFileIfChanged(sourceFilePath: string, types: IType[]) {
+        if (types.length === 0 || 
+            types.length !== this.props.types.filter(type => type.sourceFilePath === sourceFilePath).length ||
+            types.findIndex(type => type.isUpToDate === false) !== -1) {
+            this.props.onUpdateCode(types, sourceFilePath);
+        }
+    }
+
+    // helper functions for finding types and members
     private deepCopyType(otherType: IType): IType {
         switch(true) {
             case (otherType instanceof Class): return new Class(otherType as Class);
@@ -76,6 +107,12 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             default: return new Enum(otherType as Enum);
         }
     }
+    private groupTypesByProperty (types: IType[], key: any): any {
+        return types.reduce(function (rv: any, x: any) {
+            (rv[x[key]] = rv[x[key]] || []).push(x);
+            return rv;
+        }, {});
+    };
 
     render() {
         return (
@@ -88,6 +125,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 highlightMaximumDepthRecursion={this.props.configuration.selectionHighlightsConfiguration.recursionDepth}
                 highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
                 onUpdateNode={this.handleUpdateNode}
+                onDeletedNodes={this.handleDeletedNodes}
             />
         );
     }

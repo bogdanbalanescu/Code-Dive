@@ -21,7 +21,7 @@ export class Constructor {
 
     mapToSourceCode(): string {
         return [
-            `\t\t${this.modifiers.join(' ')}${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})\n`,
+            `\t\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})\n`,
             `${this.statements.map(statement => `\t\t${statement.mapToSourceCode()}`).join('\n')}`,
             '\n'
         ].join('');

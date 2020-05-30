@@ -7,4 +7,6 @@ export interface IType {
     name: string;
     modifiers: string[];
     parentInheritances: string[];
+
+    isUpToDate: boolean;
 }

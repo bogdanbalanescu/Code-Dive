@@ -12,6 +12,8 @@ export class Enum implements IType {
 
     values: EnumValue[];
 
+    isUpToDate: boolean;
+
     public constructor(otherEnum: Enum) {
         this.sourceFilePath = otherEnum.sourceFilePath || "";
 
@@ -22,6 +24,8 @@ export class Enum implements IType {
         this.parentInheritances = otherEnum.parentInheritances;
 
         this.values = otherEnum.values.map(value => new EnumValue(value));
+
+        this.isUpToDate = otherEnum.isUpToDate;
     }
 
     public setSourceFilePath(sourceFilePath: string): void {

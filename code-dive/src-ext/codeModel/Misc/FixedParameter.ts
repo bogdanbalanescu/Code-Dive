@@ -16,6 +16,6 @@ export class FixedParameter {
     }
 
     mapToSourceCode(): string {
-        return `${this.modifier} ${this.type} ${this.name} ${this.assignmentStatement? this.assignmentStatement.mapToSourceCode(): ''}`;
+        return `${this.modifier ? `${this.modifier} `: ''}${this.type} ${this.name}${this.assignmentStatement? ` ${this.assignmentStatement.mapToSourceCode()}`: ''}`;
     }
 }
