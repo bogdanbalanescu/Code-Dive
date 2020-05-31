@@ -23,8 +23,8 @@ export class Method {
 
     mapToSourceCode(): string {
         return [
-            `\t\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}${this.type} ${this.name} (${this.parameters.map(parameter => parameter.mapToSourceCode()).join(', ')})`,
-            `${this.statements.length > 0 ? `\n${this.statements.map(statement => `\t\t${statement.mapToSourceCode()}`).join('\n')}` : ';'}`,
+            `\t\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}${this.type} ${this.name} (${this.parameters.sort((a, b) => a.index - b.index).map(parameter => parameter.mapToSourceCode()).join(', ')})`,
+            `${this.statements.length > 0 ? `\n${this.statements.sort((a, b) => a.index - b.index).map(statement => `\t\t${statement.mapToSourceCode()}`).join('\n')}` : ';'}`,
             '\n'
         ].join('');
     }

@@ -46,8 +46,8 @@ export class Interface implements IType {
             `{\n`,
             `\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}interface ${this.name} ${this.parentInheritances.length > 0 ? `: ${this.parentInheritances.join(', ')}`: ''}\n`,
             `\t{\n`,
-                `${this.properties.map(member => member.mapToSourceCode()).join('')}`,
-                `${this.methods.map(member => member.mapToSourceCode()).join('')}`,
+                `${this.properties.sort((a, b) => a.index - b.index).map(member => member.mapToSourceCode()).join('')}`,
+                `${this.methods.sort((a, b) => a.index - b.index).map(member => member.mapToSourceCode()).join('')}`,
             '\t}\n',
             '}\n',
         ].join('');

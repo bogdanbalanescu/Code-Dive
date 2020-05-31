@@ -97,6 +97,20 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             this.props.onUpdateCode(types, sourceFilePath);
         }
     }
+    private handleAddNode = (nodeData: any, isBefore: boolean) => {
+        try {
+            var typesCopy = this.props.types.map(type => this.deepCopyType(type));
+            var updatedTypes = this.sourceCodeDataMapper.addCodeForNode(typesCopy, nodeData, isBefore);
+            var updatedTypesGroupedBySourceFilePath = this.groupTypesByProperty(updatedTypes, 'sourceFilePath');
+
+            for (const sourceFilePath in updatedTypesGroupedBySourceFilePath) {
+                this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
+            }
+        }
+        catch (e) {
+            console.log(`Unexpected error while adding node data: ${e.message}`)
+        }
+    }
 
     // helper functions for finding types and members
     private deepCopyType(otherType: IType): IType {
@@ -126,6 +140,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
                 onUpdateNode={this.handleUpdateNode}
                 onDeletedNodes={this.handleDeletedNodes}
+                onAddNode={this.handleAddNode}
             />
         );
     }

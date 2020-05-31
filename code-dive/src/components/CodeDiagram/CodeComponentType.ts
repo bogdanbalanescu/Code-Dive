@@ -1,11 +1,17 @@
 export enum CodeComponentType {
+    // Type
     Type = "Type",
+    // Type Members
     EnumValue = "EnumValue",
     Field = "Field",
+    MethodHeader = "MethodHeader",
     Method = "Method",
+    ConstructorHeader = "ConstructorHeader",
     Constructor = "Constructor",
-    Property = "Property",
     PropertyAccessor = "PropertyAccessor",
+    Property = "Property",
+    PropertyHeader = "PropertyHeader",
+    // Misc
     ConstructorOrMethodStatement = "ConstructorOrMethodStatement",
     PropertyAccessorStatement = "PropertyAccessorStatement",
     Parameter = "Parameter",

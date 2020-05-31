@@ -43,7 +43,7 @@ export class Enum implements IType {
             `{\n`,
             `\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}enum ${this.name} ${this.parentInheritances.length > 0 ? `: ${this.parentInheritances.join(', ')}`: ''}\n`,
             `\t{\n`,
-                `${this.values.map(member => member.mapToSourceCode()).join('\n')}`,
+                `${this.values.sort((a, b) => a.index - b.index).map(member => member.mapToSourceCode()).join('\n')}`,
             '\t}\n',
             '}\n',
         ].join('');

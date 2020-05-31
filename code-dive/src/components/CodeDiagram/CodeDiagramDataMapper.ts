@@ -161,7 +161,7 @@ export class CodeDiagramDataMapper {
                     type: CodeComponentType.PropertyAccessorStatement,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    propertyIndex: property.index,
+                    callableIndex: property.index,
                     accessorIndex: accessor.index,
                     statementIndex: statement.index
                 }
@@ -180,7 +180,7 @@ export class CodeDiagramDataMapper {
                     type: CodeComponentType.PropertyAccessor,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    propertyIndex: property.index,
+                    callableIndex: property.index,
                     accessorIndex: accessor.index
                 }
             });
@@ -202,10 +202,11 @@ export class CodeDiagramDataMapper {
                 // metadata for editing
                 assignmentStatement: property.assignmentStatement ? property.assignmentStatement.statementText : '',
                 codeComponentLocation: {
-                    type: CodeComponentType.Property,
+                    type: CodeComponentType.PropertyHeader,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    propertyIndex: property.index,
+                    callableType: CodeComponentType.Property,
+                    callableIndex: property.index,
                 }
             });
             property.parameters.forEach(parameter => createNodeForParameter(type, property, parameter, this.isLastInCollection(property.parameters, parameter)));
@@ -230,7 +231,7 @@ export class CodeDiagramDataMapper {
                     type: CodeComponentType.Property,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    propertyIndex: property.index,
+                    callableIndex: property.index,
                 }
             });
             this.nodeData.push({
@@ -268,10 +269,11 @@ export class CodeDiagramDataMapper {
                 isGroup: true,
                 // metadata for editing
                 codeComponentLocation: {
-                    type: CodeComponentType.Constructor,
+                    type: CodeComponentType.ConstructorHeader,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    constructorIndex: constructor.index,
+                    callableType: CodeComponentType.Constructor,
+                    callableIndex: constructor.index,
                 }
             });
             constructor.parameters.forEach(parameter => createNodeForParameter(type, constructor, parameter, this.isLastInCollection(constructor.parameters, parameter)));
@@ -296,7 +298,7 @@ export class CodeDiagramDataMapper {
                     type: CodeComponentType.Constructor,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    constructorIndex: constructor.index,
+                    callableIndex: constructor.index,
                 }
             });
             this.nodeData.push({
@@ -335,10 +337,11 @@ export class CodeDiagramDataMapper {
                 isGroup: true,
                 // metadata for editing
                 codeComponentLocation: {
-                    type: CodeComponentType.Method,
+                    type: CodeComponentType.MethodHeader,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    methodIndex: method.index,
+                    callableType: CodeComponentType.Method,
+                    callableIndex: method.index,
                 }
             });
             method.parameters.forEach(parameter => createNodeForParameter(type, method, parameter, this.isLastInCollection(method.parameters, parameter)));
@@ -364,7 +367,7 @@ export class CodeDiagramDataMapper {
                     type: CodeComponentType.Method,
                     typeNamespace: type.namespace,
                     typeName: type.name,
-                    methodIndex: method.index,
+                    callableIndex: method.index,
                 }
             });
             this.nodeData.push({

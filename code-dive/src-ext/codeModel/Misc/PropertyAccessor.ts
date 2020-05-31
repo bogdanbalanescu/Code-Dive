@@ -15,6 +15,6 @@ export class PropertyAccessor {
     }
 
     mapToSourceCode(): string {
-        return `\t\t\t${this.name}${this.body.length > 0 ? `\n${this.body.map(statement => `\t\t\t${statement.mapToSourceCode()}`).join('\n')}`: `;`}\n`
+        return `\t\t\t${this.name}${this.body.length > 0 ? `\n${this.body.sort((a, b) => a.index - b.index).map(statement => `\t\t\t${statement.mapToSourceCode()}`).join('\n')}`: `;`}\n`
     }
 }
