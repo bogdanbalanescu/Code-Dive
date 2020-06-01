@@ -93,12 +93,17 @@ class ReactPanel {
 						message.parsedTypesToUpdate.interfaces as Interface[],
 						message.parsedTypesToUpdate.enums as Enum[])
 					var fsPath = message.path;
-					var sourceCode = parsedTypesToUpdate.mapToSourceCode();
-					// TODO: validate source code against the code parser and notify if the changes are not acceptable
-					// TODO: notify vscode workspace somehow of this changed file (it does not see it) - OR - change the fs watcher?
-					fs.writeFileSync(fsPath, sourceCode);
-					
-					ReactPanel.updateCodeDiveAnalysisResultsForFilePath(await this.parseTypesFromSourceFile(fsPath), fsPath);
+					try {
+						// Parse to source code
+						var sourceCode = parsedTypesToUpdate.mapToSourceCode();
+						// Validate if source code is parsable
+						var parsedTypes = parseSourceCode(sourceCode, fsPath);
+						// Save source code to file
+						fs.writeFileSync(fsPath, sourceCode);
+					}
+					catch (e) {
+						this.alertWebview(e.message);
+					}
 					break;
 			}
 		}, null, this._disposables);
@@ -125,9 +130,9 @@ class ReactPanel {
 		});
 	}
 	private parseTypesFromSourceFile = async (filePath: string): Promise<ParsedTypes> => {
-		return await vscode.workspace.openTextDocument(filePath).then((file) => {
+		return fs.promises.readFile(filePath).then((data) => {
 			try {
-				return parseSourceCode(file.getText(), filePath);
+				return parseSourceCode(data.toString(), filePath);
 			}
 			catch (e) {
 				this._codeDiveChannel.appendLine(`Error while parsing file ${filePath}: ${e.message}`);

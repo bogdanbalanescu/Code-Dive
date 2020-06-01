@@ -27,7 +27,7 @@ export class Property {
             `\t\t{\n`,
             `${this.accessors.sort((a, b) => a.index - b.index).map(accessor => accessor.mapToSourceCode()).join('')}`,
             `\t\t}\n`,
-            `${this.assignmentStatement ? this.assignmentStatement.mapToSourceCode(): ''}\n`,
+            `${this.assignmentStatement ? `${this.assignmentStatement.mapToSourceCode()};`: ''}\n`,
         ].join('');
     }
 }

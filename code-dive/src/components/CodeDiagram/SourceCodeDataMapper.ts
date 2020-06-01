@@ -362,7 +362,8 @@ export class SourceCodeDataMapper {
                 var statement = constructorOrMethod.statements.find(statement => statement.index === codeComponentLocation.statementIndex) as Statement;
                 var newStatement = new Statement({
                     index: isBefore? statement.index: statement.index + 1, 
-                    blockCount: statement.statementText === '{' ? statement.blockCount + 1: statement.blockCount, 
+                    blockCount: isBefore === false && statement.statementText === '{'
+                        || isBefore === true && statement.statementText === '}' ? statement.blockCount + 1: statement.blockCount,
                     statementText: ';', 
                     usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []
                 });
@@ -377,7 +378,8 @@ export class SourceCodeDataMapper {
                 var statement = accessor.body.find(statement => statement.index === codeComponentLocation.statementIndex) as Statement;
                 var newStatement = new Statement({
                     index: isBefore? statement.index: statement.index + 1, 
-                    blockCount: isBefore === false && statement.statementText === '{' ? statement.blockCount + 1: statement.blockCount, 
+                    blockCount: isBefore === false && statement.statementText === '{'
+                        || isBefore === true && statement.statementText === '}' ? statement.blockCount + 1: statement.blockCount,
                     statementText: ';', 
                     usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []
                 });
