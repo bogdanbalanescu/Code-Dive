@@ -36,8 +36,4 @@ export class Struct implements IType {
 
         this.isUpToDate = otherStruct.isUpToDate;
     }
-
-    public setSourceFilePath(sourceFilePath: string): void {
-        this.sourceFilePath = sourceFilePath;
-    }
 }

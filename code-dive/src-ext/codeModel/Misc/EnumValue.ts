@@ -8,6 +8,6 @@ export class EnumValue {
     }
 
     mapToSourceCode(): string {
-        return this.name;
+        return `\t\t${this.name}`;
     }
 }

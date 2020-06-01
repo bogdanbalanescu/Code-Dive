@@ -36,8 +36,4 @@ export class Class implements IType {
 
         this.isUpToDate = otherClass.isUpToDate;
     }
-
-    public setSourceFilePath(sourceFilePath: string): void {
-        this.sourceFilePath = sourceFilePath;
-    }
 }

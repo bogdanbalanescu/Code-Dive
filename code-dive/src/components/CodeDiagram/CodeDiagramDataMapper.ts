@@ -60,7 +60,13 @@ export class CodeDiagramDataMapper {
                 category: NodeType.EnumValuesContainer,
                 group: this.typeKey(type),
                 key: this.enumValuesContainerKey(type),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.EnumValuesContainer,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             });
             type.values.forEach(value => createNodeForEnumValue(type, value));
         }
@@ -91,7 +97,13 @@ export class CodeDiagramDataMapper {
                 category: NodeType.FieldsContainer,
                 group: this.typeKey(type),
                 key: this.fieldsContainerKey(type),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.FieldsContainer,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             });
             type.fields.forEach(field => createNodeForField(type, field));
         }
@@ -254,7 +266,13 @@ export class CodeDiagramDataMapper {
                 category: NodeType.PropertiesContainer,
                 group: this.typeKey(type),
                 key: this.propertyContainerKey(type),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.PropertiesContainer,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             });
             type.properties.forEach(property => createNodeForProperty(type, property));
         }
@@ -321,7 +339,13 @@ export class CodeDiagramDataMapper {
                 category: NodeType.ConstructorsContainer,
                 group: this.typeKey(type),
                 key: this.constructorsContainerKey(type),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.ConstructorsContainer,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             });
             type.constructors.forEach(constructor => createNodeForConstructor(type, constructor));
         }
@@ -390,7 +414,13 @@ export class CodeDiagramDataMapper {
                 category: NodeType.MethodsContainer,
                 group: this.typeKey(type),
                 key: this.methodsContainerKey(type),
-                isGroup: true
+                isGroup: true,
+                // metadata for editing
+                codeComponentLocation: {
+                    type: CodeComponentType.MethodsContainer,
+                    typeNamespace: type.namespace,
+                    typeName: type.name,
+                }
             });
             type.methods.forEach(method => createNodeForMethod(type, method));
         }
@@ -404,6 +434,7 @@ export class CodeDiagramDataMapper {
                 name: type.name,
                 isGroup: true,
                 // metadata for editing
+                sourceFilePath: type.sourceFilePath,
                 namespaceDependecies: type.namespaceDependecies,
                 namespace: type.namespace,
                 parentInheritances: type.parentInheritances,
@@ -434,6 +465,7 @@ export class CodeDiagramDataMapper {
                 keyword: "interface"
             });
             createNodesForProperties(type);
+            createNodesForMethods(type);
         }
         const createNodesForEnum = (type: Enum) => {
             this.nodeData.push({

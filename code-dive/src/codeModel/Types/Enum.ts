@@ -27,8 +27,4 @@ export class Enum implements IType {
 
         this.isUpToDate = otherEnum.isUpToDate;
     }
-
-    public setSourceFilePath(sourceFilePath: string): void {
-        this.sourceFilePath = sourceFilePath;
-    }
 }

@@ -92,14 +92,33 @@ class ReactPanel {
 						message.parsedTypesToUpdate.structs as Struct[],
 						message.parsedTypesToUpdate.interfaces as Interface[],
 						message.parsedTypesToUpdate.enums as Enum[])
-					var fsPath = message.path;
+					var fsPath: string = (message.path as String).indexOf('.cs') !== -1 ? message.path : 
+						vscode.workspace.workspaceFolders ? path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, `${message.path}.cs`) : '';
 					try {
 						// Parse to source code
 						var sourceCode = parsedTypesToUpdate.mapToSourceCode();
 						// Validate if source code is parsable
 						var parsedTypes = parseSourceCode(sourceCode, fsPath);
-						// Save source code to file
-						fs.writeFileSync(fsPath, sourceCode);
+
+						if ((message.path as String).indexOf('.cs') === -1) { // if there is a new type and the file already exists, preserve the previously added type as well
+							if (fs.existsSync(fsPath)) {
+								var existingParsedTypesInNewFile = await this.parseTypesFromSourceFile(fsPath);
+								parsedTypes.addClasses(existingParsedTypesInNewFile.classes);
+								parsedTypes.addStructs(existingParsedTypesInNewFile.structs);
+								parsedTypes.addInterfaces(existingParsedTypesInNewFile.interfaces);
+								parsedTypes.addEnums(existingParsedTypesInNewFile.enums);
+							}
+						}
+
+						if (parsedTypes.count() === 0) {
+							// Delete empty source files
+							fs.unlinkSync(fsPath);
+						}
+						else {
+							sourceCode = parsedTypes.mapToSourceCode();
+							// Save source code to file
+							fs.writeFileSync(fsPath, sourceCode);
+						}
 					}
 					catch (e) {
 						this.alertWebview(e.message);

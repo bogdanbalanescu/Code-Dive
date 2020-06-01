@@ -7,6 +7,7 @@ import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { Inspector } from '../DataInspector/DataInspector';
+import { CodeComponentType } from './CodeComponentType';
 const clone = require('rfdc')()
 
 interface CodeDiagramProps {
@@ -19,7 +20,8 @@ interface CodeDiagramProps {
     highlightChildren: boolean;
     onUpdateNode: (nodeData: any) => void;
     onDeletedNodes: (nodeData: any[]) => void;
-    onAddNode: (nodeData: any, isBefore: boolean) => void;
+    onAddComponentNode: (nodeData: any, isBefore: boolean) => void;
+    onAddTypeNode: (nodeType: NodeType) => void;
 }
 
 class DarkThemeColors {
@@ -146,6 +148,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                     // TODO: add the properties which are to be shown for each node or group
                     properties: {
                         // "keyword": { name: "Keyword", show: Inspector.showIfPresent, type: "select", choices: ["class", "struct", "interface", "enum"] },
+                        "sourceFilePath": { name: "File Path", show: Inspector.showIfPresent },
                         "namespaceDependecies": { name: "Imported Namespaces", show: Inspector.showIfPresent },
                         "namespace": { name: "Namespace", show: Inspector.showIfPresent },
                         "parentInheritance": { name: "Inheritances", show: Inspector.showIfPresent },
@@ -225,11 +228,14 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         try {
             var data = (obj.part as go.Part).data;
             var dataClone = clone(data);
-            this.props.onAddNode(dataClone as go.ObjectData, isBefore);
+            this.props.onAddComponentNode(dataClone as go.ObjectData, isBefore);
         }
         catch (e) {
             console.log(`Unexpected message on adding a new node or group: ${e.message}`);
         }
+    }
+    private addNewType = (event: go.InputEvent, nodeType: NodeType) => {
+        this.props.onAddTypeNode(nodeType);
     }
 
     private initDiagram = (): go.Diagram => {
@@ -259,7 +265,24 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                         setsPortSpots: false
                     }),
                     click: this.onSelectionClick,
-                    "commandHandler.deleteSelection": this.deleteSelectedNodes
+                    "commandHandler.deleteSelection": this.deleteSelectedNodes,
+                    contextMenu: this.$("ContextMenu",
+                        this.$("ContextMenuButton",
+                            this.$(go.TextBlock, `Add New Class`, { alignment: go.Spot.Left }),
+                            { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewType(event, NodeType.Class) }),
+                        this.$("ContextMenuButton",
+                            this.$(go.TextBlock, `Add New Struct`, { alignment: go.Spot.Left }),
+                            { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewType(event, NodeType.Struct) }),
+                        this.$("ContextMenuButton",
+                            this.$(go.TextBlock, `Add New Interface`, { alignment: go.Spot.Left }),
+                            { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewType(event, NodeType.Interface) }),
+                        this.$("ContextMenuButton",
+                            this.$(go.TextBlock, `Add New Enum`, { alignment: go.Spot.Left }),
+                            { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewType(event, NodeType.Enum) }),
+                        this.$("ContextMenuButton",
+                            this.$(go.TextBlock, `Delete Selection`, { alignment: go.Spot.Left }),
+                            { click: this.deleteSelectedNodes }),
+                        )
                 });
 
         // enum value node and group templates
@@ -280,21 +303,21 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         diagram.groupTemplateMap.add(NodeType.PropertyHeaderContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.PropertyBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Property, this.methodGroupTemplate("Property"));
-        diagram.groupTemplateMap.add(NodeType.PropertiesContainer, this.methodsContainerGroupTemplate("Properties"));
+        diagram.groupTemplateMap.add(NodeType.PropertiesContainer, this.methodsContainerGroupTemplate("Properties", "Property"));
         // constructor group templates
         diagram.groupTemplateMap.add(NodeType.ConstructorHeader, this.methodHeaderGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.ConstructorBody, this.methodBodyGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.ConstructorHeaderContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.ConstructorBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Constructor, this.methodGroupTemplate("Constructor"));
-        diagram.groupTemplateMap.add(NodeType.ConstructorsContainer, this.methodsContainerGroupTemplate("Constructors"));
+        diagram.groupTemplateMap.add(NodeType.ConstructorsContainer, this.methodsContainerGroupTemplate("Constructors", "Constructor"));
         // method group templates
         diagram.groupTemplateMap.add(NodeType.MethodHeader, this.methodHeaderGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.MethodBody, this.methodBodyGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.MethodHeaderContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.MethodBodyContainer, this.methodPartContainerGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Method, this.methodGroupTemplate("Method"));
-        diagram.groupTemplateMap.add(NodeType.MethodsContainer, this.methodsContainerGroupTemplate("Methods"));
+        diagram.groupTemplateMap.add(NodeType.MethodsContainer, this.methodsContainerGroupTemplate("Methods", "Method"));
         // type group templates
         diagram.groupTemplateMap.add(NodeType.Class, this.classGroupTemplate());
         diagram.groupTemplateMap.add(NodeType.Struct, this.classGroupTemplate());
@@ -317,14 +340,17 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
 
     // Context Menu Template
-    private addNewComponentContextMenuTemplate(componentName: string) {
+    private addNewComponentNearExistingComponentContextMenuTemplate(componentName: string) {
         return this.$("ContextMenu",
             this.$("ContextMenuButton",
                 this.$(go.TextBlock, `Add ${componentName} Before`, { alignment: go.Spot.Left }),
                 { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj, true) }),
             this.$("ContextMenuButton",
                 this.$(go.TextBlock, `Add ${componentName} After`, { alignment: go.Spot.Left }),
-                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) })
+                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) }),
+            this.$("ContextMenuButton",
+                this.$(go.TextBlock, `Delete Selection`, { alignment: go.Spot.Left }),
+                { click: this.deleteSelectedNodes }),
             );
     }
     private addNewPropertyAccessorContextMenuTemplate() {
@@ -334,21 +360,34 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
                 { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj, true) }),
             this.$("ContextMenuButton",
                 this.$(go.TextBlock, `Add Set Accessor`, { alignment: go.Spot.Left }),
-                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) })
+                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) }),
+            this.$("ContextMenuButton",
+                this.$(go.TextBlock, `Delete Selection`, { alignment: go.Spot.Left }),
+                { click: this.deleteSelectedNodes }),
             );
     }
-    private addNewCallableParameterContextMenuTemplate() {
+    private addNewComponentContextMenuTemplate(componentName: string) {
         return this.$("ContextMenu",
             this.$("ContextMenuButton",
-                this.$(go.TextBlock, `Add Parameter`, { alignment: go.Spot.Left }),
-                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) })
+                this.$(go.TextBlock, `Add ${componentName}`, { alignment: go.Spot.Left }),
+                { click: (event: go.InputEvent, obj: go.GraphObject) => this.addNewComponent(event, obj) }),
+            this.$("ContextMenuButton",
+                this.$(go.TextBlock, `Delete Selection`, { alignment: go.Spot.Left }),
+                { click: this.deleteSelectedNodes }),
+            );
+    }
+    private deleteSelectionContextMenuTemplate() {
+        return this.$("ContextMenu",
+            this.$("ContextMenuButton",
+                this.$(go.TextBlock, `Delete Selection`, { alignment: go.Spot.Left }),
+                { click: this.deleteSelectedNodes }),
             );
     }
 
     // enum value templates
     private enumValueNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Value") },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentNearExistingComponentContextMenuTemplate("Value") },
             this.$(go.TextBlock,
                 { isMultiline: false, editable: false },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.Default)).ofObject(),
@@ -357,7 +396,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private enumValuesContainerGroupTemplate = () => {
         return this.$(go.Group, "Table", { name: "Container" },
-            { movable: false, click: this.onSelectionClick },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Value") },
             this.$(go.Shape, "RoundedRectangle", 
                 { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
@@ -400,7 +439,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // field templates
     private fieldNodeTemplate = () => {
         return this.$(go.Node, "Auto",
-            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Field") },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentNearExistingComponentContextMenuTemplate("Field") },
             this.$(go.Shape, "RoundedRectangle", 
                 { fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
@@ -430,7 +469,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         );
     }
     private fieldsContainerGroupTemplate = () => {
-        return this.$(go.Group, "Table", { name: "Container" },
+        return this.$(go.Group, "Table", { name: "Container", contextMenu: this.addNewComponentContextMenuTemplate("Field") },
             { movable: false, click: this.onSelectionClick },
             this.$(go.Shape, "RoundedRectangle", 
                 { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
@@ -462,7 +501,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private statementNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Statement") },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentNearExistingComponentContextMenuTemplate("Statement") },
             this.$(go.Panel, 
                 new go.Binding("width", "blockCount", blockCount => blockCount * 15)), //TODO: parameterize the value by which the width is computed
             this.$(go.Panel, "Horizontal",
@@ -480,7 +519,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // parameter template
     private parameterNodeTemplate = () => {
         return this.$(go.Node, "Horizontal",
-            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Parameter") },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentNearExistingComponentContextMenuTemplate("Parameter") },
             // parameter name
             this.$(go.TextBlock,
                 { isMultiline: false, editable: false, stroke: this.theme.Field },
@@ -525,7 +564,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // property templates
     private propertyHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick, contextMenu: this.addNewCallableParameterContextMenuTemplate() },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Parameter") },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",
@@ -567,7 +606,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type method templates (also used for some parts of constructors and properties)
     private methodHeaderGroupTemplate = () => {
         return this.$(go.Group, "Table",
-            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick, contextMenu: this.addNewCallableParameterContextMenuTemplate() },
+            { movable: false, stretch: go.GraphObject.Fill, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate("Parameter") },
             // method visibility access modifiers
             this.$(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(0, 1) }), // TODO: revise wrapping column number
             this.$(go.Panel, "Horizontal",
@@ -618,7 +657,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private methodGroupTemplate = (contextMenuComponentName: string) => {
         return this.$(go.Group, "Auto",
-            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate(contextMenuComponentName) },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentNearExistingComponentContextMenuTemplate(contextMenuComponentName) },
             this.$(go.Shape, "RoundedRectangle", 
                 { fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
@@ -626,9 +665,9 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
             this.$(go.Placeholder),
             );
     }
-    private methodsContainerGroupTemplate = (groupName: string) => {
+    private methodsContainerGroupTemplate = (groupName: string, contextMenuComponentName: string) => {
         return this.$(go.Group, "Table", { name: "Container" },
-            { movable: false, click: this.onSelectionClick },
+            { movable: false, click: this.onSelectionClick, contextMenu: this.addNewComponentContextMenuTemplate(contextMenuComponentName) },
             this.$(go.Shape, "RoundedRectangle", 
                 { stretch: go.GraphObject.Fill, strokeWidth: 2, columnSpan: 2, fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
@@ -652,7 +691,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     // type templates (classes, structs, interfaces, enums)
     private classGroupTemplate = () => {
         return this.$(go.Group, "Auto",
-            { locationSpot: go.Spot.Center, click: this.onSelectionClick },
+            { locationSpot: go.Spot.Center, click: this.onSelectionClick, contextMenu: this.deleteSelectionContextMenuTemplate() },
             this.$(go.Shape, "RoundedRectangle", 
                 { stretch: go.GraphObject.Fill, strokeWidth: 2, rowSpan: 2, fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),
@@ -676,7 +715,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
     }
     private enumGroupTemplate = () => {
         return this.$(go.Group, "Auto",
-            { locationSpot: go.Spot.Center, click: this.onSelectionClick },
+            { locationSpot: go.Spot.Center, click: this.onSelectionClick, contextMenu: this.deleteSelectionContextMenuTemplate() },
             this.$(go.Shape, "RoundedRectangle", 
                 { strokeWidth: 2, fill: this.theme.NodeBackground },
                 new go.Binding("stroke", "isHighlighted", isHighlighted => this.strokeOrHighlight(isHighlighted, this.theme.NodeStroke)).ofObject()),

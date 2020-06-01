@@ -30,8 +30,4 @@ export class Interface implements IType {
 
         this.isUpToDate = otherInterface.isUpToDate;
     }
-
-    public setSourceFilePath(sourceFilePath: string): void {
-        this.sourceFilePath = sourceFilePath;
-    }
 }

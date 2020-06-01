@@ -65,6 +65,22 @@ export class SourceCodeDataMapper {
             case (CodeComponentType.MethodHeader):
                 (type as Class | Struct).methods = (type as Class | Struct).methods.filter(method => method.index !== codeComponentLocation.callableIndex);
                 break;
+            // Type Member Container
+            case (CodeComponentType.FieldsContainer):
+                (type as Class | Struct).fields = [];
+                break;
+            case (CodeComponentType.PropertiesContainer):
+                (type as Class | Struct | Interface).properties = [];
+                break;
+            case (CodeComponentType.ConstructorsContainer):
+                (type as Class | Struct).constructors = [];
+                break;
+            case (CodeComponentType.MethodsContainer):
+                (type as Class | Struct).methods = [];
+                break;
+            case (CodeComponentType.EnumValuesContainer):
+                (type as Enum).values = [];
+                break;
             // Misc
             case (CodeComponentType.Parameter):
                 var callable = ((callableType: CodeComponentType): Constructor | Method | Property => {
@@ -106,6 +122,7 @@ export class SourceCodeDataMapper {
         switch(codeComponentLocation.type) {
             // Type
             case (CodeComponentType.Type):
+                type.sourceFilePath = nodeData.sourceFilePath;
                 type.namespaceDependecies = nodeData.namespaceDependecies;
                 type.namespace = nodeData.namespace;
                 type.modifiers = nodeData.modifiers;
@@ -208,16 +225,6 @@ export class SourceCodeDataMapper {
         type.isUpToDate = false;
         var codeComponentLocation = nodeData.codeComponentLocation;
         switch(codeComponentLocation.type) {
-            // Type
-            // case (CodeComponentType.Type):
-            //     type.namespaceDependecies = nodeData.namespaceDependecies;
-            //     type.namespace = nodeData.namespace;
-            //     type.modifiers = nodeData.modifiers;
-            //     type.name = nodeData.name;
-            //     type.parentInheritances = nodeData.parentInheritances;
-            //     // TODO: add conversions between classes, structs, interfaces and enums
-            //     break;
-
             // Type Member
             case (CodeComponentType.EnumValue):
                 var enumValueIndex = ((type as Enum).values.find(value => value.index === codeComponentLocation.valueIndex) as EnumValue).index;
@@ -296,7 +303,7 @@ export class SourceCodeDataMapper {
                     index: isBefore? method.index: method.index + 1,
                     modifiers: type instanceof Interface ? ['public'] : [],
                     name: 'NewMethod',
-                    type: 'object',
+                    type: 'void',
                     parameters: [],
                     declaredVariables: [],
                     statements: type instanceof Interface ? [] : [
@@ -307,6 +314,65 @@ export class SourceCodeDataMapper {
                     if (method.index >= newMethod.index) method.index += 1;
                 });
                 (type as Class | Struct).methods.push(newMethod);
+                break;
+            // Type Member Containers
+            case (CodeComponentType.FieldsContainer):
+                var newField = new Field({
+                    index: (type as Class | Struct).fields.length,
+                    modifiers: [],
+                    name: 'newField',
+                    type: 'object',
+                    assignmentStatement: undefined
+                });
+                (type as Class | Struct).fields.push(newField);
+                break;
+            case (CodeComponentType.PropertiesContainer):
+                var newProperty = new Property({
+                    index: (type as Class | Struct | Interface).properties.length,
+                    modifiers: type instanceof Interface? ['public'] : [],
+                    name: 'NewProperty',
+                    type: 'object',
+                    accessors: [
+                        new PropertyAccessor({ index: 0, name: 'get', body: [], declaredVariables: [] }),
+                        new PropertyAccessor({ index: 1, name: 'set', body: [], declaredVariables: [] })],
+                    parameters: [],
+                    assignmentStatement: undefined
+                });
+                (type as Class | Struct | Interface).properties.push(newProperty);
+                break;
+            case (CodeComponentType.ConstructorsContainer):
+                var newConstructor = new Constructor({
+                    index: (type as Class | Struct).constructors.length,
+                    modifiers: [],
+                    name: type.name,
+                    parameters: [],
+                    declaredVariables: [],
+                    statements: [
+                        new Statement({index: 0, blockCount: 0, statementText: '{', usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []}),
+                        new Statement({index: 1, blockCount: 0, statementText: '}', usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []})]
+                });
+                (type as Class | Struct).constructors.push(newConstructor);
+                break;
+            case (CodeComponentType.MethodsContainer):
+                var newMethod = new Method({
+                    index: (type as Class | Struct).methods.length,
+                    modifiers: type instanceof Interface ? ['public'] : [],
+                    name: 'NewMethod',
+                    type: 'void',
+                    parameters: [],
+                    declaredVariables: [],
+                    statements: type instanceof Interface ? [] : [
+                        new Statement({index: 0, blockCount: 0, statementText: '{', usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []}),
+                        new Statement({index: 1, blockCount: 0, statementText: '}', usedConstructors: [], usedFieldsAndProperties: [], usedMethods: [], usedTypes: []})]
+                });
+                (type as Class | Struct).methods.push(newMethod);
+                break;
+            case (CodeComponentType.EnumValuesContainer):
+                var newEnumValue = new EnumValue({
+                    index: (type as Enum).values.length,
+                    name: 'NewEnumValue'
+                });
+                (type as Enum).values.push(newEnumValue);
                 break;
             // Misc
             case (CodeComponentType.Parameter):
@@ -389,5 +455,44 @@ export class SourceCodeDataMapper {
                 accessor.body.push(newStatement);
                 break;
         }
+    }
+    
+    public addTypeForNode(types: IType[], nodeType: NodeType) {
+        switch(nodeType) {
+            // Type
+            case (NodeType.Class):
+                types.push(new Class({
+                    sourceFilePath: "NewClass",
+                    namespaceDependecies: [], namespace: "DefaultNamespace", name: "NewClass", modifiers: [], parentInheritances: [],
+                    fields: [], properties: [], constructors: [], methods: [],
+                    isUpToDate: false,
+                }));
+                break;
+            case (NodeType.Struct):
+                types.push(new Struct({
+                    sourceFilePath: "NewStruct",
+                    namespaceDependecies: [], namespace: "DefaultNamespace", name: "NewStruct", modifiers: [], parentInheritances: [],
+                    fields: [], properties: [], constructors: [], methods: [],
+                    isUpToDate: false,
+                }));
+                break;
+            case (NodeType.Interface):
+                types.push(new Interface({
+                    sourceFilePath: "NewInterface",
+                    namespaceDependecies: [], namespace: "DefaultNamespace", name: "NewInterface", modifiers: [], parentInheritances: [],
+                    properties: [], methods: [],
+                    isUpToDate: false,
+                }));
+                break;
+            case (NodeType.Enum):
+                types.push(new Enum({
+                    sourceFilePath: "NewEnum",
+                    namespaceDependecies: [], namespace: "DefaultNamespace", name: "NewEnum", modifiers: [], parentInheritances: [],
+                    values: [],
+                    isUpToDate: false,
+                }));
+                break;
+        }
+        return types;
     }
 }

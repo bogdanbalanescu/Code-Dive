@@ -11,6 +11,7 @@ import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
 import { SourceCodeDataMapper } from './SourceCodeDataMapper';
 import { CodeComponentType } from './CodeComponentType';
+import { NodeType } from './NodeType';
 
 interface CodeDiagramState {
     nodeDataArray: Array<go.ObjectData>;
@@ -56,10 +57,20 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         try {
             var typesCopy = this.props.types.map(type => this.deepCopyType(type));
             var updatedTypes = this.sourceCodeDataMapper.updateCodeForNode(typesCopy, nodeData);
+            
+            var existingSourceFiles = this.props.types.map(type => type.sourceFilePath).filter((value, index, self) => self.indexOf(value) === index);
             var updatedTypesGroupedBySourceFilePath = this.groupTypesByProperty(updatedTypes, 'sourceFilePath');
 
+            // update types in existing source files (TODO: remove source files if there are no more types there)
+            existingSourceFiles.forEach(sourceFilePath => {
+                updatedTypesGroupedBySourceFilePath[sourceFilePath] ?
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath]) :
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, []); //this.removeSourceFile(sourceFilePath);
+            });
+            // update types in new source files
             for (const sourceFilePath in updatedTypesGroupedBySourceFilePath) {
-                this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
+                if (existingSourceFiles.indexOf(sourceFilePath) === -1)
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
             }
         }
         catch (e) {
@@ -97,7 +108,7 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             this.props.onUpdateCode(types, sourceFilePath);
         }
     }
-    private handleAddNode = (nodeData: any, isBefore: boolean) => {
+    private handleAddComponentNode = (nodeData: any, isBefore: boolean) => {
         try {
             var typesCopy = this.props.types.map(type => this.deepCopyType(type));
             var updatedTypes = this.sourceCodeDataMapper.addCodeForNode(typesCopy, nodeData, isBefore);
@@ -109,6 +120,30 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         }
         catch (e) {
             console.log(`Unexpected error while adding node data: ${e.message}`)
+        }
+    }
+    private handleAddTypeNode = (nodeType: NodeType) => {
+        try {
+            var typesCopy = this.props.types.map(type => this.deepCopyType(type));
+            var updatedTypes = this.sourceCodeDataMapper.addTypeForNode(typesCopy, nodeType);
+
+            var existingSourceFiles = this.props.types.map(type => type.sourceFilePath).filter((value, index, self) => self.indexOf(value) === index);
+            var updatedTypesGroupedBySourceFilePath = this.groupTypesByProperty(updatedTypes, 'sourceFilePath');
+
+            // update types in existing source files (TODO: remove source files if there are no more types there)
+            existingSourceFiles.forEach(sourceFilePath => {
+                updatedTypesGroupedBySourceFilePath[sourceFilePath] ?
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath]) :
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, []); //this.removeSourceFile(sourceFilePath);
+            });
+            // update types in new source files
+            for (const sourceFilePath in updatedTypesGroupedBySourceFilePath) {
+                if (existingSourceFiles.indexOf(sourceFilePath) === -1)
+                    this.updateCodeInSourceFileIfChanged(sourceFilePath, updatedTypesGroupedBySourceFilePath[sourceFilePath])
+            }
+        }
+        catch(e) {
+            console.log(`Unexpected error while deleting nodes: ${e.message}`)
         }
     }
 
@@ -140,7 +175,8 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
                 highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
                 onUpdateNode={this.handleUpdateNode}
                 onDeletedNodes={this.handleDeletedNodes}
-                onAddNode={this.handleAddNode}
+                onAddComponentNode={this.handleAddComponentNode}
+                onAddTypeNode={this.handleAddTypeNode}
             />
         );
     }

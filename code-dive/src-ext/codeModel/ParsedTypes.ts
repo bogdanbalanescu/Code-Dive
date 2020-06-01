@@ -32,6 +32,10 @@ export class ParsedTypes {
         if (enums.length) this.enums = this.enums.concat(enums);
     }
 
+    public count(): number {
+        return this.classes.length + this.structs.length + this.interfaces.length + this.enums.length;
+    }
+
 	setSourceFilePath(filePath: string) {
         this.classes.forEach(type => type.setSourceFilePath(filePath));
         this.structs.forEach(type => type.setSourceFilePath(filePath));
@@ -48,10 +52,10 @@ export class ParsedTypes {
     
 	mapToSourceCode(): string {
         return [
-            this.classes.map(type => type.mapToSourceCode()),
-            this.structs.map(type => type.mapToSourceCode()),
-            this.interfaces.map(type => type.mapToSourceCode()),
-            this.enums.map(type => type.mapToSourceCode()),
+            this.classes.map(type => type.mapToSourceCode()).join(''),
+            this.structs.map(type => type.mapToSourceCode()).join(''),
+            this.interfaces.map(type => type.mapToSourceCode()).join(''),
+            this.enums.map(type => type.mapToSourceCode()).join(''),
         ].join('\n');
 	}
 }
