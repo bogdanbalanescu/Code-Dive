@@ -18,7 +18,8 @@
  */
 
 import * as go from 'gojs';
-import './DataInspector.css';
+import './DataInspectorDarkTheme.css';
+import './DataInspectorLightTheme.css';
 
 /**
  * This class implements an inspector for GoJS model data objects.
@@ -101,9 +102,9 @@ export class Inspector {
    * @param {Diagram} diagram a reference to a GoJS Diagram
    * @param {Object=} options an optional JS Object describing options for the inspector
    */
-  constructor(divid: HTMLDivElement, diagram: go.Diagram, options?: { [index: string]: any }) {
+  constructor(divid: HTMLDivElement, diagram: go.Diagram, theme: string, options?: { [index: string]: any }) {
     this._div = divid;
-    this._div.className = 'inspector';
+    this._div.className = theme === 'Dark' ? 'dark-inspector' : 'light-inspector';
     this._div.innerHTML = '';
     this._diagram = diagram;
     this.tabIndex = 0;

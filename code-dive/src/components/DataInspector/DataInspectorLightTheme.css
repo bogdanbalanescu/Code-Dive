@@ -1,0 +1,51 @@
+/*
+  Light CSS theme for the Data inspector
+*/
+
+.light-inspector {
+  /* Position related properties */
+  position: absolute;
+  top: 10%;
+  left: 0.5%;
+  z-index: 9;
+  border-radius: 15px;
+  
+  /* Default properties by Northwoods Software Corporation */
+  display: inline-block;
+  font: bold 14px helvetica, sans-serif;
+  background-color: #212121;
+  color: #F5F5F5;
+  cursor: default;
+}
+
+.light-inspector table {
+  border-collapse: separate;
+  border-spacing: 5px;
+  border-radius: 15px;
+  background: #CCCCCC;
+}
+
+.light-inspector td, th {
+  padding: 2px;
+  color: #000044 /* Midnight blue */
+}
+
+.light-inspector input {
+  background-color: #EEEEEE;
+  color: darkblue;
+  font: bold 12px helvetica, sans-serif;
+  border: 0px;
+  border-radius: 5px;
+  padding: 2px;
+}
+
+.light-inspector input:disabled {
+  background-color: #BDBDBD;
+  color: #616161;
+}
+
+.light-inspector select {
+  background-color: #EEEEEE;
+  color: #000044; /* Midnight blue */
+  border-radius: 5px;
+}

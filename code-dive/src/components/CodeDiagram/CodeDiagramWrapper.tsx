@@ -7,7 +7,6 @@ import { LinkType } from './LinkType';
 import { NodeType } from './NodeType';
 import { StatementAtomSemantic } from './StatementAtomSemantic';
 import { Inspector } from '../DataInspector/DataInspector';
-import { CodeComponentType } from './CodeComponentType';
 const clone = require('rfdc')()
 
 interface CodeDiagramProps {
@@ -142,7 +141,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         if (this.diagramReference.current !== null) {
             let diagram = this.diagramReference.current.getDiagram();
             if (diagram !== null) {
-                new Inspector(this.inspectorReference.current as HTMLDivElement, diagram, {
+                new Inspector(this.inspectorReference.current as HTMLDivElement, diagram, this.props.theme, {
                     includesOwnProperties: false,
                     updateAffectedDiagramParts: false,
                     // TODO: add the properties which are to be shown for each node or group
