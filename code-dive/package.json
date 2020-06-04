@@ -1,26 +1,26 @@
 {
-  "name": "code-dive",
-  "displayName": "Code Dive",
-  "description": "Code Dive is a VS Code Extension that serves as a Visual Programming Tool for Textual Based Programming Languages.",
+  "name": "code-diagram",
+  "displayName": "Code Diagram",
+  "description": "Code Diagram is a VS Code Extension that serves as a Visual Programming Tool for Textual Based Programming Languages.",
   "publisher": "bdaniel",
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.23.0"
   },
   "activationEvents": [
-    "onCommand:extension.code-dive"
+    "onCommand:extension.code-diagram"
   ],
   "main": "./build/src-ext/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "extension.code-dive",
-        "title": "Start Code Dive",
-        "category": "Code Dive"
+        "command": "extension.code-diagram",
+        "title": "Start Code Diagram",
+        "category": "Code Diagram"
       }
     ],
     "configuration": {
-      "title": "Code Dive",
+      "title": "Code Diagram",
       "properties": {
         "linkCreationConfiguration.linksToSameType": {
           "type": "boolean",

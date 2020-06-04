@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Code Diagram",
+  "name": "Code Diagram, a visual programming tool for textual based programming languages.",
   "icons": [
     {
       "src": "favicon.ico",

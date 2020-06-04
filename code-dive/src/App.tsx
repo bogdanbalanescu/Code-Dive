@@ -74,7 +74,7 @@ class App extends React.Component<Props> {
       <div>
         <Helmet>
           <meta charSet="utf-8" />
-          <title>Code Dive, a visual programming tool for textual based programming languages.</title>
+          <title>Code Diagram, a visual programming tool for textual based programming languages.</title>
         </Helmet>
         {
           this.props.interactor instanceof ExtensionInteractor ?
