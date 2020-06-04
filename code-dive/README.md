@@ -1,39 +1,50 @@
-# Project template taken from:
-https://github.com/rebornix/vscode-webview-react
+# Code Diagram, a Visual Programming tool for Textual Based Programming Languages (Proof of Concept)
+Currently only covering a subset of C#, this tool is not ready for production use.
 
-The following is the README file from the above mentioned github Repository.
+# Features
+The following is a short list describing the features provided by Code Diagram:
+* Visual representation of the code under the form of a UML-like diagram capable of delivering the full capabilities of source code as well.
+* Real-time code synchronization between the source files and between the visual representation of the code.
+* Links shown between statements, parameters, type members and types.
+* Configurations available to show/hide certain link types and real-time updates to the diagram.
+* Highlighted selections for the selected code components, their links and the components those links point to.
+* Configurations available to increase the number of layers of dependency taken into consideration for the highlighted selections.
+* Ability to add new types, type members, statements and parameters from the visual representation of the code.
+* Ability to change the source files of types from the visual representation of the code.
 
-# VSCode Webview React
+# The covered subset of the C# language
+The following is a short description of what Code Diagram understand of the C# language.
 
-This project was bootstrapped with 
-* [Create React App](https://github.com/facebookincubator/create-react-app)
-* [Create React App TypeScript](https://github.com/wmonk/create-react-app-typescript)
-* [VSCode Extension Webview Sample](https://github.com/Microsoft/vscode-extension-samples/tree/master/webview-sample)
+If something is not covered in this list, then it most probably is not supported - again, this tool is only a Proof of Concept at the present moment.
 
-[The webview API](https://code.visualstudio.com/docs/extensions/webview) allows extensions to create customizable views within VSCode. Single Page Application frameworks are perfect fit for this use case. However, to make modern JavaScript frameworks/toolchains appeal to VSCode webview API's [security best practices](https://code.visualstudio.com/docs/extensions/webview#_security) requires some knowledge of both the bundling framework you are using and how VSCode secures webview. This project aims to provide an out-of-box starter kit for Create React App and TypeScript in VSCode's webview.
+Note: for brevity, the dots ```...``` shall replace the content of the body of methods, constructors, etc. and shall not be taken as part of the syntax.
+* **using** directives: preferably placed at the top of the file and applying to all types in the same source file.
+  * Example: ```using System;```
+* **namespace** declaration
+  * Example: ```namespace CodeDiagramNamespace { ... }```
+* **class**, **struct**, **interface** or **enum** declaration:
+  * Example: ```class ClassExample { ... }```
+  * Example: ```struct StructExample { ... }```
+  * Example: ```interface InterfaceExample { ... }```
+  * Example: ```enum EnumExample { ... }```
+* **field** declaration:
+  * Example: ```public int x = 42;```
+* **property** declaration:
+  * Example: ```protected sealed MagicNumber { get; set; }```
+  * Example: ```public PropertyWithAccessModifiers { get { return backedField; } set { backedField = value; } }```
+* **constructor** or **method** declaration:
+  * Example: ```public ClassExample() { ... }```
+  * Example: ```public int Add(int x, int y) { return x + y; }```
+* **statements**
+  * Variable declarations: ```int x = 42;```
+  * Invocation: ```object.CallMethod()```
+  * Assignment: ```x = 43;```
+  * If and else: ```if (IsThisTrue()) { ... } else { ... }```
+  * While: ```While (condition) { ... }```
+  * Do: ```do { ... } while (Possible());```
+  * For: ```for (x = 1; x < 2; x=x+1) { ... }```
+  * Foreach: ```foreach(int x in numbers) { ... }```
+  * Return: ```return expression;```
+  * Throw: ```throw exception;```
+  * Try, catch and finally: ``` try { ... } catch (Exception ex) { ... } finally { ... }```
 
-## Development
-
-Run following commands in the terminal
-
-```shell
-yarn install
-yarn run build
-```
-And then press F5, in Extension Development Host session, run `Start React Webview` command from command palette.
-
-## Under the hood
-
-Things we did on top of Create React App TypeScript template
-
-* We inline `index.html` content in `ext-src/extension.ts` when creating the webview
-* We set strict security policy for accessing resources in the webview.
-  * Only resources in `/build` can be accessed
-  * Onlu resources whose scheme is `vscode-resource` can be accessed.
-* For all resources we are going to use in the webview, we change their schemes to `vscode-resource`
-* Since we only allow local resources, absolute path for styles/images (e.g., `/static/media/logo.svg`) will not work. We add a `.env` file which sets `PUBLIC_URL` to `./` and after bundling, resource urls will be relative.
-* We add baseUrl `<base href="${vscode.Uri.file(path.join(this._extensionPath, 'build')).with({ scheme: 'vscode-resource' })}/">` and then all relative paths work.
-
-## Limitations
-
-Right now you can only run production bits (`yarn run build`) in the webview, how to make dev bits work (webpack dev server) is still unknown yet. Suggestions and PRs welcome !
