@@ -1,7 +1,25 @@
 # Code Diagram, a Visual Programming tool for Textual Based Programming Languages (Proof of Concept)
 Currently only covering a subset of C#, this tool is not ready for production use.
 
-# Features
+## Development
+The following project is made of two main parts:
+* A Visual Studio Code extension that contains a webview
+* A React application that fills the webview's content
+
+To run the React application (separately) in browser:
+```
+yarn install
+yarn start
+```
+
+To run the extension in Visual Studio Code debugging mode:
+```
+yarn install
+yarn build
+Then press 'F5' to run.
+```
+
+## Features
 The following is a short list describing the features provided by Code Diagram:
 * Visual representation of the code under the form of a UML-like diagram capable of delivering the full capabilities of source code as well.
 * Real-time code synchronization between the source files and between the visual representation of the code.
@@ -12,7 +30,7 @@ The following is a short list describing the features provided by Code Diagram:
 * Ability to add new types, type members, statements and parameters from the visual representation of the code.
 * Ability to change the source files of types from the visual representation of the code.
 
-# The covered subset of the C# language
+## The covered subset of the C# language
 The following is a short description of what Code Diagram understand of the C# language.
 
 If something is not covered in this list, then it most probably is not supported - again, this tool is only a Proof of Concept at the present moment.

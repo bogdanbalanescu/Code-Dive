@@ -1,8 +1,8 @@
 ## Development
 
-Run following commands in the terminal
+Run the following commands in the terminal
 
 ```
 npm install
-node src/parser.js
+node src/parser.ts
 ```
