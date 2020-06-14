@@ -4,7 +4,9 @@ Currently only covering a subset of C#, this tool is not ready for production us
 ## Development
 The following project is made of two main parts:
 * A Visual Studio Code extension that contains a webview
+  * Sources are in ```src-ext```
 * A React application that fills the webview's content
+  * Sources are in ```src```
 
 To run the React application (separately) in browser:
 ```
@@ -16,8 +18,33 @@ To run the extension in Visual Studio Code debugging mode:
 ```
 yarn install
 yarn build
-Then press 'F5' to run.
+Then press 'F5' to run (in Visual Studio Code).
+In the newly opened Visual Studio Code session, open a folder with C# source files.
+Press (Ctrl+Shift+P) to open the Command Pallete.
+Enter '>Code Diagram'.
 ```
+
+To create a package and install the extension on the local environment:
+```
+yarn install
+vsce package   <--- this will generate a file called "code-diagram-0.1.0.vsix"
+code --install-extension code-diagram-0.1.0.vsix
+```
+To uninstall the extension from the local environment:
+```
+code --uninstall-extension bdaniel.code-diagram
+```
+
+## Documentation
+
+For documentation about the architectural design of Code Diagram, please open the Visual Paradigm Project found at: ```./documentation/Code Diagram.vpp```. This project contains the following diagrams:
+- ```Component Diagram``` containing an architectural overview of the whole system
+- ```C# Class Diagram``` describing the JSON structure of the parsed types
+- ```Node Class Diagram``` describing the JSON structure of the mapped nodes from the parsed types
+- ```Link Class Diagram``` describing the JSON structured of the mapped links from the parsed types
+- ```Sequence Diagram - Start Code Diagram``` which describes the interaction between the system's components each time Code Diagram is run for the first time
+- ```Sequence Diagram - Modify the Code Diagram``` which describes the interaction between the system's components in order to update the code diagram and keep the code in sync
+- ```Sequence Diagram - Modify the Source Code``` which describes the interaction between the system's components in order to keep the diagram in sync with the code whenever the source code is modified
 
 ## Features
 The following is a short list describing the features provided by Code Diagram:
