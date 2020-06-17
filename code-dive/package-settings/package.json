@@ -90,49 +90,14 @@
     }
   },
   "dependencies": {
-    "@material-ui/core": "^4.9.14",
-    "@types/react-helmet": "^6.0.0",
-    "@types/react-redux": "^7.1.7",
-    "gojs": "^2.1.14",
-    "gojs-react": "^1.0.5",
-    "immer": "^6.0.3",
-    "jison": "^0.4.18",
-    "paths-js": "^0.4.10",
-    "react": "^16.3.2",
-    "react-dom": "^16.3.2",
-    "react-helmet": "^6.0.0",
-    "react-redux": "^7.2.0",
-    "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0",
-    "resize-observer-polyfill": "^1.5.1",
-    "rfdc": "^1.1.4",
-    "terser": "3.16.0"
   },
   "resolutions": {
-    "terser": "3.14.1"
   },
   "scripts": {
-    "vscode:prepublish": "yarn build-webview && yarn build-extension",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "start": "react-scripts start",
-    "build": "yarn build-webview && yarn build-extension",
-    "build-webview": "node ./scripts/build-non-split.js",
-    "build-extension": "tsc -p tsconfig.extension.json && echo F|xcopy src-ext\\codeParser\\CSharpGrammarParser.js build\\src-ext\\codeParser /i /y",
-    "package": "yarn build && yarn create-package-build-tree && yarn copy-package-settings-files && yarn build-package",
-    "create-package-build-tree": "ren build build-temp && robocopy build-temp build\\build /mir | echo 0 && rd build-temp /s /q",
-    "copy-package-settings-files": "echo F|xcopy package-settings\\package.json build\\package.json /f && echo F|xcopy package-settings\\README.md build\\README.md /f",
-    "build-package": "cd build && yarn install && echo Y|vsce package",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "vscode:prepublish": "",
+    "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
-    "@types/jest": "^23.3.13",
-    "@types/node": "^10.1.2",
-    "@types/react": "^16.3.14",
-    "@types/react-dom": "^16.0.5",
-    "react-scripts": "^2.1.3",
-    "rewire": "^4.0.1",
-    "typescript": "3.9.3",
     "vscode": "^1.1.37"
   },
   "browserslist": [

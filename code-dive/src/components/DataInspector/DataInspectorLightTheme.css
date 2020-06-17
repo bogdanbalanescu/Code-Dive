@@ -5,10 +5,12 @@
 .light-inspector {
   /* Position related properties */
   position: absolute;
-  top: 10%;
-  left: 0.5%;
+  top: 75px;
+  left: 10px;
   z-index: 9;
   border-radius: 15px;
+  max-height: 10%;
+  max-width: 30%;
   
   /* Default properties by Northwoods Software Corporation */
   display: inline-block;

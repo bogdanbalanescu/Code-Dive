@@ -5,8 +5,8 @@
 .dark-inspector {
   /* Position related properties */
   position: absolute;
-  top: 10%;
-  left: 0.5%;
+  top: 75px;
+  left: 10px;
   z-index: 9;
   border-radius: 15px;
   max-height: 10%;
