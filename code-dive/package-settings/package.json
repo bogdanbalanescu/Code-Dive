@@ -74,6 +74,11 @@
             "Changes the extension theme to light. Warning: this only takes effect after restarting the extension."
           ]
         },
+        "showOverview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows an Overview of the diagram in the bottom left corner."
+        },
         "selectionHighlights.recursionDepth": {
           "type": "number",
           "default": 1,

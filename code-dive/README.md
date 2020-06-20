@@ -26,9 +26,8 @@ Enter '>Code Diagram'.
 
 To create a package and install the extension on the local environment:
 ```
-yarn install
-vsce package   <--- this will generate a file called "code-diagram-0.1.0.vsix"
-code --install-extension code-diagram-0.1.0.vsix
+yarn package   <--- this will generate a file called 'code-diagram-0.1.0.vsix' in the 'build' folder
+code --install-extension build/code-diagram-0.1.0.vsix
 ```
 To uninstall the extension from the local environment:
 ```
