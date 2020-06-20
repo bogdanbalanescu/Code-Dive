@@ -23,11 +23,11 @@ export class Property {
 
     mapToSourceCode(): string {
         return [
-            `\t\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}${this.type} ${this.name} ${this.parameters.length > 0 ? `[${this.parameters.sort((a, b) => a.index - b.index).map(parameter => parameter.mapToSourceCode()).join(', ')}]`: ''}\n`,
+            `\t\t${this.modifiers.length > 0 ? `${this.modifiers.join(' ')} `: ''}${this.type} ${this.name}${this.parameters.length > 0 ? `[${this.parameters.sort((a, b) => a.index - b.index).map(parameter => parameter.mapToSourceCode()).join(', ')}]`: ''}\n`,
             `\t\t{\n`,
             `${this.accessors.sort((a, b) => a.index - b.index).map(accessor => accessor.mapToSourceCode()).join('')}`,
             `\t\t}\n`,
-            `${this.assignmentStatement ? `${this.assignmentStatement.mapToSourceCode()};`: ''}\n`,
+            `${this.assignmentStatement && this.assignmentStatement.statementText ? `${this.assignmentStatement.mapToSourceCode()};`: ''}\n`,
         ].join('');
     }
 }

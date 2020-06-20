@@ -121,7 +121,11 @@ class ReactPanel {
 						}
 					}
 					catch (e) {
-						this.alertWebview(e.message);
+						if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+							this.alertWebview('Please open a workspace or a folder before creating new types.');
+						} else {
+							this.alertWebview(e.message);
+						}
 					}
 					break;
 			}

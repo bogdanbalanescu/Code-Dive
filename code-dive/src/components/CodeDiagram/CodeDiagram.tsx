@@ -2,7 +2,7 @@ import * as go from 'gojs';
 import * as React from 'react';
 
 import { CodeDiagramConfiguration } from './CodeDiagramConfiguration';
-import { CodeDiagramWrapper } from './CodeDiagramWrapper'
+import { CodeDiagramWrapper } from './CodeDiagramWrapper';
 import { CodeDiagramDataMapper } from './CodeDiagramDataMapper';
 import { IType } from '../../codeModel/Types/IType'
 import { Class } from '../../codeModel/Types/Class';
@@ -10,7 +10,6 @@ import { Struct } from '../../codeModel/Types/Struct';
 import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
 import { SourceCodeDataMapper } from './SourceCodeDataMapper';
-import { CodeComponentType } from './CodeComponentType';
 import { NodeType } from './NodeType';
 
 interface CodeDiagramState {

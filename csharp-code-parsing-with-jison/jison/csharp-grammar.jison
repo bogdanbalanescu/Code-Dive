@@ -211,14 +211,22 @@ if (!('addProperty' in yy)) {
 			index: properties.length,
 			type: type,
 			name: name,
-			modifiers : modifiers,
+			modifiers : currentInvocableMemberModifiers.concat(modifiers),
 			parameters: currentInvocableMemberFixedParameters,
 			accessors : propertyAccessors
 		});
 		// Cleanup after property
 		modifiers = [];
+		currentInvocableMemberModifiers = [];
 		currentInvocableMemberFixedParameters = [];
 		propertyAccessors = [];
+	};
+}
+if (!('saveCurrentPropertyIndexerModifiers' in yy)) {
+	yy.saveCurrentPropertyIndexerModifiers = function saveCurrentPropertyIndexerModifiers() {
+		currentInvocableMemberModifiers = modifiers;
+		// Cleanup
+		modifiers = [];
 	};
 }
 if (!('addAssignmentExpressionForPreviousProperty' in yy)) {
@@ -657,7 +665,7 @@ property_declaration_default
 		{yy.addProperty($2, $3);}
 	| modifiers array_type IDENTIFIER property_body
 		{yy.addProperty($2, $3);}
-	| modifiers IDENTIFIER THIS '[' formal_parameter_list ']' property_body
+	| modifiers IDENTIFIER THIS _subroutine_save_current_property_indexer_modifiers '[' formal_parameter_list ']' property_body
 		{yy.addProperty($2, $3);}
 	| IDENTIFIER IDENTIFIER property_body
 		{yy.addProperty($1, $2);}
@@ -665,6 +673,10 @@ property_declaration_default
 		{yy.addProperty($1, $2);}
 	| IDENTIFIER THIS '[' formal_parameter_list ']' property_body
 		{yy.addProperty($1, $2);}
+	;
+_subroutine_save_current_property_indexer_modifiers
+	: /* empty */
+		{yy.saveCurrentPropertyIndexerModifiers($1);}
 	;
 property_body
 	: '{' accessor_declarations '}'

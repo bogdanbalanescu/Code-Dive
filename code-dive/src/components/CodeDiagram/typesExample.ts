@@ -206,7 +206,7 @@ var parsedTypes: any = { classes:
          { index: 1,
            type: 'object',
            name: 'this',
-           modifiers: [],
+           modifiers: [ 'public' ],
            parameters:
             [ { index: 0, type: 'int', name: 'index', modifier: '', assignmentStatement: undefined } ],
            accessors:
