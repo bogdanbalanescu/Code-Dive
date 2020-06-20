@@ -1,6 +1,6 @@
 import * as go from 'gojs';
 import * as React from 'react';
-import { ReactDiagram } from 'gojs-react';
+import { ReactDiagram, ReactOverview } from 'gojs-react';
 
 import './CodeDiagramWrapper.css';
 import { LinkType } from './LinkType';
@@ -17,6 +17,7 @@ interface CodeDiagramProps {
     theme: string;
     highlightMaximumDepthRecursion: number;
     highlightChildren: boolean;
+    onDiagramLoaded: (diagramReference: go.Diagram) => void;
     onUpdateNode: (nodeData: any) => void;
     onDeletedNodes: (nodeData: any[]) => void;
     onAddComponentNode: (nodeData: any, isBefore: boolean) => void;
@@ -335,6 +336,7 @@ export class CodeDiagramWrapper extends React.Component<CodeDiagramProps, {}> {
         diagram.linkTemplateMap.add(LinkType.StatementUsesFieldOrProperty, this.linksToUsedMembers());
         diagram.linkTemplateMap.add(LinkType.StatementUsesConstructorOrMethod, this.linksToUsedMembers());
 
+        this.props.onDiagramLoaded(diagram);
         return diagram;
     }
 

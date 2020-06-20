@@ -239,7 +239,8 @@ class ReactPanel {
 				includeChildren: config.get("selectionHighlights.includeChildren") as boolean
 			},
 			theme: config.get("theme") as string,
-			isLoaded: true
+			isLoaded: true,
+			showOverview: config.get("showOverview") as boolean
 		}
 		return codeDiagaramConfiguration;
 	}

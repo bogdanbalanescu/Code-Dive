@@ -11,12 +11,16 @@ import { Interface } from '../../codeModel/Types/Interface';
 import { Enum } from '../../codeModel/Types/Enum';
 import { SourceCodeDataMapper } from './SourceCodeDataMapper';
 import { NodeType } from './NodeType';
+import { ReactOverview } from 'gojs-react';
+
+import '../Overview/Overview.css'
 
 interface CodeDiagramState {
     nodeDataArray: Array<go.ObjectData>;
     linkDataArray: Array<go.ObjectData>;
     modelData: go.ObjectData;
     skipsDiagramUpdate: boolean;
+    diagramReference: go.Diagram | undefined;
 }
 
 interface CodeDiagramProps {
@@ -35,7 +39,8 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
             nodeDataArray: [],
             linkDataArray: [],
             modelData: {},
-            skipsDiagramUpdate: true
+            skipsDiagramUpdate: true,
+            diagramReference: undefined
         };
 
         this.sourceCodeDataMapper = new SourceCodeDataMapper();
@@ -162,21 +167,41 @@ export class CodeDiagram extends React.Component<CodeDiagramProps, CodeDiagramSt
         }, {});
     };
 
+    // diagram loaded handler
+    private handleDiagramLoaded = (diagramReference: go.Diagram) => {
+        this.setState({
+            ...this.state, diagramReference: diagramReference
+        });
+    }
+
     render() {
         return (
-            <CodeDiagramWrapper
-                nodeDataArray={this.state.nodeDataArray}
-                linkDataArray={this.state.linkDataArray}
-                modelData={this.state.modelData}
-                skipsDiagramUpdate={this.state.skipsDiagramUpdate}
-                theme={this.props.configuration.theme}
-                highlightMaximumDepthRecursion={this.props.configuration.selectionHighlightsConfiguration.recursionDepth}
-                highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
-                onUpdateNode={this.handleUpdateNode}
-                onDeletedNodes={this.handleDeletedNodes}
-                onAddComponentNode={this.handleAddComponentNode}
-                onAddTypeNode={this.handleAddTypeNode}
-            />
+            <div>
+                <CodeDiagramWrapper
+                    nodeDataArray={this.state.nodeDataArray}
+                    linkDataArray={this.state.linkDataArray}
+                    modelData={this.state.modelData}
+                    skipsDiagramUpdate={this.state.skipsDiagramUpdate}
+                    theme={this.props.configuration.theme}
+                    highlightMaximumDepthRecursion={this.props.configuration.selectionHighlightsConfiguration.recursionDepth}
+                    highlightChildren={this.props.configuration.selectionHighlightsConfiguration.includeChildren}
+                    onDiagramLoaded={this.handleDiagramLoaded}
+                    onUpdateNode={this.handleUpdateNode}
+                    onDeletedNodes={this.handleDeletedNodes}
+                    onAddComponentNode={this.handleAddComponentNode}
+                    onAddTypeNode={this.handleAddTypeNode}
+                />
+                {
+                    this.props.configuration.showOverview && this.state.diagramReference ?
+                    (
+                        <ReactOverview
+                            initOverview={() => new go.Overview()}
+                            divClassName={this.props.configuration.theme === 'Dark'? 'dark-overview': 'light-overview'}
+                            observedDiagram={this.state.diagramReference}
+                        />
+                    ): null
+                }
+            </div>
         );
     }
 }

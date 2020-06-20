@@ -1,0 +1,14 @@
+/*
+  Dark CSS theme for the Diagram Overview
+*/
+
+.dark-overview {
+    /* Position related properties */
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 9;
+    border-radius: 15px;
+    height: 27%;
+    width: 17%;
+}

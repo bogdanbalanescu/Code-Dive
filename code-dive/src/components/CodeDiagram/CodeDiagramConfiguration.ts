@@ -3,6 +3,7 @@ export class CodeDiagramConfiguration {
     selectionHighlightsConfiguration: SelectionHighlightsConfiguration = new SelectionHighlightsConfiguration();
     theme: string = "Dark";
     isLoaded: boolean = false;
+    showOverview: boolean = false;
 
     public constructor(isLoaded: boolean = false) {
         this.isLoaded = isLoaded;

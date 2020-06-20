@@ -3,6 +3,7 @@ export class CodeDiagramConfiguration {
     public selectionHighlightsConfiguration: SelectionHighlightsConfiguration = new SelectionHighlightsConfiguration();
     public theme: string = "Dark";
     public isLoaded: boolean = false;
+    public showOverview: boolean = false;
 }
 
 class LinkCreationConfiguration {
